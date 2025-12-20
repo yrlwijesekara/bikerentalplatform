@@ -9,6 +9,7 @@ dotenv.config();
 const app = express();
 app.use(bodyParser.json());
 app.use('/api/users', userRouter);
+
 const connectionString = process.env.MONGODB_URI;
 const PORT = process.env.PORT || 5000;
 
