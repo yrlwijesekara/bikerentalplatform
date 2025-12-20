@@ -2,11 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
+import userRouter from './routes/userRouter.js';
 
 dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
+app.use('/api/users', userRouter);
 const connectionString = process.env.MONGODB_URI;
 const PORT = process.env.PORT || 5000;
 
