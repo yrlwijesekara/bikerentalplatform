@@ -3,11 +3,28 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import userRouter from './routes/userRouter.js';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
+app.use((req, res, next) => {
+    const value = req.header('Authorization');
+    if (value != null) {
+        const token = value.replace('Bearer ', '');
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (decoded == null) {
+                return res.status(401).send({ error: 'Unauthorized' });
+            } else {
+                req.user = decoded;
+                next();
+            }
+        });
+    } else {
+        next();
+    }
+});
 app.use('/api/users', userRouter);
 
 const connectionString = process.env.MONGODB_URI;
