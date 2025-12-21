@@ -13,11 +13,31 @@ export function createUser(req, res) {
         password: passwordHash,
         phone: req.body.phone,
         address: req.body.address,
-        city: req.body.city
+        city: req.body.city,
+        location: req.body.location || {},
+        image: req.body.image || '',
+        role: req.body.role || 'user',
+        vendorDetails: req.body.role === 'vendor' ? {
+            shopName: req.body.shopName,
+            shopLicenseNo: req.body.shopLicenseNo,
+            description: req.body.description,
+            rating: req.body.rating || 0,
+            totalReviews: req.body.totalReviews || 0,
+            isApproved: req.body.isApproved || false
+        } : undefined,
+        preferences: {
+            preferredBikeType: req.body.preferredBikeType,
+            travelStyle: req.body.travelStyle,
+            budgetRange: req.body.budgetRange
+        }
     }
     const newUser = new User(userData);
     newUser.save()
-        .then(() => res.status(201).send(newUser))
+        .then(() => {
+            // Remove password from response
+            const { password, ...userResponse } = newUser.toObject();
+            res.status(201).send(userResponse);
+        })
         .catch((error) => res.status(400).send({ error: error.message }));
 }
 
@@ -29,6 +49,10 @@ export function loginUser(req, res) {
         .then((user) => {
             if (!user) {
                 return res.status(404).send({ error: "User not found" });
+            }
+
+            if (user.isblocked) {
+                return res.status(403).send({ error: "Account is blocked" });
             }
 
             const isPasswordValid = bcrypt.compareSync(password, user.password);
@@ -44,10 +68,13 @@ export function loginUser(req, res) {
                 phone: user.phone,
                 address: user.address,
                 city: user.city,
+                location: user.location,
+                image: user.image,
                 role: user.role,
                 isemailverified: user.isemailverified,
                 isblocked: user.isblocked,
-                image: user.image
+                vendorDetails: user.vendorDetails,
+                preferences: user.preferences
             }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
             res.status(200).send({
@@ -61,10 +88,13 @@ export function loginUser(req, res) {
                     phone: user.phone,
                     address: user.address,
                     city: user.city,
+                    location: user.location,
+                    image: user.image,
                     role: user.role,
                     isemailverified: user.isemailverified,
                     isblocked: user.isblocked,
-                    image: user.image
+                    vendorDetails: user.vendorDetails,
+                    preferences: user.preferences
                 }
             });
         })
