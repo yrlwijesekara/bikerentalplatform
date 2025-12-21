@@ -110,3 +110,10 @@ export function isvender(req, res) {
         return true;
     }
 }
+export function isadmin(req, res) {
+    if(req.user == null || req.user.role !== 'admin') {
+        return false;
+    }else {
+        return true;
+    }
+}
