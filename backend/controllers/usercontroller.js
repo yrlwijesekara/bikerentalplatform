@@ -36,7 +36,9 @@ export function createUser(req, res) {
         .then(() => {
             // Remove password from response
             const { password, ...userResponse } = newUser.toObject();
-            res.status(201).send(userResponse);
+            res.status(201).json(
+                { message: "User created successfully", user: userResponse }
+            );
         })
         .catch((error) => res.status(400).send({ error: error.message }));
 }
@@ -99,4 +101,12 @@ export function loginUser(req, res) {
             });
         })
         .catch((error) => res.status(500).send({ error: error.message }));
+}
+
+export function isvender(req, res) {
+    if(req.user == null || req.user.role !== 'vendor') {
+        return false;
+    }else {
+        return true;
+    }
 }
