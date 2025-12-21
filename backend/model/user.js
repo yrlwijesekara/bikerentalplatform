@@ -60,4 +60,18 @@ export default User;
     
 
 
-    
+/*
+POST http://localhost:5000/api/users/register
+
+{
+  "firstname": "Admin",
+  "lastname": "User",
+  "email": "admin@bikerental.com",
+  "password": "admin123",
+  "phone": "+1234567890",
+  "address": "Admin Office, 123 Central Plaza",
+  "city": "Mumbai",
+  "role": "admin",
+  "image": "https://example.com/admin-avatar.jpg"
+}
+  */
