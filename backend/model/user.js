@@ -74,4 +74,19 @@ POST http://localhost:5000/api/users/register
   "role": "admin",
   "image": "https://example.com/admin-avatar.jpg"
 }
+
+POST http://localhost:5000/api/users/register
+{
+  "firstname": "John",
+  "lastname": "Vendor",
+  "email": "vendor@example.com",
+  "password": "password123",
+  "phone": "+1234567890",
+  "address": "Shop Address",
+  "city": "Mumbai",
+  "role": "vendor",
+  "shopName": "John's Bike Rentals",
+  "shopLicenseNo": "BL123456",
+  "description": "Premium bike rentals"
+}
   */

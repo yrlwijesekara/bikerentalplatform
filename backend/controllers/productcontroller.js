@@ -55,3 +55,24 @@ export async function getproducts(req, res) {
         });
     }
 }
+export async function getproductbyvender(req, res) {
+    try {
+        // Fetch products for the logged-in vendor
+        if (!isvender(req, res)) {
+            return res.status(403).json({
+                message: "Access denied. Only vendors can view their products."
+            });
+        }
+        const products = await Product.find({ vendor: req.user.id });
+        res.status(200).json({
+            message: "Products fetched successfully",
+            products: products
+        });
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({
+            message: "Error fetching products",
+            error: "Internal server error"
+        });
+    }
+        }
