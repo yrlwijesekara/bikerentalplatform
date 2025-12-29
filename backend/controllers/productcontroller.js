@@ -75,4 +75,49 @@ export async function getproductbyvender(req, res) {
             error: "Internal server error"
         });
     }
+}
+
+export async function updateProduct(req, res) {
+    if (!isvender(req, res)) {
+        return res.status(403).json({
+            message: "Access denied. Only vendors can update products.",
+            error: "Unauthorized"
+        });
+    }
+    
+    const data = req.body;
+    const productId = req.params.id;
+    
+    try {
+        // First, check if the product exists and belongs to the vendor
+        const existingProduct = await Product.findOne({ 
+            _id: productId, 
+            vendor: req.user.id 
+        });
+        
+        if (!existingProduct) {
+            return res.status(404).json({
+                message: "Product not found or you don't have permission to update this product.",
+                error: "Not found"
+            });
         }
+        
+        // Update the product only if it belongs to the vendor
+        const updatedProduct = await Product.findByIdAndUpdate(
+            productId, 
+            data, 
+            { new: true, runValidators: true }
+        );
+        
+        res.status(200).json({
+            message: "Product updated successfully",
+            product: updatedProduct
+        });
+    } catch (error) {
+        console.error("Error updating product:", error);
+        res.status(500).json({
+            message: "Error updating product",
+            error: "Internal server error"
+        });
+    }
+}
