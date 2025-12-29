@@ -130,28 +130,58 @@ export async function deleteProduct(req, res) {
             message: "Access denied. Only vendors can delete products.",
             error: "Unauthorized"
         });
+    }
 
-        try {
-            const productId = req.params.id;
-            const result = await Product.deleteOne({ 
-                _id: productId, 
-                vendor: req.user.id 
-            });
-            if (result.deletedCount === 0) {
-                return res.status(404).json({
-                    message: "Product not found or you don't have permission to delete this product.",
-                    error: "Not found"
-                });
-            }
-            res.status(200).json({
-                message: "Product deleted successfully"
-            });
-        } catch (error) {
-            console.error("Error deleting product:", error);
-            res.status(500).json({
-                message: "Error deleting product",
-                error: "Internal server error"
+    try {
+        const productId = req.params.id;
+        const result = await Product.deleteOne({ 
+            _id: productId, 
+            vendor: req.user.id 
+        });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({
+                message: "Product not found or you don't have permission to delete this product.",
+                error: "Not found"
             });
         }
+        res.status(200).json({
+            message: "Product deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        res.status(500).json({
+            message: "Error deleting product",
+            error: "Internal server error"
+        });
+    }
+}
+
+export async function getproductinfo(req, res) {
+    try {
+        const productId = req.params.id;
+        let product;
+        
+        if(isadmin(req, res) || isvender(req, res)) {
+            product = await Product.findById(productId);
+        } else {
+            product = await Product.findOne({ _id: productId, isAvailable: true });
+        }
+
+        if(product == null) {
+            return res.status(404).json({
+                message: "Product not found",
+                error: "Not found"
+            });
+        }
+        res.status(200).json({
+            message: "Product fetched successfully",
+            product: product
+        });
+    } catch (error) {
+        console.error("Error fetching product info:", error);
+        res.status(500).json({
+            message: "Error fetching product info",
+            error: "Internal server error"
+        });
     }
 }
