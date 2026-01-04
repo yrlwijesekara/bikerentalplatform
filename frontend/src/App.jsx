@@ -10,7 +10,6 @@ function App() {
   return (
     <BrowserRouter>
       <div className="w-full h-screen">
-        l
         <div>
           <Routes>
             <Route path="/" element={<Homepage />} />
