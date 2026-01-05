@@ -10,15 +10,15 @@ function App() {
   return (
     <BrowserRouter>
       <div className="w-full h-screen">
-        <div>
-          <Routes>
+        
+          <Routes path="/">
             <Route path="/" element={<Homepage />} />
             <Route path="/login" element={<Loginpage />} />
             <Route path="/register" element={<Registrationpage />} />
             <Route path="/admin/*" element={<Adminpage />} />
             <Route path="/*" element={<Notfoundpage />} />
           </Routes>
-        </div>
+        
       </div>
     </BrowserRouter>
   );
