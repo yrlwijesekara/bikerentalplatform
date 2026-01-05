@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -14,6 +14,7 @@ export default function Loginpage() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   async function login() {
     if (!email || !password) {
@@ -25,12 +26,17 @@ export default function Loginpage() {
     console.log(email, password);
     
     try {
-      const response = await axios.post("http://localhost:5000/api/users/login", { 
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/users/login`, { 
         email, 
         password 
       });
-      console.log("Login successful:", response.data);
+      console.log("Login successful:", response.data );
       toast.success("Login successful! Welcome back.");
+      if (response.data.user.role === "admin") {
+        navigate("/admin");
+      } else if (response.data.user.role === "vendor" || response.data.user.role === "users") {
+        navigate("/");
+      }
       localStorage.setItem('token', response.data.token);
       // You can redirect to dashboard here
     } catch (error) {
