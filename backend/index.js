@@ -5,11 +5,13 @@ import bodyParser from 'body-parser';
 import userRouter from './routes/userRouter.js';
 import jwt from 'jsonwebtoken';
 import productRouter from './routes/productRouter.js';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 app.use((req, res, next) => {
     const value = req.header('Authorization');
     if (value != null) {
