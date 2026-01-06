@@ -33,7 +33,7 @@ export default function Adminpage() {
             <div className="w-[calc(100%-400px)] h-full flex justify-center items-center bg-amber-100">
                 <Routes>
                     <Route path="/" element={<h1 className="text-black">Admin Dashboard</h1>} />
-                    <Route path="products" element={<AddbikePage />} />
+                    <Route path="products" element={<ProductAdmin />} />
                     <Route path="users" element={<h1 className="text-black">Manage Users</h1>} />
                     <Route path="vendors" element={<h1 className="text-black">Manage Vendors</h1>} />
                     <Route path="bookings" element={<h1 className="text-black">Manage Bookings</h1>} />
