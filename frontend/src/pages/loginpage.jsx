@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+
 export default function Loginpage() {
   const backgroundImages = [
     "bg-[url(./loginbg3.jpg)]",
@@ -62,7 +63,7 @@ export default function Loginpage() {
     <div
       className={`w-full h-screen ${backgroundImages[currentBgIndex]} bg-cover bg-center flex justify-center items-center transition-all duration-1000`}
     >
-      <div className="w-[500px] h-[600px] backdrop-blur-lg shadow-2xl rounded-2xl text-amber-100 flex flex-col justify-center items-center">
+      <div className="w-[500px] h-[600px] backdrop-blur-lg shadow-2xl rounded-2xl text-(--text-color) flex flex-col justify-center items-center">
         <h1 className="text-4xl font-bold text-center mb-10">Login Page</h1>
 
         <div className="w-full flex flex-col justify-center items-center gap-6">
@@ -71,7 +72,7 @@ export default function Loginpage() {
             type="email"
             placeholder="Email"
             value={email}
-            className="w-[350px] h-[60px] rounded-md p-4 text-white bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[60px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
           />
 
           <input
@@ -79,22 +80,22 @@ export default function Loginpage() {
             type="password"
             placeholder="Password"
             value={password}
-            className="w-[350px] h-[60px] rounded-md p-4 text-white bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[60px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
           />
 
           <button 
             onClick={login}
             disabled={loading}
-            className="w-[350px] h-[60px] rounded-md bg-amber-600 text-white font-bold text-xl transition-all duration-300 hover:bg-amber-500 hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-[350px] h-[60px] rounded-md bg-(--button-color) text-amber-100 flex justify-center items-center transition-all duration-300 hover:bg-amber-500 hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
 
-          <p className="text-amber-100">
+          <p className="text-(--text-color)">
             Don't have an account?{" "}
             <Link
               to="/register"
-              className="text-amber-300 hover:underline hover:text-amber-100"
+              className="text-(--button-color) hover:underline hover:text-amber-100"
             >
               Sign Up
             </Link>
