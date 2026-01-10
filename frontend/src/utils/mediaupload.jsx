@@ -11,12 +11,12 @@ export default function MediaUpload(file) {
         }
         const timestamp = new Date().getTime();
         const fileName = `${timestamp}-${file.name}`;
-        supabase.storage.from('images').upload(fileName, file, { cacheControl: '3600', upsert: false })
+        supabase.storage.from('bikes').upload(fileName, file, { cacheControl: '3600', upsert: false })
             .then((response) => {
                 if (response.error) {
                     reject("Error uploading file: " + response.error.message);
                 } else {
-                    const publicUrl = supabase.storage.from('images').getPublicUrl(fileName).data.publicUrl;
+                    const publicUrl = supabase.storage.from('bikes').getPublicUrl(fileName).data.publicUrl;
                     resolve(publicUrl);
                 }
             })
@@ -25,3 +25,6 @@ export default function MediaUpload(file) {
             });
     });
 }
+
+
+
