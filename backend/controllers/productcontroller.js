@@ -33,15 +33,8 @@ export async function createProduct(req, res) {
 
 export async function getproducts(req, res) {
     try {
-        // Admin can see all products, regular users see only available products
-        let products;
-        if (isadmin(req, res)) {
-            products = await Product.find(); // All products for admin
-        } else {
-            products = await Product.find({
-                isAvailable: true // Only available products for regular users
-            });
-        }
+        // For admin panel, show all products
+        const products = await Product.find();
         
         res.status(200).json({
             message: "Products fetched successfully", 
@@ -164,7 +157,7 @@ export async function getproductinfo(req, res) {
         if(isadmin(req, res) || isvender(req, res)) {
             product = await Product.findById(productId);
         } else {
-            product = await Product.findOne({ _id: productId, isAvailable: true });
+            product = await Product.findOne({ _id: productId, isAvailable: true  });
         }
 
         if(product == null) {

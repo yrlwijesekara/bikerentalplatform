@@ -5,7 +5,7 @@ import { FaUserAlt } from "react-icons/fa";
 import { TiVendorAndroid } from "react-icons/ti";
 import { FaBookmark } from "react-icons/fa6";
 import { VscCodeReview } from "react-icons/vsc";
-import ProductAdmin from "./admin/productAdmin";
+import ProductAdminPage from "./admin/productAdmin.jsx";
 
 
 
@@ -33,7 +33,7 @@ export default function Adminpage() {
             <div className="w-[calc(100%-400px)] h-full flex justify-center items-center bg-amber-100">
                 <Routes>
                     <Route path="/" element={<h1 className="text-black">Admin Dashboard</h1>} />
-                    <Route path="products" element={<ProductAdmin />} />
+                    <Route path="products" element={<ProductAdminPage />} />
                     <Route path="users" element={<h1 className="text-black">Manage Users</h1>} />
                     <Route path="vendors" element={<h1 className="text-black">Manage Vendors</h1>} />
                     <Route path="bookings" element={<h1 className="text-black">Manage Bookings</h1>} />

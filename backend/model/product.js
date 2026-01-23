@@ -6,6 +6,7 @@ export const productSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
+   
 
     // 🏍️ Basic bike details
     bikeName: {
@@ -16,6 +17,10 @@ export const productSchema = new mongoose.Schema({
     bikeType: {
         type: String,
         enum: ["Scooter", "Gear Bike"],
+        required: true
+    },
+    manufacturingYear: {
+        type: Number,
         required: true
     },
 
@@ -80,6 +85,10 @@ export const productSchema = new mongoose.Schema({
         type: String,
         enum: ["coastal", "city", "mixed"],
         required: true
+    },
+    isApproved: {
+        type: Boolean,
+        default: false
     }
 
 }, { timestamps: true });
