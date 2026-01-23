@@ -32,10 +32,10 @@ export default function Loginpage() {
         password 
       });
       console.log("Login successful:", response.data );
-      toast.success("Login successful! Welcome back.");
+      toast.success(`Login successful! Welcome back, ${response.data.user.firstname}`);
       if (response.data.user.role === "admin") {
         navigate("/admin");
-      } else if (response.data.user.role === "vendor" || response.data.user.role === "users") {
+      } else if (response.data.user.role === "vendor" || response.data.user.role === "user") {
         navigate("/");
       }
       localStorage.setItem('token', response.data.token);

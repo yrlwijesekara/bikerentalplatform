@@ -75,7 +75,7 @@ export default function ProductAdminPage() {
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[1200px]">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 ">
                 <tr>
                     <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">ID</th>
                     <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Bike Name</th>
@@ -119,7 +119,7 @@ export default function ProductAdminPage() {
                                 </div>
                             )}
                         </td>
-                        <td className="py-3 px-4 border border-gray-300 whitespace-nowrap">
+                        <td className="py-3 px-4 border border-gray-300 whitespace-nowrap ">
                             <div className="flex space-x-2">
                                 <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md transition-colors duration-200 flex items-center">
                                     <FaPen className="w-3 h-3" />
