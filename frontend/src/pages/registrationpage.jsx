@@ -128,8 +128,8 @@ export default function Registrationpage() {
     <div
       className={`w-full h-screen ${backgroundImages[currentBgIndex]} bg-cover bg-center flex justify-center items-center transition-all duration-1000`}
     >
-      <div className="w-[500px] h-[850px] backdrop-blur-lg shadow-2xl rounded-2xl text-(--text-color) flex flex-col justify-center items-center">
-        <h1 className="text-4xl font-bold text-center mb-8">Create Account</h1>
+      <div className="w-[500px] h-[850px] backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center">
+        <h1 className="text-4xl font-bold text-center mb-8 text-[var(--brand-primary)]">Create Account</h1>
 
         <div className="w-full flex flex-col justify-center items-center gap-4">
           <input 
@@ -138,7 +138,7 @@ export default function Registrationpage() {
             type="text"
             placeholder="First Name"
             value={formData.firstname}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <input 
@@ -147,7 +147,7 @@ export default function Registrationpage() {
             type="text"
             placeholder="Last Name"
             value={formData.lastname}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <input 
@@ -156,7 +156,7 @@ export default function Registrationpage() {
             type="email"
             placeholder="Email Address"
             value={formData.email}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <input 
@@ -165,7 +165,7 @@ export default function Registrationpage() {
             type="tel"
             placeholder="Phone Number"
             value={formData.phone}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <input 
@@ -174,7 +174,7 @@ export default function Registrationpage() {
             type="text"
             placeholder="Address"
             value={formData.address}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <input 
@@ -183,7 +183,7 @@ export default function Registrationpage() {
             type="text"
             placeholder="City"
             value={formData.city}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <input
@@ -192,7 +192,7 @@ export default function Registrationpage() {
             type="password"
             placeholder="Password"
             value={formData.password}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <input
@@ -201,32 +201,32 @@ export default function Registrationpage() {
             type="password"
             placeholder="Confirm Password"
             value={formData.confirmPassword}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <select
             name="role"
             onChange={handleInputChange}
             value={formData.role}
-            className="w-[350px] h-[50px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50"
+            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)]"
           >
-            <option value="user" className="bg-gray-800 text-amber-200">Customer</option>
-            <option value="vendor" className="bg-gray-800 text-amber-200">Bike Owner</option>
+            <option value="user" className="bg-[var(--card-background)] text-gray-800">Customer</option>
+            <option value="vendor" className="bg-[var(--card-background)] text-gray-800">Bike Owner</option>
           </select>
 
           <button 
             onClick={register}
             disabled={loading}
-            className="w-[350px] h-[50px] rounded-md bg-(--button-color) text-amber-100 flex justify-center items-center transition-all duration-300 hover:bg-amber-500 hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-[350px] h-[50px] rounded-md bg-[var(--brand-primary)] text-white flex justify-center items-center transition-all duration-300 hover:bg-[var(--brand-secondary)] hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
           >
             {loading ? "Creating Account..." : "Sign Up"}
           </button>
 
-          <p className="text-(--text-color) mt-2">
+          <p className="text-white text-600 mt-2">
             Already have an account?{" "}
             <Link
               to="/login"
-              className="text-(--button-color) hover:underline hover:text-amber-100"
+              className="text-[var(--brand-primary)] hover:underline hover:text-[var(--brand-secondary)] font-medium"
             >
               Login
             </Link>

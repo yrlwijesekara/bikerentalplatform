@@ -1,15 +1,29 @@
-import { Routes, Route , Link as Links } from "react-router-dom";
+import { Routes, Route , Link as Links, useNavigate } from "react-router-dom";
 import { RiMotorbikeFill } from "react-icons/ri";
 import { VscGraph } from "react-icons/vsc";
 import { FaUserAlt } from "react-icons/fa";
 import { TiVendorAndroid } from "react-icons/ti";
 import { FaBookmark } from "react-icons/fa6";
 import { VscCodeReview } from "react-icons/vsc";
+import { FiLogOut } from "react-icons/fi";
 import ProductAdminPage from "./admin/productAdmin.jsx";
 
 
 
 export default function Adminpage() {
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        // Clear authentication data
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        sessionStorage.clear();
+        
+        // Redirect to login page
+        navigate('/login');
+    };
+
     return (
         <div className="w-full h-screen flex">
             <div className="w-[400px] h-full bg-amber-900 flex flex-col items-center">
@@ -27,7 +41,16 @@ export default function Adminpage() {
                 <Links to="/admin/bookings" className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg">
                     <FaBookmark className="inline-block mr-2" /> Bookings</Links>
                 <Links to="/admin/reviews" className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg">
-                    <VscCodeReview className="inline-block mr-2" /> Reviews</Links></div>
+                    <VscCodeReview className="inline-block mr-2" /> Reviews</Links>
+                
+                {/* Logout Button */}
+                <button 
+                    onClick={handleLogout} 
+                    className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-red-600 hover:shadow-lg mt-4"
+                >
+                    <FiLogOut className="inline-block mr-2" /> Logout
+                </button>
+                </div>
            
             </div>
             <div className="w-[calc(100%-400px)] h-full flex justify-center items-center bg-amber-100">

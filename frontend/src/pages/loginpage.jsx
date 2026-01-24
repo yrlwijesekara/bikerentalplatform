@@ -63,8 +63,8 @@ export default function Loginpage() {
     <div
       className={`w-full h-screen ${backgroundImages[currentBgIndex]} bg-cover bg-center flex justify-center items-center transition-all duration-1000`}
     >
-      <div className="w-[500px] h-[600px] backdrop-blur-lg shadow-2xl rounded-2xl text-(--text-color) flex flex-col justify-center items-center">
-        <h1 className="text-4xl font-bold text-center mb-10">Login Page</h1>
+      <div className="w-[500px] h-[600px] backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center">
+        <h1 className="text-4xl font-bold text-center mb-10 text-[var(--brand-primary)]">Login Page</h1>
 
         <div className="w-full flex flex-col justify-center items-center gap-6">
           <input 
@@ -72,7 +72,7 @@ export default function Loginpage() {
             type="email"
             placeholder="Email"
             value={email}
-            className="w-[350px] h-[60px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[60px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <input
@@ -80,22 +80,22 @@ export default function Loginpage() {
             type="password"
             placeholder="Password"
             value={password}
-            className="w-[350px] h-[60px] rounded-md p-4 text-(--text-color) bg-transparent border-2 border-hidden border-amber-300 outline-none transition-all duration-300 hover:border-amber-200 hover:scale-105 focus:border-amber-100 focus:shadow-lg focus:shadow-amber-200/50 placeholder-amber-200"
+            className="w-[350px] h-[60px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
           />
 
           <button 
             onClick={login}
             disabled={loading}
-            className="w-[350px] h-[60px] rounded-md bg-(--button-color) text-amber-100 flex justify-center items-center transition-all duration-300 hover:bg-amber-500 hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-[350px] h-[60px] rounded-md bg-[var(--brand-primary)] text-white flex justify-center items-center transition-all duration-300 hover:bg-[var(--brand-secondary)] hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
 
-          <p className="text-(--text-color)">
+          <p className="text-white text-600">
             Don't have an account?{" "}
             <Link
               to="/register"
-              className="text-(--button-color) hover:underline hover:text-amber-100"
+              className="text-[var(--brand-primary)] hover:underline hover:text-[var(--brand-secondary)] font-medium"
             >
               Sign Up
             </Link>

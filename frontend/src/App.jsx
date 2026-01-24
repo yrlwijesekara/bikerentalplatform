@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
-import Homepage from "./pages/homepage.jsx";
+
 import Loginpage from "./pages/loginpage.jsx";
 import Registrationpage from "./pages/registrationpage.jsx";
 import Adminpage from "./pages/adminpage.jsx";
-import Notfoundpage from "./pages/notfound.jsx";
+
 import { Toaster } from "react-hot-toast";
+import Clientpage from "./pages/client/clientpage.jsx";
 
 
 function App() {
@@ -43,11 +44,11 @@ function App() {
           }}
         />
           <Routes path="/">
-            <Route path="/" element={<Homepage />} />
+            
             <Route path="/login" element={<Loginpage />} />
             <Route path="/register" element={<Registrationpage />} />
             <Route path="/admin/*" element={<Adminpage />} />
-            <Route path="/*" element={<Notfoundpage />} />
+            <Route path="/*" element={<Clientpage />} />
           </Routes>
         
       </div>

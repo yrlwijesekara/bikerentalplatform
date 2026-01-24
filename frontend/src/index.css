@@ -2,10 +2,25 @@
 
 @theme{
 
-    --primary-color: #FFB800;
-    --secondary-color: #1E1E1E;
-    --button-color: #d97706;
-    --text-color: #e3ded9;
-    --background-color: #F5F5F5;
+   
+    
+    /* Navigation Bar Colors */
+    --navbar-bg: #0A2540;
+    --navbar-text: #FFFFFF;
+    --navbar-active: #FF8C00;
+    --navbar-hover: #1F3C88;
+    --navbar-border: #1C3A5F;
+    
+    /* Primary Brand Colors */
+    --brand-primary: #007BFF;
+    --brand-secondary: #FF8C00;
+    --brand-success: #2ECC71;
+    --brand-warning: #E74C3C;
+    
+    /* Main Background & Layout */
+    --main-background: #F8F9FA;
+    --card-background: #FFFFFF;
+    --section-divider: #E0E0E0;
+    --shadow-color: rgba(0,0,0,0.08);
 
 }
