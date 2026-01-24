@@ -9,8 +9,19 @@ export default function Clientpage() {
         <Header />
         <Routes path="/">
             <Route path="/" element={<h1 className="text-black">Client Home Page</h1>} />
-            <Route path="browse-bikes" element={<h1 className="text-black">Browse Bikes Page</h1>} />
-            <Route path="about-sri-lanka" element={<h1 className="text-black">About Sri Lanka Travel Page</h1>} />
+            <Route path="/find-bikes" element={<h1 className="text-black">Find Bikes Page</h1>} />
+            <Route path="/ai-suggestions" element={<h1 className="text-black">AI Suggestions Page</h1>} />
+            <Route path="/my-bookings" element={<h1 className="text-black">My Bookings Page</h1>} />
+            <Route path="/routes" element={<h1 className="text-black">Routes & Safety Page</h1>} />
+            <Route path="/profile" element={<h1 className="text-black">User Profile Page</h1>} />
+            <Route path="/bookings" element={<h1 className="text-black">Bookings Page</h1>} />
+            <Route path="/vendor/dashboard" element={<h1 className="text-black">Vendor Dashboard</h1>} />
+            <Route path="/vendor/bikes" element={<h1 className="text-black">Vendor Bikes Page</h1>} />
+            <Route path="/vendor/bookings" element={<h1 className="text-black">Vendor Bookings Page</h1>} />
+            <Route path="/vendor/earnings" element={<h1 className="text-black">Vendor Earnings Page</h1>} />
+            <Route path="/vendor/reviews" element={<h1 className="text-black">Vendor Reviews Page</h1>} />
+
+            
             <Route path="/*" element={<Notfoundpage />} />
             
             
