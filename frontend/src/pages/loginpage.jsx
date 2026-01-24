@@ -33,12 +33,16 @@ export default function Loginpage() {
       });
       console.log("Login successful:", response.data );
       toast.success(`Login successful! Welcome back, ${response.data.user.firstname}`);
+      
+      // Store token and role in localStorage
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('role', response.data.user.role);
+      
       if (response.data.user.role === "admin") {
         navigate("/admin");
       } else if (response.data.user.role === "vendor" || response.data.user.role === "user") {
         navigate("/");
       }
-      localStorage.setItem('token', response.data.token);
       // You can redirect to dashboard here
     } catch (error) {
       console.error("Login failed:", error);

@@ -1,10 +1,61 @@
 import { Link } from "react-router-dom";
-
+import { useState, useEffect } from "react";
+import PublicNavbar from "./PublicNavbar";
+import UserNavbar from "./UserNavbar";
+import VendorNavbar from "./VendorNavbar";
 
 export default function Header() {
-  
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [role, setRole] = useState(localStorage.getItem("role"));
 
- 
+  useEffect(() => {
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      setToken(localStorage.getItem("token"));
+      setRole(localStorage.getItem("role"));
+    };
+
+    // Listen for storage events
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check for changes on component mount and periodically
+    const interval = setInterval(() => {
+      const currentToken = localStorage.getItem("token");
+      const currentRole = localStorage.getItem("role");
+      if (currentToken !== token || currentRole !== role) {
+        setToken(currentToken);
+        setRole(currentRole);
+      }
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [token, role]);
+
+  const renderNavbar = () => {
+    console.log("Current role:", role, "Current token:", token); // Debug log
+    
+    if (!token) {
+      return <PublicNavbar />;
+    }
+
+    if (role === "user") {
+      return <UserNavbar />;
+    }
+
+    if (role === "vendor") {
+      return <VendorNavbar />;
+    }
+
+    // Admin users don't get navbar in main header - they use admin panel only
+    if (role === "admin") {
+      return null;
+    }
+
+    return <PublicNavbar />;
+  };
 
   return (
     <header className="w-full h-[80px] bg-[var(--navbar-bg)] text-[var(--navbar-text)] flex items-center justify-between px-6 shadow-lg border-b border-[var(--navbar-border)]">
@@ -12,25 +63,7 @@ export default function Header() {
         BikeRental Sri Lanka
       </Link>
       
-      <nav className="flex items-center gap-6">
-        <Link to="/" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          Home
-        </Link>
-        
-        <Link to="/browse-bikes" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          Browse Bikes
-        </Link>
-        
-        
-        
-        <Link to="/about-sri-lanka" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          About Sri Lanka Travel
-        </Link>
-        
-        <Link to="/login" className="px-4 py-2 bg-[var(--navbar-active)] rounded-md hover:bg-[var(--navbar-hover)] transition-colors duration-200 font-medium text-white">
-          Login
-        </Link>
-      </nav>
+      {renderNavbar()}
     </header>
   );
 }
