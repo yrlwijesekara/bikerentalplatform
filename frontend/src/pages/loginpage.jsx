@@ -65,18 +65,20 @@ export default function Loginpage() {
 
   return (
     <div
-      className={`w-full h-screen ${backgroundImages[currentBgIndex]} bg-cover bg-center flex justify-center items-center transition-all duration-1000`}
+      className={`w-full min-h-screen ${backgroundImages[currentBgIndex]} bg-cover bg-center flex justify-center items-center transition-all duration-1000 p-4 sm:p-6 lg:p-8`}
     >
-      <div className="w-[500px] h-[600px] backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center">
-        <h1 className="text-4xl font-bold text-center mb-10 text-[var(--brand-primary)]">Login Page</h1>
+      <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center p-6 sm:p-8 lg:p-10 min-h-[500px] sm:min-h-[600px]">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 lg:mb-10 text-[var(--brand-primary)]">
+          Login Page
+        </h1>
 
-        <div className="w-full flex flex-col justify-center items-center gap-6">
+        <div className="w-full flex flex-col justify-center items-center gap-4 sm:gap-5 lg:gap-6">
           <input 
             onChange={(e) => setEmail(e.target.value)}
             type="email"
             placeholder="Email"
             value={email}
-            className="w-[350px] h-[60px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
+            className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
           />
 
           <input
@@ -84,18 +86,24 @@ export default function Loginpage() {
             type="password"
             placeholder="Password"
             value={password}
-            className="w-[350px] h-[60px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
+            className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
           />
 
           <button 
             onClick={login}
             disabled={loading}
-            className="w-[350px] h-[60px] rounded-md bg-[var(--brand-primary)] text-white flex justify-center items-center transition-all duration-300 hover:bg-[var(--brand-secondary)] hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md text-white flex justify-center items-center transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm sm:text-base"
+            style={{
+              backgroundColor: 'var(--button-primary-bg)',
+              color: 'var(--button-primary-text)'
+            }}
+            onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = 'var(--button-primary-hover)')}
+            onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = 'var(--button-primary-bg)')}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
 
-          <p className="text-white text-600">
+          <p className="text-white text-sm sm:text-base text-center">
             Don't have an account?{" "}
             <Link
               to="/register"

@@ -126,29 +126,33 @@ export default function Registrationpage() {
 
   return (
     <div
-      className={`w-full h-screen ${backgroundImages[currentBgIndex]} bg-cover bg-center flex justify-center items-center transition-all duration-1000`}
+      className={`w-full min-h-screen ${backgroundImages[currentBgIndex]} bg-cover bg-center flex justify-center items-center transition-all duration-1000 p-4 sm:p-6 lg:p-8`}
     >
-      <div className="w-[500px] h-[850px] backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center">
-        <h1 className="text-4xl font-bold text-center mb-8 text-[var(--brand-primary)]">Create Account</h1>
+      <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center p-6 sm:p-8 lg:p-10 my-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-7 lg:mb-8 text-[var(--brand-primary)]">
+          Create Account
+        </h1>
 
-        <div className="w-full flex flex-col justify-center items-center gap-4">
-          <input 
-            name="firstname"
-            onChange={handleInputChange}
-            type="text"
-            placeholder="First Name"
-            value={formData.firstname}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
-          />
+        <div className="w-full flex flex-col justify-center items-center gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px]">
+            <input 
+              name="firstname"
+              onChange={handleInputChange}
+              type="text"
+              placeholder="First Name"
+              value={formData.firstname}
+              className="w-full h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
+            />
 
-          <input 
-            name="lastname"
-            onChange={handleInputChange}
-            type="text"
-            placeholder="Last Name"
-            value={formData.lastname}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
-          />
+            <input 
+              name="lastname"
+              onChange={handleInputChange}
+              type="text"
+              placeholder="Last Name"
+              value={formData.lastname}
+              className="w-full h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
+            />
+          </div>
 
           <input 
             name="email"
@@ -156,7 +160,7 @@ export default function Registrationpage() {
             type="email"
             placeholder="Email Address"
             value={formData.email}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
+            className="w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px] h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
           />
 
           <input 
@@ -165,50 +169,54 @@ export default function Registrationpage() {
             type="tel"
             placeholder="Phone Number"
             value={formData.phone}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
+            className="w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px] h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
           />
 
-          <input 
-            name="address"
-            onChange={handleInputChange}
-            type="text"
-            placeholder="Address"
-            value={formData.address}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px]">
+            <input 
+              name="address"
+              onChange={handleInputChange}
+              type="text"
+              placeholder="Address"
+              value={formData.address}
+              className="w-full h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
+            />
 
-          <input 
-            name="city"
-            onChange={handleInputChange}
-            type="text"
-            placeholder="City"
-            value={formData.city}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
-          />
+            <input 
+              name="city"
+              onChange={handleInputChange}
+              type="text"
+              placeholder="City"
+              value={formData.city}
+              className="w-full h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
+            />
+          </div>
 
-          <input
-            name="password"
-            onChange={handleInputChange}
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px]">
+            <input
+              name="password"
+              onChange={handleInputChange}
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              className="w-full h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
+            />
 
-          <input
-            name="confirmPassword"
-            onChange={handleInputChange}
-            type="password"
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500"
-          />
+            <input
+              name="confirmPassword"
+              onChange={handleInputChange}
+              type="password"
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
+              className="w-full h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
+            />
+          </div>
 
           <select
             name="role"
             onChange={handleInputChange}
             value={formData.role}
-            className="w-[350px] h-[50px] rounded-md p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-105 focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)]"
+            className="w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px] h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] text-sm sm:text-base"
           >
             <option value="user" className="bg-[var(--card-background)] text-gray-800">Customer</option>
             <option value="vendor" className="bg-[var(--card-background)] text-gray-800">Bike Owner</option>
@@ -217,12 +225,18 @@ export default function Registrationpage() {
           <button 
             onClick={register}
             disabled={loading}
-            className="w-[350px] h-[50px] rounded-md bg-[var(--brand-primary)] text-white flex justify-center items-center transition-all duration-300 hover:bg-[var(--brand-secondary)] hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            className="w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px] h-[45px] sm:h-[48px] lg:h-[50px] rounded-md text-white flex justify-center items-center transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm sm:text-base mt-2"
+            style={{
+              backgroundColor: 'var(--button-primary-bg)',
+              color: 'var(--button-primary-text)'
+            }}
+            onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = 'var(--button-primary-hover)')}
+            onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = 'var(--button-primary-bg)')}
           >
             {loading ? "Creating Account..." : "Sign Up"}
           </button>
 
-          <p className="text-white text-600 mt-2">
+          <p className="text-white text-sm sm:text-base text-center mt-2">
             Already have an account?{" "}
             <Link
               to="/login"
