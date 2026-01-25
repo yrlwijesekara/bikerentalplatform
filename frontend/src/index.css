@@ -17,6 +17,12 @@
     --brand-success: #2ECC71;
     --brand-warning: #E74C3C;
     
+    /* Primary Button Colors */
+    --button-primary-bg: #007BFF;
+    --button-primary-text: #FFFFFF;
+    --button-primary-hover: #0056B3;
+    --button-primary-disabled: #A9C9FF;
+    
     /* Main Background & Layout */
     --main-background: #F8F9FA;
     --card-background: #FFFFFF;

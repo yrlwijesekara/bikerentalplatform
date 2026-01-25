@@ -58,12 +58,14 @@ export default function Header() {
   };
 
   return (
-    <header className="w-full h-[80px] bg-[var(--navbar-bg)] text-[var(--navbar-text)] flex items-center justify-between px-6 shadow-lg border-b border-[var(--navbar-border)]">
+    <header className="w-full h-[80px] bg-[var(--navbar-bg)] text-[var(--navbar-text)] flex items-center justify-between px-6 shadow-lg border-b border-[var(--navbar-border)] relative">
       <Link to="/" className="text-2xl font-bold text-[var(--navbar-text)] hover:text-[var(--navbar-active)] transition-colors">
         BikeRental Sri Lanka
       </Link>
       
-      {renderNavbar()}
+      <div className="relative">
+        {renderNavbar()}
+      </div>
     </header>
   );
 }
