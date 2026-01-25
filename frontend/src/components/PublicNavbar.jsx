@@ -6,7 +6,7 @@ const PublicNavbar = () => (
       Home
     </Link>
     
-    <Link to="/browse-bikes" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
+    <Link to="/find-bikes" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
       Find Bikes
     </Link>
     
