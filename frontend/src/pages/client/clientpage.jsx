@@ -21,6 +21,7 @@ export default function Clientpage() {
             <Route path="/vendor/earnings" element={<h1 className="text-black">Vendor Earnings Page</h1>} />
             <Route path="/vendor/reviews" element={<h1 className="text-black">Vendor Reviews Page</h1>} />
             <Route path="/about-sri-lanka" element={<h1 className="text-black">About Sri Lanka Travel Page</h1>} />
+           
 
 
 
