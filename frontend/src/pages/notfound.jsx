@@ -3,7 +3,7 @@ import { HiHome, HiArrowLeft } from "react-icons/hi";
 
 export default function Notfoundpage() {
     return (
-        <div className="w-full min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex justify-center items-center px-4">
+        <div className="w-full h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex justify-center items-center px-4">
             <div className="max-w-2xl w-full text-center">
                 {/* 404 Number */}
                 <div className="mb-8">

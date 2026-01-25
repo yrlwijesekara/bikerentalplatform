@@ -5,6 +5,7 @@ import Notfoundpage from "../notfound.jsx";
 import Footer from "../../components/footer.jsx";
 import Findbike from "./findbike.jsx";
 import Bikes from "./vendor/bikes.jsx";
+import AddbikePage from "./vendor/addbikePage.jsx";
 
 export default function Clientpage() {
   return (
@@ -20,6 +21,7 @@ export default function Clientpage() {
             <Route path="/bookings" element={<h1 className="text-black">Bookings Page</h1>} />
             <Route path="/vendor/dashboard" element={<h1 className="text-black">Vendor Dashboard</h1>} />
             <Route path="/vendor/bikes" element={<Bikes />} />
+            <Route path="/vendor/add-bike" element={<AddbikePage />} />
             <Route path="/vendor/bookings" element={<h1 className="text-black">Vendor Bookings Page</h1>} />
             <Route path="/vendor/earnings" element={<h1 className="text-black">Vendor Earnings Page</h1>} />
             <Route path="/vendor/reviews" element={<h1 className="text-black">Vendor Reviews Page</h1>} />
