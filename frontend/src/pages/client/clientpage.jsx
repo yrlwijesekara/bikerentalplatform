@@ -9,7 +9,7 @@ import AddbikePage from "./vendor/addbikePage.jsx";
 
 export default function Clientpage() {
   return (
-    <div className="w-full h-screen max-h-screen bg-[var(--main-background)] flex flex-col overflow-y-auto">
+    <div className="w-full h-screen max-h-screen bg-(--main-background) flex flex-col overflow-y-auto">
         <Header />
         <Routes path="/">
             <Route path="/" element={<h1 className="text-black">Client Home Page</h1>} />

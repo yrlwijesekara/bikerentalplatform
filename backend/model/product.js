@@ -49,12 +49,8 @@ export const productSchema = new mongoose.Schema({
         required: true
     },
 
-    latitude: {
-        type: Number
-    },
-
-    longitude: {
-        type: Number
+   mapUrl: {
+        type: String // Google Maps link (optional but useful)
     },
 
     // 📸 Bike images

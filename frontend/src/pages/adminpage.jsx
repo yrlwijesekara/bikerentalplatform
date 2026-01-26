@@ -25,8 +25,8 @@ export default function Adminpage() {
     };
 
     return (
-        <div className="w-full h-screen flex">
-            <div className="w-[400px] h-full bg-amber-900 flex flex-col items-center">
+        <div className="w-full min-h-screen flex">
+            <div className="w-[400px] min-h-screen bg-amber-900 flex flex-col items-center">
                 
                 <div className="w-full m-6 gap-5 flex flex-col">
                 <h1 className="text-white text-4xl font-bold m-4 flex justify-center items-center">Admin Panel</h1>
@@ -53,7 +53,7 @@ export default function Adminpage() {
                 </div>
            
             </div>
-            <div className="w-[calc(100%-400px)] h-full flex justify-center items-center bg-amber-100">
+            <div className="w-[calc(100%-400px)] min-h-screen flex justify-center items-center bg-amber-100">
                 <Routes>
                     <Route path="/" element={<h1 className="text-black">Admin Dashboard</h1>} />
                     <Route path="products" element={<ProductAdminPage />} />

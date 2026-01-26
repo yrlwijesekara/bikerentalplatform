@@ -35,8 +35,6 @@ export default function Header() {
   }, [token, role]);
 
   const renderNavbar = () => {
-    console.log("Current role:", role, "Current token:", token); // Debug log
-    
     if (!token) {
       return <PublicNavbar />;
     }
