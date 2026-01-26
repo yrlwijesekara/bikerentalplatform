@@ -25,9 +25,77 @@ export default function AddbikePage() {
     const [mapUrl, setMapUrl] = useState("");
     const [images, setImages] = useState([]);
     const [isAvailable, setIsAvailable] = useState(true);
+    
+    // Validation states
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Validation function
+    const validateForm = () => {
+        const newErrors = {};
+        
+        // Required field validations
+        if (!bikename.trim()) {
+            newErrors.bikename = "Bike name is required";
+        }
+        
+        if (!manufacturingYear) {
+            newErrors.manufacturingYear = "Manufacturing year is required";
+        } else if (manufacturingYear < 1980 || manufacturingYear > new Date().getFullYear()) {
+            newErrors.manufacturingYear = `Year must be between 1980 and ${new Date().getFullYear()}`;
+        }
+        
+        if (!engineCC) {
+            newErrors.engineCC = "Engine CC is required";
+        } else if (engineCC < 50 || engineCC > 2000) {
+            newErrors.engineCC = "Engine CC must be between 50 and 2000";
+        }
+        
+        if (!lastServiceDate) {
+            newErrors.lastServiceDate = "Last service date is required";
+        } else if (new Date(lastServiceDate) > new Date()) {
+            newErrors.lastServiceDate = "Service date cannot be in the future";
+        }
+        
+        if (!pricePerDay) {
+            newErrors.pricePerDay = "Price per day is required";
+        } else if (pricePerDay <= 0) {
+            newErrors.pricePerDay = "Price must be greater than 0";
+        }
+        
+        if (!city.trim()) {
+            newErrors.city = "City is required";
+        }
+        
+        // URL validation (optional but if provided should be valid)
+        if (mapUrl && !isValidUrl(mapUrl)) {
+            newErrors.mapUrl = "Please enter a valid URL";
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+    
+    // URL validation helper
+    const isValidUrl = (string) => {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    };
 
     function handleSubmit(e) {
         e.preventDefault(); // Prevent form from refreshing the page
+        
+        // Validate form before submission
+        if (!validateForm()) {
+            toast.error("Please fill required fields correctly.");
+            return;
+        }
+        
+        setIsSubmitting(true);
         
         const bikeData = {
             
@@ -58,11 +126,13 @@ export default function AddbikePage() {
         })
         .then((response) => {
             toast.success("Bike added successfully!");
+            setIsSubmitting(false);
             window.location.href = "/vendor/bikes";
         })
         .catch((error) => {
             console.error("Error adding bike:", error);
             toast.error("Failed to add bike. Please try again.");
+            setIsSubmitting(false);
         });
 
         
@@ -83,11 +153,16 @@ export default function AddbikePage() {
                 </div>
                 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Bike Name </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bike Name <span className="text-red-500">*</span></label>
                     <input type="text" 
                     value={bikename}
                     onChange={(e)=>{setBikename(e.target.value)}}
-                    className="w-full h-10 border border-gray-300 rounded-md px-3 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" placeholder="Enter bike name"/>
+                    className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
+                        errors.bikename 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                    }`} placeholder="Enter bike name"/>
+                    {errors.bikename && <p className="text-red-500 text-sm mt-1">{errors.bikename}</p>}
                 </div>
                 
                 <div>
@@ -102,27 +177,42 @@ export default function AddbikePage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturing Year </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturing Year <span className="text-red-500">*</span></label>
                     <input 
                     value={manufacturingYear}
                     onChange={(e)=>{setManufacturingYear(e.target.value)}}
-                    type="number" className="w-full h-10 border border-gray-300 rounded-md px-3 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" placeholder="e.g., 2023" min="1980" max="2025"/>
+                    type="number" className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
+                        errors.manufacturingYear 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                    }`} placeholder="e.g., 2023" min="1980" max="2025"/>
+                    {errors.manufacturingYear && <p className="text-red-500 text-sm mt-1">{errors.manufacturingYear}</p>}
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Engine CC </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Engine CC <span className="text-red-500">*</span></label>
                     <input
                     value={engineCC}
                     onChange={(e)=>{setEngineCC(e.target.value)}}
-                     type="number" className="w-full h-10 border border-gray-300 rounded-md px-3 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" placeholder="e.g., 150" min="50"/>
+                     type="number" className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
+                        errors.engineCC 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                    }`} placeholder="e.g., 150" min="50"/>
+                    {errors.engineCC && <p className="text-red-500 text-sm mt-1">{errors.engineCC}</p>}
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Service Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Service Date<span className="text-red-500">*</span></label>
                     <input
                     value={lastServiceDate}
                     onChange={(e)=>{setLastServiceDate(e.target.value)}}
-                     type="date" className="w-full h-10 border border-gray-300 rounded-md px-3 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none"/>
+                     type="date" className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
+                        errors.lastServiceDate 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                    }`}/>
+                    {errors.lastServiceDate && <p className="text-red-500 text-sm mt-1">{errors.lastServiceDate}</p>}
                 </div>
 
                 <div>
@@ -155,19 +245,29 @@ export default function AddbikePage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price Per Day (LKR) </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price Per Day (LKR) <span className="text-red-500">*</span></label>
                     <input
                     value={pricePerDay}
                     onChange={(e)=>{setPricePerDay(e.target.value)}}
-                     type="number" className="w-full h-10 border border-gray-300 rounded-md px-3 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" placeholder="e.g., 1500" min="0"/>
+                     type="number" className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
+                        errors.pricePerDay 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                    }`} placeholder="e.g., 1500" min="0"/>
+                    {errors.pricePerDay && <p className="text-red-500 text-sm mt-1">{errors.pricePerDay}</p>}
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City <span className="text-red-500">*</span></label>
                     <input
                     value={city}
                     onChange={(e)=>{setCity(e.target.value)}}
-                     type="text" className="w-full h-10 border border-gray-300 rounded-md px-3 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" placeholder="e.g., Tangalle"/>
+                     type="text" className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
+                        errors.city 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                    }`} placeholder="e.g., Tangalle"/>
+                    {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                 </div>
 
                 <div>
@@ -175,7 +275,12 @@ export default function AddbikePage() {
                     <input
                     value={mapUrl}
                     onChange={(e)=>{setMapUrl(e.target.value)}}
-                     type="text" className="w-full h-10 border border-gray-300 rounded-md px-3 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" placeholder="https://maps.google.com/..." />
+                     type="text" className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
+                        errors.mapUrl 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                    }`} placeholder="https://maps.google.com/..." />
+                    {errors.mapUrl && <p className="text-red-500 text-sm mt-1">{errors.mapUrl}</p>}
                 </div>
 
                
@@ -210,9 +315,16 @@ export default function AddbikePage() {
                         Cancel
                     </Link>
                     <button 
-                    type="button" onClick={handleSubmit} className="flex-1 h-10 rounded-md text-white font-medium transition-all duration-200 hover:opacity-90"
-                        style={{backgroundColor: 'var(--button-primary-bg)'}}>
-                        Add Bike
+                    type="button" 
+                    onClick={handleSubmit} 
+                    disabled={isSubmitting}
+                    className={`flex-1 h-10 rounded-md text-white font-medium transition-all duration-200 ${
+                        isSubmitting 
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : 'hover:opacity-90'
+                    }`}
+                    style={{backgroundColor: 'var(--button-primary-bg)'}}>
+                        {isSubmitting ? 'Adding Bike...' : 'Add Bike'}
                     </button>
                 </div>
             </form>
