@@ -2,9 +2,11 @@ import { RiMotorbikeFill } from "react-icons/ri";
 import { TbReportMoney } from "react-icons/tb";
 import { BsFileEarmarkImageFill } from "react-icons/bs";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { use, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+
 
 
 
@@ -25,6 +27,8 @@ export default function AddbikePage() {
     const [mapUrl, setMapUrl] = useState("");
     const [images, setImages] = useState([]);
     const [isAvailable, setIsAvailable] = useState(true);
+
+    const navigate = useNavigate();
     
     // Validation states
     const [errors, setErrors] = useState({});
@@ -127,7 +131,7 @@ export default function AddbikePage() {
         .then((response) => {
             toast.success("Bike added successfully!");
             setIsSubmitting(false);
-            window.location.href = "/vendor/bikes";
+            navigate("/vendor/bikes");
         })
         .catch((error) => {
             console.error("Error adding bike:", error);
