@@ -152,7 +152,7 @@ export default function AddbikePage() {
             <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Basic Details */}
                 <div className="md:col-span-2 ">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b pb-2 flex items-center gap-2">
+                    <h3 className="text-lg font-semibold mb-3 text-(--brand-primary) border-b pb-2 flex items-center gap-2">
                         <RiMotorbikeFill />Basic Information</h3>
                 </div>
                 
@@ -244,7 +244,7 @@ export default function AddbikePage() {
 
                 {/* Pricing & Location */}
                 <div className="md:col-span-2">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b pb-2 mt-4 flex items-center gap-2">
+                    <h3 className="text-lg font-semibold mb-3 text-(--brand-primary) border-b pb-2 mt-4 flex items-center gap-2">
                         <TbReportMoney />Pricing & Location</h3>
                 </div>
 
@@ -269,7 +269,7 @@ export default function AddbikePage() {
                      type="text" className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
                         errors.city 
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                        : 'border-gray-300 focus:border-(--brand-primary) focus:ring-(--brand-primary)'
                     }`} placeholder="e.g., Tangalle"/>
                     {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                 </div>
@@ -282,7 +282,7 @@ export default function AddbikePage() {
                      type="text" className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
                         errors.mapUrl 
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-200' 
-                        : 'border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]'
+                        : 'border-gray-300 focus:border-(--brand-primary) focus:ring-(--brand-primary)'
                     }`} placeholder="https://maps.google.com/..." />
                     {errors.mapUrl && <p className="text-red-500 text-sm mt-1">{errors.mapUrl}</p>}
                 </div>
@@ -291,7 +291,7 @@ export default function AddbikePage() {
 
                 {/* Images & Availability */}
                 <div className="md:col-span-2">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b pb-2 mt-4 flex items-center gap-2">
+                    <h3 className="text-lg font-semibold mb-3 text-(--brand-primary) border-b pb-2 mt-4 flex items-center gap-2">
                        <BsFileEarmarkImageFill />Images & Availability</h3>
                 </div>
 

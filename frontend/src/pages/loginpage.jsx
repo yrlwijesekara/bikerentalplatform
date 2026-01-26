@@ -6,16 +6,41 @@ import toast from "react-hot-toast";
 
 export default function Loginpage() {
   const backgroundImages = [
-    "bg-[url(./loginbg3.jpg)]",
-    "bg-[url(./loginbg4.jpg)]",
-    "bg-[url(./loginbg2.jpg)]",
+    "/loginbg3.jpg",
+    "/loginbg4.jpg", 
+    "/loginbg2.jpg",
   ];
 
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Preload images to ensure they're cached
+  useEffect(() => {
+    const preloadImages = async () => {
+      const imagePromises = backgroundImages.map((src) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = src;
+        });
+      });
+
+      try {
+        await Promise.all(imagePromises);
+        setImagesLoaded(true);
+      } catch (error) {
+        console.error("Error preloading images:", error);
+        setImagesLoaded(true); // Still show the page even if images fail
+      }
+    };
+
+    preloadImages();
+  }, []);
 
   async function login() {
     if (!email || !password) {
@@ -54,6 +79,8 @@ export default function Loginpage() {
   }
 
   useEffect(() => {
+    if (!imagesLoaded) return; // Don't start cycling until images are loaded
+    
     const interval = setInterval(() => {
       setCurrentBgIndex(
         (prevIndex) => (prevIndex + 1) % backgroundImages.length
@@ -61,11 +88,19 @@ export default function Loginpage() {
     }, 20000); // Change every 20 seconds
 
     return () => clearInterval(interval);
-  }, [backgroundImages.length]);
+  }, [backgroundImages.length, imagesLoaded]);
 
   return (
     <div
-      className={`w-full min-h-screen ${backgroundImages[currentBgIndex]} bg-cover bg-center flex justify-center items-center transition-all duration-1000 p-4 sm:p-6 lg:p-8`}
+      className="w-full min-h-screen bg-cover bg-center flex justify-center items-center transition-all duration-1000 p-4 sm:p-6 lg:p-8"
+      style={{
+        backgroundImage: imagesLoaded 
+          ? `url('${backgroundImages[currentBgIndex]}')` 
+          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Fallback gradient
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
     >
       <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center p-6 sm:p-8 lg:p-10 min-h-[500px] sm:min-h-[600px]">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 lg:mb-10 text-[var(--brand-primary)]">
