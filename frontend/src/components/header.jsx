@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import PublicNavbar from "./PublicNavbar";
 import UserNavbar from "./UserNavbar";
 import VendorNavbar from "./VendorNavbar";
+import { GiFullMotorcycleHelmet } from "react-icons/gi";
 
 export default function Header() {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -57,7 +58,8 @@ export default function Header() {
 
   return (
     <header className="w-full h-[80px] bg-[var(--navbar-bg)] text-[var(--navbar-text)] flex items-center justify-between px-6 shadow-lg border-b border-[var(--navbar-border)] relative">
-      <Link to="/" className="text-2xl font-bold text-[var(--navbar-text)] hover:text-[var(--navbar-active)] transition-colors">
+      <Link to="/" className="text-2xl font-bold text-[var(--navbar-text)] hover:text-[var(--navbar-active)] transition-colors flex items-center gap-2">
+      <GiFullMotorcycleHelmet />
         BikeRental Sri Lanka
       </Link>
       
