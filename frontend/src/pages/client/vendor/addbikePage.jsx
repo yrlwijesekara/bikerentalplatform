@@ -6,6 +6,8 @@ import { use, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import MediaUpload from "../../../utils/mediaupload.jsx";
+
 
 
 
@@ -90,7 +92,9 @@ export default function AddbikePage() {
         }
     };
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
+        
+
         e.preventDefault(); // Prevent form from refreshing the page
         
         // Validate form before submission
@@ -100,6 +104,24 @@ export default function AddbikePage() {
         }
         
         setIsSubmitting(true);
+        
+        // Handle image upload to Supabase
+        let imageUrls = [];
+        if (images && images.length > 0) {
+            try {
+                toast.loading("Uploading images...");
+                const uploadPromises = Array.from(images).map(file => MediaUpload(file));
+                imageUrls = await Promise.all(uploadPromises);
+                toast.dismiss();
+                toast.success(`${imageUrls.length} images uploaded successfully!`);
+                console.log("Uploaded image URLs:", imageUrls);
+            } catch (error) {
+                toast.dismiss();
+                toast.error("Failed to upload images: " + error);
+                setIsSubmitting(false);
+                return;
+            }
+        }
         
         const bikeData = {
             
@@ -113,7 +135,7 @@ export default function AddbikePage() {
             pricePerDay: pricePerDay,
             city: city,
             mapUrl: mapUrl,
-            images: [],
+            images: imageUrls,
             isAvailable: isAvailable,
             
         };  
@@ -298,9 +320,10 @@ export default function AddbikePage() {
                 <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Upload Images</label>
                     <input
-                    value={images}
-                    onChange={(e)=>{setImages(e.target.value)}}
-                     type="file" multiple className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none"/>
+                    onChange={(e)=>{
+                        setImages(e.target.files);
+                    }}
+                     type="file" multiple accept="image/*" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none"/>
                 </div>
 
                 <div className="md:col-span-2">
