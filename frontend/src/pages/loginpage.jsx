@@ -42,7 +42,9 @@ export default function Loginpage() {
     preloadImages();
   }, []);
 
-  async function login() {
+  async function login(e) {
+    e.preventDefault(); // Prevent form submission
+    
     if (!email || !password) {
       toast.error("Please fill in all fields.");
       return;
@@ -107,12 +109,14 @@ export default function Loginpage() {
           Login Page
         </h1>
 
-        <div className="w-full flex flex-col justify-center items-center gap-4 sm:gap-5 lg:gap-6">
+        <form onSubmit={login} className="w-full flex flex-col justify-center items-center gap-4 sm:gap-5 lg:gap-6">
           <input 
             onChange={(e) => setEmail(e.target.value)}
             type="email"
             placeholder="Email"
             value={email}
+            autoComplete="email"
+            required
             className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
           />
 
@@ -121,11 +125,13 @@ export default function Loginpage() {
             type="password"
             placeholder="Password"
             value={password}
+            autoComplete="current-password"
+            required
             className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] placeholder-gray-500 text-sm sm:text-base"
           />
 
           <button 
-            onClick={login}
+            type="submit"
             disabled={loading}
             className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md text-white flex justify-center items-center transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm sm:text-base"
             style={{
@@ -147,7 +153,7 @@ export default function Loginpage() {
               Sign Up
             </Link>
           </p>
-        </div>
+        </form>
       </div>
     </div>
   );

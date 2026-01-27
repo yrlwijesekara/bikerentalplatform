@@ -39,7 +39,7 @@ export default function ProductAdminPage() {
   return (
     <div className="w-full h-full flex justify-center items-start min-h-screen bg-amber-100 p-4 md:p-6">
       <div className="w-full max-w-[95vw] xl:max-w-[1400px] 2xl:max-w-[1600px]">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Product Administration</h1>        
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Motor Bike Administration</h1>        
         {/* Search Bar */}
         <div className="mb-6">
           <div className="relative max-w-md mx-auto">

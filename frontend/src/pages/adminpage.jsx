@@ -28,7 +28,7 @@ export default function Adminpage() {
         <div className="w-full min-h-screen flex">
             <div className="w-[400px] min-h-screen bg-amber-900 flex flex-col items-center">
                 
-                <div className="w-full m-6 gap-5 flex flex-col">
+                <div className="w-[400px] m-6 gap-5 flex flex-col fixed">
                 <h1 className="text-white text-4xl font-bold m-4 flex justify-center items-center">Admin Panel</h1>
                      <Links to="/admin" className="w-full flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg">
                     <VscGraph className="inline-block mr-2" /> Dashboard</Links>

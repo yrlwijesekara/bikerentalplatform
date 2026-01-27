@@ -179,7 +179,7 @@ export default function AddbikePage() {
                 </div>
                 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Bike Name <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bike Name </label>
                     <input type="text" 
                     value={bikename}
                     onChange={(e)=>{setBikename(e.target.value)}}
@@ -203,7 +203,7 @@ export default function AddbikePage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturing Year <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturing Year </label>
                     <input 
                     value={manufacturingYear}
                     onChange={(e)=>{setManufacturingYear(e.target.value)}}
@@ -216,7 +216,7 @@ export default function AddbikePage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Engine CC <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Engine CC </label>
                     <input
                     value={engineCC}
                     onChange={(e)=>{setEngineCC(e.target.value)}}
@@ -229,7 +229,7 @@ export default function AddbikePage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Service Date<span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Service Date</label>
                     <input
                     value={lastServiceDate}
                     onChange={(e)=>{setLastServiceDate(e.target.value)}}
@@ -271,7 +271,7 @@ export default function AddbikePage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price Per Day (LKR) <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price Per Day (LKR) </label>
                     <input
                     value={pricePerDay}
                     onChange={(e)=>{setPricePerDay(e.target.value)}}
@@ -284,7 +284,7 @@ export default function AddbikePage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City </label>
                     <input
                     value={city}
                     onChange={(e)=>{setCity(e.target.value)}}
@@ -337,7 +337,7 @@ export default function AddbikePage() {
                 </div>
 
                 {/* Submit Buttons */}
-                <div className="md:col-span-2 flex gap-3 mt-6 pt-4 border-t">
+                <div className="md:col-span-2 flex gap-3 mt-6 pt-4 border-t border-(--brand-primary)">
                     <Link to="/vendor/bikes" className="flex-1 h-10 border flex items-center justify-center border-gray-300 text-gray-700 rounded-md font-medium hover:bg-[var(--button-primary-bg)] hover:text-white transition-colors">
                         Cancel
                     </Link>
