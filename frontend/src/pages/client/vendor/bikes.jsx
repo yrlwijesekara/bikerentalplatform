@@ -157,7 +157,16 @@ export default function Bikes() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-80px)] bg-(--main-background) overflow-y-auto">
+    <div className="w-full h-[calc(100vh-80px)] bg-(--main-background) overflow-y-auto scrollbar-hide"
+         style={{
+           scrollbarWidth: 'none', /* Firefox */
+           msOverflowStyle: 'none', /* Internet Explorer 10+ */
+         }}>
+      <style jsx>{`
+        div::-webkit-scrollbar {
+          display: none; /* Safari and Chrome */
+        }
+      `}</style>
       <div className="p-6">
         {/* Add New Bike Button */}
         <Link 

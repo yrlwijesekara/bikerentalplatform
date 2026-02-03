@@ -159,11 +159,21 @@ export default function AddbikePage() {
   }
 
   return (
-    <div className="w-full flex flex-col items-center justify-center bg-[var(--main-background)] p-4 py-6">
-      <div className="w-full max-w-3xl bg-[var(--card-background)]  shadow-2xl rounded-xl p-6">
-        <h1 className="text-2xl font-bold text-center mb-6 text-[var(--brand-primary)]">
-          Add New Bike
-        </h1>
+    <div className="w-full h-[calc(100vh-80px)] bg-[var(--main-background)] overflow-y-auto"
+         style={{
+           scrollbarWidth: 'none', /* Firefox */
+           msOverflowStyle: 'none', /* Internet Explorer 10+ */
+         }}>
+      <style jsx>{`
+        div::-webkit-scrollbar {
+          display: none; /* Safari and Chrome */
+        }
+      `}</style>
+      <div className="min-h-full flex flex-col items-center justify-center p-4 py-6">
+        <div className="w-full max-w-3xl bg-[var(--card-background)] shadow-2xl rounded-xl p-6">
+          <h1 className="text-2xl font-bold text-center mb-6 text-[var(--brand-primary)]">
+            Add New Bike
+          </h1>
 
         <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Basic Details */}
@@ -468,6 +478,7 @@ export default function AddbikePage() {
           />
         </div>
       </div>
+    </div>
     </div>
   );
 }
