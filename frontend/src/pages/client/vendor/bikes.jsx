@@ -1,14 +1,219 @@
+import { useState, useEffect } from "react";
 import { BiPlus } from "react-icons/bi";
 import { Link } from "react-router-dom";
-
+import { MdOutlineEdit, MdDelete } from "react-icons/md";
+import { IoIosEye } from "react-icons/io";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function Bikes() {
+  const [bikes, setBikes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch bikes from database
+  useEffect(() => {
+    fetchBikes();
+  }, []);
+
+  const fetchBikes = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        toast.error("Please login to view your bikes");
+        return;
+      }
+
+      const response = await axios.get(
+        import.meta.env.VITE_BACKEND_URL + "/products/vender",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setBikes(response.data.products || []);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching bikes:", error);
+      setError("Failed to fetch bikes");
+      toast.error("Failed to fetch bikes");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (bikeId) => {
+    if (!window.confirm("Are you sure you want to delete this bike?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      await axios.delete(
+        import.meta.env.VITE_BACKEND_URL + `/products/${bikeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("Bike deleted successfully!");
+      fetchBikes(); // Refresh the list
+    } catch (error) {
+      console.error("Error deleting bike:", error);
+      toast.error("Failed to delete bike");
+    }
+  };
+
+  const BikeCard = ({ bike }) => (
+    <div className="w-full bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 hover:scale-[1.02]">
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+        {/* Bike Image */}
+        <div className="w-full lg:w-48 h-32 flex-shrink-0">
+          <img 
+            src={bike.images?.[0] || "https://via.placeholder.com/300x200?text=No+Image"} 
+            alt={bike.bikeName}
+            className="w-full h-full object-cover rounded-md"
+          />
+        </div>
+        
+        {/* Bike Details */}
+        <div className="flex-1 space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h3 className="text-xl font-bold text-gray-900">{bike.bikeName}</h3>
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+              bike.isApproved 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              {bike.isApproved ? 'Approved' : 'Pending Approval'}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+            <p><span className="font-medium">Type:</span> {bike.bikeType}</p>
+            <p><span className="font-medium">Price:</span> Rs.{bike.pricePerDay}/day</p>
+            <p><span className="font-medium">Year:</span> {bike.manufacturingYear}</p>
+            <p><span className="font-medium">Engine:</span> {bike.engineCC}CC</p>
+            <p><span className="font-medium">Fuel:</span> {bike.fuelType}</p>
+            <p><span className="font-medium">City:</span> {bike.city}</p>
+          </div>
+          
+          {bike.note && (
+            <p className="text-sm text-gray-700 italic">
+              <span className="font-medium">Note:</span> {bike.note}
+            </p>
+          )}
+          
+          <div className={`inline-flex px-2 py-1 rounded text-sm ${
+            bike.isAvailable 
+              ? 'bg-green-100 text-green-700' 
+              : 'bg-red-100 text-red-700'
+          }`}>
+            {bike.isAvailable ? 'Available' : 'Not Available'}
+          </div>
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex lg:flex-col gap-2 justify-end">
+          <button 
+            className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+            title="View Details"
+          >
+            <IoIosEye size={18} />
+          </button>
+          <button 
+            className="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200"
+            title="Edit Bike"
+          >
+            <MdOutlineEdit size={18} />
+          </button>
+          <button 
+            onClick={() => handleDelete(bike._id)}
+            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
+            title="Delete Bike"
+          >
+            <MdDelete size={18} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="w-full h-[calc(100vh-80px)] bg-(--main-background) p-6 flex flex-col items-center justify-center">
+        <AiOutlineLoading3Quarters className="animate-spin text-4xl text-(--brand-primary) mb-4" />
+        <p className="text-lg text-gray-600">Loading your bikes...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full  max-h-screen bg-(--main-background) p-6 flex flex-col items-center">
-      <Link to="/vendor/add-bike" className="fixed bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-(--button-primary-bg) text-(--button-primary-text) font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-(--button-primary-hover) cursor-pointer">
-        <BiPlus /> Add New Bike
-      </Link>
-      <h1 className="text-2xl font-bold mt-4">Vendor Bikes</h1>
+    <div className="w-full h-[calc(100vh-80px)] bg-(--main-background) overflow-y-auto">
+      <div className="p-6">
+        {/* Add New Bike Button */}
+        <Link 
+          to="/vendor/add-bike" 
+          className="fixed bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-(--button-primary-bg) text-(--button-primary-text) font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-(--button-primary-hover) cursor-pointer z-50"
+        >
+          <BiPlus size={20} /> Add New Bike
+        </Link>
+
+        {/* Page Header */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h1 className="text-3xl font-bold text-gray-900">My Bikes</h1>
+            <div className="text-sm text-gray-600">
+              Total: {bikes.length} bike{bikes.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </div>
+
+        {/* Bikes List */}
+        <div className="max-w-7xl mx-auto">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-800">{error}</p>
+              <button 
+                onClick={fetchBikes}
+                className="mt-2 text-red-600 hover:text-red-800 underline"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {bikes.length === 0 && !loading && !error ? (
+            <div className="text-center py-12">
+              <div className="mb-4">
+                <BiPlus className="mx-auto text-6xl text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No bikes added yet</h3>
+              <p className="text-gray-600 mb-6">Start by adding your first bike to the rental platform</p>
+              <Link 
+                to="/vendor/add-bike"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-(--button-primary-bg) text-(--button-primary-text) font-semibold rounded-lg hover:bg-(--button-primary-hover) transition-colors duration-200"
+              >
+                <BiPlus size={20} /> Add Your First Bike
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-6 pb-24">
+              {bikes.map((bike) => (
+                <BikeCard key={bike._id} bike={bike} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

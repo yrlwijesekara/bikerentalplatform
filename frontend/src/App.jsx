@@ -4,6 +4,7 @@ import "./App.css";
 import Loginpage from "./pages/loginpage.jsx";
 import Registrationpage from "./pages/registrationpage.jsx";
 import Adminpage from "./pages/adminpage.jsx";
+import Homepage from "./pages/homepage.jsx";
 
 import { Toaster } from "react-hot-toast";
 import Clientpage from "./pages/client/clientpage.jsx";
@@ -43,8 +44,8 @@ function App() {
             }
           }}
         />
-          <Routes path="/">
-            
+          <Routes>
+            <Route path="/" element={<Homepage />} />
             <Route path="/login" element={<Loginpage />} />
             <Route path="/register" element={<Registrationpage />} />
             <Route path="/admin/*" element={<Adminpage />} />

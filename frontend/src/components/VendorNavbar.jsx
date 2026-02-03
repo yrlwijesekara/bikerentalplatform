@@ -10,7 +10,7 @@ const VendorNavbar = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     sessionStorage.clear();
-    navigate('/login');
+    navigate('/');
   };
 
   const toggleMenu = () => {
