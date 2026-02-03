@@ -58,6 +58,11 @@ export const productSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    note : {
+        type: String,
+        default: 'none'
+    },
+
 
     // 📦 Availability
     isAvailable: {
@@ -69,6 +74,10 @@ export const productSchema = new mongoose.Schema({
     rating: {
         type: Number,
         default: 0
+    },
+    recommendedprice: {
+        type: Number,
+        default: "0"
     },
 
     totalReviews: {

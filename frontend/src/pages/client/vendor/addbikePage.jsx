@@ -20,6 +20,7 @@ export default function AddbikePage() {
   const [city, setCity] = useState("");
   const [mapUrl, setMapUrl] = useState("");
   const [images, setImages] = useState([]);
+  const [recommendedprice, setRecommendedprice] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
 
   const navigate = useNavigate();
@@ -130,6 +131,7 @@ export default function AddbikePage() {
       city: city,
       mapUrl: mapUrl,
       images: imageUrls,
+      recommendedprice: recommendedprice,
       isAvailable: isAvailable,
     };
     const token = localStorage.getItem("token");
@@ -459,6 +461,8 @@ export default function AddbikePage() {
           </h1>
           <input
             type="text"
+            value={recommendedprice}
+            onChange={(e) => setRecommendedprice(e.target.value)}
             placeholder="AI Suggested Price..."
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm sm:text-base focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none"
           />
