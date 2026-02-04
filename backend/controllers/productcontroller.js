@@ -178,3 +178,57 @@ export async function getproductinfo(req, res) {
         });
     }
 }
+
+export async function updateProductApproval(req, res) {
+    // Check if user is an admin
+    if (!isadmin(req, res)) {
+        return res.status(403).json({
+            message: "Access denied. Only admins can update product approval status.",
+            error: "Unauthorized"
+        });
+    }
+
+    const { isApproved, note } = req.body;
+    const productId = req.params.id;
+
+    // Validate input
+    if (typeof isApproved !== 'boolean') {
+        return res.status(400).json({
+            message: "Invalid input. isApproved must be a boolean value.",
+            error: "Bad request"
+        });
+    }
+
+    try {
+        // Prepare update data
+        const updateData = { isApproved };
+        if (note !== undefined && note !== null) {
+            updateData.note = note;
+        }
+
+        // Find and update the product's approval status and note
+        const updatedProduct = await Product.findByIdAndUpdate(
+            productId,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedProduct) {
+            return res.status(404).json({
+                message: "Product not found.",
+                error: "Not found"
+            });
+        }
+
+        res.status(200).json({
+            message: `Product ${isApproved ? 'approved' : 'rejected'} successfully`,
+            product: updatedProduct
+        });
+    } catch (error) {
+        console.error("Error updating product approval:", error);
+        res.status(500).json({
+            message: "Error updating product approval status",
+            error: "Internal server error"
+        });
+    }
+}
