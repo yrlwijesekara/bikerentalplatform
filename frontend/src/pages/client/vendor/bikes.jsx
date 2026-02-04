@@ -9,13 +9,59 @@ import toast from "react-hot-toast";
 
 export default function Bikes() {
   const [bikes, setBikes] = useState([]);
+  const [filteredBikes, setFilteredBikes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedType, setSelectedType] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
 
   // Fetch bikes from database
   useEffect(() => {
     fetchBikes();
   }, []);
+
+  // Filter bikes based on search criteria
+  useEffect(() => {
+    let filtered = bikes;
+
+    if (searchTerm) {
+      filtered = filtered.filter(bike => 
+        bike.bikeName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedType) {
+      filtered = filtered.filter(bike => 
+        bike.bikeType.toLowerCase() === selectedType.toLowerCase()
+      );
+    }
+
+    if (selectedCity) {
+      filtered = filtered.filter(bike => 
+        bike.city.toLowerCase().includes(selectedCity.toLowerCase())
+      );
+    }
+
+    setFilteredBikes(filtered);
+  }, [bikes, searchTerm, selectedType, selectedCity]);
+
+  // Get unique bike types and cities for filter dropdowns
+  const getBikeTypes = () => {
+    const types = bikes.map(bike => bike.bikeType).filter(Boolean);
+    return [...new Set(types)];
+  };
+
+  const getCities = () => {
+    const cities = bikes.map(bike => bike.city).filter(Boolean);
+    return [...new Set(cities)];
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedType('');
+    setSelectedCity('');
+  };
 
   const fetchBikes = async () => {
     try {
@@ -37,6 +83,7 @@ export default function Bikes() {
       );
 
       setBikes(response.data.products || []);
+      setFilteredBikes(response.data.products || []);
       setError(null);
     } catch (error) {
       console.error("Error fetching bikes:", error);
@@ -151,7 +198,7 @@ export default function Bikes() {
     return (
       <div className="w-full h-[calc(100vh-80px)] bg-(--main-background) p-6 flex flex-col items-center justify-center">
         <AiOutlineLoading3Quarters className="animate-spin text-4xl text-(--brand-primary) mb-4" />
-        <p className="text-lg text-gray-600">Loading your bikes...</p>
+        <p className="text-lg text-gray-600">Loading your rental bikes...</p>
       </div>
     );
   }
@@ -179,9 +226,70 @@ export default function Bikes() {
         {/* Page Header */}
         <div className="max-w-7xl mx-auto mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-3xl font-bold text-gray-900">My Bikes</h1>
+            <h1 className="text-3xl font-bold text-gray-900">My Rental Bikes</h1>
             <div className="text-sm text-gray-600">
-              Total: {bikes.length} bike{bikes.length !== 1 ? 's' : ''}
+              Total: {bikes.length} bike{bikes.length !== 1 ? 's' : ''} | 
+              Showing: {filteredBikes.length} bike{filteredBikes.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Search by Name */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Search by Name</label>
+                <input
+                  type="text"
+                  placeholder="Enter bike name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Filter by Type */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Filter by Type</label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">All Types</option>
+                  {getBikeTypes().map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter by City */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Filter by City</label>
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">All Cities</option>
+                  {getCities().map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Clear Filters Button */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 invisible">Clear</label>
+                <button
+                  onClick={clearFilters}
+                  className="w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 font-medium"
+                >
+                  Clear Filters
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -200,7 +308,20 @@ export default function Bikes() {
             </div>
           )}
 
-          {bikes.length === 0 && !loading && !error ? (
+          {filteredBikes.length === 0 && bikes.length > 0 && !loading && !error ? (
+            <div className="text-center py-12">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No bikes match your search criteria</h3>
+                <p className="text-gray-600 mb-6">Try adjusting your search terms or clear the filters</p>
+                <button 
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          ) : bikes.length === 0 && !loading && !error ? (
             <div className="text-center py-12">
               <div className="mb-4">
                 <BiPlus className="mx-auto text-6xl text-gray-400" />
@@ -216,7 +337,7 @@ export default function Bikes() {
             </div>
           ) : (
             <div className="space-y-6 pb-24">
-              {bikes.map((bike) => (
+              {filteredBikes.map((bike) => (
                 <BikeCard key={bike._id} bike={bike} />
               ))}
             </div>
