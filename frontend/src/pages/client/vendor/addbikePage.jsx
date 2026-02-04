@@ -164,7 +164,7 @@ export default function AddbikePage() {
            scrollbarWidth: 'none', /* Firefox */
            msOverflowStyle: 'none', /* Internet Explorer 10+ */
          }}>
-      <style jsx>{`
+      <style>{`
         div::-webkit-scrollbar {
           display: none; /* Safari and Chrome */
         }

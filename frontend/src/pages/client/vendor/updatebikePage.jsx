@@ -15,7 +15,7 @@ export default function UpdatebikePage() {
   const [biketype, setBiketype] = useState(location.state.bike.bikeType);
   const [manufacturingYear, setManufacturingYear] = useState(location.state.bike.manufacturingYear);
   const [engineCC, setEngineCC] = useState(location.state.bike.engineCC);
-  const [lastServiceDate, setLastServiceDate] = useState(
+ const [lastServiceDate, setLastServiceDate] = useState(
     location.state.bike.lastServiceDate ? 
     new Date(location.state.bike.lastServiceDate).toISOString().split('T')[0] : ''
   );
@@ -172,7 +172,7 @@ export default function UpdatebikePage() {
            scrollbarWidth: 'none', /* Firefox */
            msOverflowStyle: 'none', /* Internet Explorer 10+ */
          }}>
-      <style jsx>{`
+      <style>{`
         div::-webkit-scrollbar {
           display: none; /* Safari and Chrome */
         }
@@ -180,7 +180,7 @@ export default function UpdatebikePage() {
       <div className="min-h-full flex flex-col items-center justify-center p-4 py-6">
         <div className="w-full max-w-3xl bg-[var(--card-background)] shadow-2xl rounded-xl p-6">
           <h1 className="text-2xl font-bold text-center mb-6 text-[var(--brand-primary)]">
-            Add New Bike
+            Update Bike Information
           </h1>
 
         <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -442,6 +442,7 @@ export default function UpdatebikePage() {
                   setIsAvailable(e.target.checked);
                 }}
                 type="checkbox"
+                
                 className="w-4 h-4 text-[var(--brand-primary)] border-gray-300 rounded focus:ring-[var(--brand-primary)]"
               />
               <label className="text-sm font-medium text-gray-700">

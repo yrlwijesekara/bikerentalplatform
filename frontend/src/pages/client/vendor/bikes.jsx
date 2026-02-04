@@ -99,10 +99,6 @@ export default function Bikes() {
   };
 
   const handleDelete = async (bikeId) => {
-    if (!window.confirm("Are you sure you want to delete this bike?")) {
-      return;
-    }
-
     try {
       const token = localStorage.getItem("token");
       
@@ -214,7 +210,7 @@ export default function Bikes() {
            scrollbarWidth: 'none', /* Firefox */
            msOverflowStyle: 'none', /* Internet Explorer 10+ */
          }}>
-      <style jsx>{`
+      <style>{`
         div::-webkit-scrollbar {
           display: none; /* Safari and Chrome */
         }
