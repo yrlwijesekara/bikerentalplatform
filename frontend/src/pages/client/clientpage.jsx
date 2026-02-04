@@ -7,6 +7,7 @@ import Findbike from "./findbike.jsx";
 import Bikes from "./vendor/bikes.jsx";
 import AddbikePage from "./vendor/addbikePage.jsx";
 import ProtectedRoute from "../../components/ProtectedRoute.jsx";
+import UpdatebikePage from "./vendor/updatebikepage.jsx";
 
 export default function Clientpage() {
   return (
@@ -59,6 +60,11 @@ export default function Clientpage() {
             <Route path="/vendor/reviews" element={
               <ProtectedRoute requiredRole="vendor">
                 <h1 className="text-black">Vendor Reviews Page</h1>
+              </ProtectedRoute>
+            } />
+            <Route path="/vendor/update-bike" element={
+              <ProtectedRoute requiredRole="vendor">
+                <UpdatebikePage />
               </ProtectedRoute>
             } />
             <Route path="/about-sri-lanka" element={<h1 className="text-black">About Sri Lanka Travel Page</h1>} />

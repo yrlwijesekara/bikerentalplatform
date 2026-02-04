@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { BiPlus } from "react-icons/bi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineEdit, MdDelete } from "react-icons/md";
 import { IoIosEye } from "react-icons/io";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+
 export default function Bikes() {
+   
+  const navigate = useNavigate();
   const [bikes, setBikes] = useState([]);
   const [filteredBikes, setFilteredBikes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +18,7 @@ export default function Bikes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  
 
   // Fetch bikes from database
   useEffect(() => {
@@ -177,6 +181,7 @@ export default function Bikes() {
             <IoIosEye size={18} />
           </button>
           <button 
+            onClick={() => navigate(`/vendor/update-bike`, { state: { bike } })}
             className="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200"
             title="Edit Bike"
           >
