@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { HiHome, HiArrowLeft } from "react-icons/hi";
+import { GiFullMotorcycleHelmet } from "react-icons/gi";
 
 export default function Notfoundpage() {
     return (
@@ -25,7 +26,9 @@ export default function Notfoundpage() {
 
                 {/* Illustration */}
                 <div className="mb-12">
-                    <div className="w-48 h-48 mx-auto bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20 animate-bounce"></div>
+                    <div className="w-48 h-48 mx-auto bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-60 animate-bounce">
+                        <GiFullMotorcycleHelmet className="w-full h-full text-white" />
+                    </div>
                 </div>
 
                 {/* Action Buttons */}

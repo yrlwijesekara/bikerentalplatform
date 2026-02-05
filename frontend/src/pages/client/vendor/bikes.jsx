@@ -198,7 +198,7 @@ export default function Bikes() {
 
   if (loading) {
     return (
-      <div className="w-full h-[calc(100vh-80px)] bg-(--main-background) p-6 flex flex-col items-center justify-center">
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-100px)] ">
         <Loader />
         <p className="text-lg text-gray-600">Loading your rental bikes...</p>
       </div>
