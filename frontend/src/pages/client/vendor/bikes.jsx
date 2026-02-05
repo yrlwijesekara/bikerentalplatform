@@ -3,9 +3,10 @@ import { BiPlus } from "react-icons/bi";
 import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineEdit, MdDelete } from "react-icons/md";
 import { IoIosEye } from "react-icons/io";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+
 import axios from "axios";
 import toast from "react-hot-toast";
+import Loader from "../../../components/loader";
 
 
 export default function Bikes() {
@@ -198,7 +199,7 @@ export default function Bikes() {
   if (loading) {
     return (
       <div className="w-full h-[calc(100vh-80px)] bg-(--main-background) p-6 flex flex-col items-center justify-center">
-        <AiOutlineLoading3Quarters className="animate-spin text-4xl text-(--brand-primary) mb-4" />
+        <Loader />
         <p className="text-lg text-gray-600">Loading your rental bikes...</p>
       </div>
     );

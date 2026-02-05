@@ -1,17 +1,65 @@
-import { Routes, Route , Link as Links, useNavigate } from "react-router-dom";
-import { RiMotorbikeFill } from "react-icons/ri";
-import { VscGraph } from "react-icons/vsc";
+import { Routes, Route, Link as Links, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { RiMotorbikeFill, RiDashboardLine } from "react-icons/ri";
 import { FaUserAlt } from "react-icons/fa";
 import { TiVendorAndroid } from "react-icons/ti";
 import { FaBookmark } from "react-icons/fa6";
 import { VscCodeReview } from "react-icons/vsc";
-import { FiLogOut } from "react-icons/fi";
+import { FiLogOut, FiSettings } from "react-icons/fi";
+import { HiMenu, HiX, HiBell } from "react-icons/hi";
 import ProductAdminPage from "./admin/productAdmin.jsx";
+
+
 
 
 
 export default function Adminpage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    // Navigation items configuration
+    const navigationItems = [
+        {
+            path: "/admin",
+            icon: RiDashboardLine,
+            label: "Dashboard",
+            exact: true
+        },
+        {
+            path: "/admin/products",
+            icon: RiMotorbikeFill,
+            label: "Products"
+        },
+        {
+            path: "/admin/users",
+            icon: FaUserAlt,
+            label: "Users"
+        },
+        {
+            path: "/admin/vendors",
+            icon: TiVendorAndroid,
+            label: "Vendors"
+        },
+        {
+            path: "/admin/bookings",
+            icon: FaBookmark,
+            label: "Bookings"
+        },
+        {
+            path: "/admin/reviews",
+            icon: VscCodeReview,
+            label: "Reviews"
+        }
+    ];
+
+    // Check if current path is active
+    const isActivePath = (path, exact = false) => {
+        if (exact) {
+            return location.pathname === path;
+        }
+        return location.pathname.startsWith(path);
+    };
 
     const handleLogout = () => {
         // Clear authentication data
@@ -24,44 +72,152 @@ export default function Adminpage() {
         navigate('/login');
     };
 
+    const toggleSidebar = () => {
+        setIsSidebarOpen(!isSidebarOpen);
+    };
+
+    const closeSidebar = () => {
+        setIsSidebarOpen(false);
+    };
+
     return (
-        <div className="w-full min-h-screen flex">
-            <div className="w-[400px] min-h-screen bg-amber-900 flex flex-col items-center">
-                
-                <div className="w-[400px] m-6 gap-5 flex flex-col fixed">
-                <h1 className="text-white text-4xl font-bold m-4 flex justify-center items-center">Admin Panel</h1>
-                     <Links to="/admin" className="w-full flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg">
-                    <VscGraph className="inline-block mr-2" /> Dashboard</Links>
-                <Links to="/admin/products" className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg" >
-                    <RiMotorbikeFill className="inline-block mr-2" /> Products</Links>
-                <Links to="/admin/users" className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg">
-                    <FaUserAlt className="inline-block mr-2" /> Users</Links>
-                <Links to="/admin/vendors" className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg">
-                    <TiVendorAndroid className="inline-block mr-2" /> Vendors</Links>
-                <Links to="/admin/bookings" className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg">
-                    <FaBookmark className="inline-block mr-2" /> Bookings</Links>
-                <Links to="/admin/reviews" className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-amber-800 hover:shadow-lg">
-                    <VscCodeReview className="inline-block mr-2" /> Reviews</Links>
-                
-                {/* Logout Button */}
-                <button 
-                    onClick={handleLogout} 
-                    className="flex justify-center items-center p-4 text-white border-b border-amber-700 text-2xl transition-all duration-300 hover:cursor-pointer hover:scale-105 hover:bg-red-600 hover:shadow-lg mt-4"
-                >
-                    <FiLogOut className="inline-block mr-2" /> Logout
-                </button>
+        <div className="w-full min-h-screen flex relative bg-gray-50">
+            <style jsx>{`
+                .scrollbar-hide {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                }
+            `}</style>
+            {/* Mobile Header with Hamburger Menu */}
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-amber-900 border-b border-amber-700 px-4 py-3 flex justify-between items-center shadow-lg">
+                <div className="flex items-center space-x-3">
+                    <h1 className="text-white text-xl font-bold">Admin Panel</h1>
                 </div>
-           
+                <div className="flex items-center space-x-3">
+                    <button className="p-2 text-white hover:bg-amber-800 rounded-lg transition-colors">
+                        <HiBell className="h-5 w-5" />
+                    </button>
+                    <button
+                        onClick={toggleSidebar}
+                        className="p-2 rounded-md hover:bg-amber-800 transition-colors duration-200"
+                        aria-label="Toggle sidebar"
+                    >
+                        {isSidebarOpen ? (
+                            <HiX className="h-6 w-6 text-white" />
+                        ) : (
+                            <HiMenu className="h-6 w-6 text-white" />
+                        )}
+                    </button>
+                </div>
             </div>
-            <div className="w-[calc(100%-400px)] min-h-screen flex justify-center items-center bg-amber-100">
-                <Routes>
-                    <Route path="/" element={<h1 className="text-black">Admin Dashboard</h1>} />
-                    <Route path="products" element={<ProductAdminPage />} />
-                    <Route path="users" element={<h1 className="text-black">Manage Users</h1>} />
-                    <Route path="vendors" element={<h1 className="text-black">Manage Vendors</h1>} />
-                    <Route path="bookings" element={<h1 className="text-black">Manage Bookings</h1>} />
-                    <Route path="reviews" element={<h1 className="text-black">Manage Reviews</h1>} />
-                </Routes>
+
+            {/* Mobile Backdrop */}
+            {isSidebarOpen && (
+                <div 
+                    className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity"
+                    onClick={closeSidebar}
+                ></div>
+            )}
+
+            {/* Sidebar */}
+            <div className={`
+                fixed lg:static inset-y-0 left-0 z-50
+                w-[300px] lg:w-[280px] min-h-screen bg-amber-900 
+                transform transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                flex flex-col shadow-xl
+            `}>
+                {/* Sidebar Header */}
+                <div className="p-6 border-b border-amber-800">
+                    <h1 className="hidden lg:block text-white text-2xl font-bold text-center">
+                        🚴‍♂️ Bike Rental Admin
+                    </h1>
+                    <div className="lg:hidden h-4"></div>
+                </div>
+
+                {/* Navigation Menu */}
+                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto scrollbar-hide">
+                    {navigationItems.map((item) => {
+                        const Icon = item.icon;
+                        const active = isActivePath(item.path, item.exact);
+                        
+                        return (
+                            <Links 
+                                key={item.path}
+                                to={item.path} 
+                                className={`
+                                    flex items-center px-4 py-3 rounded-lg transition-all duration-200
+                                    ${active 
+                                        ? 'bg-amber-800 text-white shadow-md transform scale-105' 
+                                        : 'text-amber-100 hover:bg-amber-800 hover:text-white hover:shadow-md hover:transform hover:scale-105'
+                                    }
+                                `}
+                                onClick={closeSidebar}
+                            >
+                                <Icon className="text-xl mr-3 flex-shrink-0" />
+                                <span className="font-medium truncate">{item.label}</span>
+                            </Links>
+                        );
+                    })}
+                </nav>
+
+                {/* Sidebar Footer */}
+                <div className="p-4 border-t border-amber-800 space-y-2">
+                    <button className="w-full flex items-center px-4 py-3 text-amber-100 hover:bg-amber-800 hover:text-white rounded-lg transition-all duration-200">
+                        <FiSettings className="text-xl mr-3" />
+                        <span className="font-medium">Settings</span>
+                    </button>
+                    
+                    <button 
+                        onClick={() => {
+                            handleLogout();
+                            closeSidebar();
+                        }}
+                        className="w-full flex items-center px-4 py-3 text-amber-100 hover:bg-red-600 hover:text-white rounded-lg transition-all duration-200"
+                    >
+                        <FiLogOut className="text-xl mr-3" />
+                        <span className="font-medium">Logout</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-h-screen pt-16 lg:pt-0">
+                {/* Desktop Header */}
+                <div className="hidden lg:flex bg-white border-b border-gray-200 px-6 py-4 justify-between items-center shadow-sm">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-800">
+                            {navigationItems.find(item => isActivePath(item.path, item.exact))?.label || 'Admin Panel'}
+                        </h2>
+                        <p className="text-sm text-gray-500">Manage your bike rental platform</p>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                            <HiBell className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-amber-900 rounded-full flex items-center justify-center">
+                                <span className="text-white font-bold text-sm">A</span>
+                            </div>
+                            <span className="text-gray-700 font-medium">Admin</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Page Content */}
+                <div className="w-full">
+                    <Routes>
+                        <Route path="/" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Dashboard - To be implemented</h1></div>} />
+                        <Route path="products" element={<ProductAdminPage />} />
+                        <Route path="users" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Users - To be implemented</h1></div>} />
+                        <Route path="vendors" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Vendors - To be implemented</h1></div>} />
+                        <Route path="bookings" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Bookings - To be implemented</h1></div>} />
+                        <Route path="reviews" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Reviews - To be implemented</h1></div>} />
+                    </Routes>
+                </div>
             </div>
         </div>
     );
