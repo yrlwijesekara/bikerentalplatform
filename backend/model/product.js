@@ -53,6 +53,11 @@ export const productSchema = new mongoose.Schema({
         type: String // Google Maps link (optional but useful)
     },
 
+    phoneNumber: {
+        type: String,
+        required: true
+    },
+
     // 📸 Bike images
     images: {
         type: [String],

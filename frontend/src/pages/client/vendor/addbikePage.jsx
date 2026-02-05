@@ -19,6 +19,7 @@ export default function AddbikePage() {
   const [pricePerDay, setPricePerDay] = useState("");
   const [city, setCity] = useState("");
   const [mapUrl, setMapUrl] = useState("");
+  const [phonenumber, setPhonenumber] = useState("");
   const [images, setImages] = useState([]);
   const [recommendedprice, setRecommendedprice] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
@@ -67,6 +68,12 @@ export default function AddbikePage() {
 
     if (!city.trim()) {
       newErrors.city = "City is required";
+    }
+
+    if (!phonenumber.trim()) {
+      newErrors.phonenumber = "Phone number is required";
+    } else if (!/^[0-9]{10}$/.test(phonenumber)) {
+      newErrors.phonenumber = "Phone number must be 10 digits";
     }
 
     // URL validation (optional but if provided should be valid)
@@ -130,6 +137,7 @@ export default function AddbikePage() {
       pricePerDay: pricePerDay,
       city: city,
       mapUrl: mapUrl,
+      phoneNumber : phonenumber,
       images: imageUrls,
       recommendedprice: recommendedprice,
       isAvailable: isAvailable,
@@ -377,6 +385,29 @@ export default function AddbikePage() {
             />
             {errors.city && (
               <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number{" "}
+            </label>
+            <input
+              value={phonenumber}
+              onChange={(e) => {
+                setPhonenumber(e.target.value);
+              }}
+              type="tel"
+              className={`w-full h-10 border rounded-md px-3 focus:ring-1 outline-none ${
+                errors.phonenumber
+                  ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                  : "border-gray-300 focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+              }`}
+              placeholder="e.g., 0771234567"
+              maxLength="10"
+            />
+            {errors.phonenumber && (
+              <p className="text-red-500 text-sm mt-1">{errors.phonenumber}</p>
             )}
           </div>
 
