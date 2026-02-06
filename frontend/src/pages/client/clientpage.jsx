@@ -8,6 +8,7 @@ import Bikes from "./vendor/bikes.jsx";
 import AddbikePage from "./vendor/addbikePage.jsx";
 import ProtectedRoute from "../../components/ProtectedRoute.jsx";
 import UpdatebikePage from "./vendor/updatebikepage.jsx";
+import BikeOverview from "./user/bikeoverview.jsx";
 
 export default function Clientpage() {
   return (
@@ -70,6 +71,7 @@ export default function Clientpage() {
             <Route path="/about-sri-lanka" element={<h1 className="text-black">About Sri Lanka Travel Page</h1>} />
            
             <Route path="/*" element={<Notfoundpage />} />
+            <Route path="/bikeoverview/:id" element={<BikeOverview />} />
         </Routes>
        
     </div>
