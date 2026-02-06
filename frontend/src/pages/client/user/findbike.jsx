@@ -79,7 +79,17 @@ export default function Findbike() {
     setMaxPrice('');
   };
   return (
-    <div className="w-full min-h-[calc(100vh-80px)] pt-4 pb-16">
+    <div className="w-full h-[calc(100vh-80px)] overflow-y-auto"
+         style={{
+           scrollbarWidth: 'none',
+           msOverflowStyle: 'none',
+         }}>
+      <style jsx>{`
+        div::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+      <div className="pt-4 pb-16">
       {
         loading ? (
           <div className="flex justify-center items-center min-h-[50vh]">
@@ -202,6 +212,7 @@ export default function Findbike() {
           </div>
         )
       }
+      </div>
     </div>
   )
 }

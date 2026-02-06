@@ -29,7 +29,7 @@ export default function ProductCard(props) {
         
         <div className="mt-auto">
           <p className="text-xl font-bold text-green-600 mb-3">
-            ${bike.pricePerDay || 0} <span className="text-sm font-normal text-gray-600">per day</span>
+            {bike.pricePerDay.toLocaleString("en-LK", {style: "currency", currency: "LKR", minimumFractionDigits: 2})} <span className="text-sm font-normal text-gray-600">per day</span>
           </p>
           <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
             Rent Now

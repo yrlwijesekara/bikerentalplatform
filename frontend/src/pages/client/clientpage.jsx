@@ -11,7 +11,7 @@ import UpdatebikePage from "./vendor/updatebikepage.jsx";
 
 export default function Clientpage() {
   return (
-    <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col">
+    <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col overflow-hidden">
         <Header />
         <Routes>
             <Route path="/find-bikes" element={<Findbike />} />
