@@ -14,7 +14,7 @@ export default function Findbike() {
 
   useEffect(() => {
     if (loading) {
-      axios.get(import.meta.env.VITE_BACKEND_URL + '/products/')
+      axios.get(import.meta.env.VITE_BACKEND_URL + '/products/available')
         .then(response => {
           const bikesData = response.data.products || [];
           setBikes(bikesData);

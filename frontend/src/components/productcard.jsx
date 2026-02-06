@@ -14,7 +14,7 @@ export default function ProductCard(props) {
         }
         className="w-full h-48 sm:h-56 lg:h-64 object-cover rounded-lg mb-3"
         onClick={() => {
-          navigate(`/bikeoverview/${bike._id}`);
+          navigate(`/bikeoverview`+`/${bike._id}`);
           
         }}
       />

@@ -71,7 +71,7 @@ export default function Clientpage() {
             <Route path="/about-sri-lanka" element={<h1 className="text-black">About Sri Lanka Travel Page</h1>} />
            
             <Route path="/*" element={<Notfoundpage />} />
-            <Route path="/bikeoverview/:id" element={<BikeOverview />} />
+            <Route path="/bikeoverview/:bikeid" element={<BikeOverview />} />
         </Routes>
        
     </div>

@@ -48,6 +48,28 @@ export async function getproducts(req, res) {
         });
     }
 }
+
+export async function getAvailableProducts(req, res) {
+    try {
+        
+        const products = await Product.find({ 
+            isAvailable: true, 
+            isApproved: true 
+        });
+        
+        res.status(200).json({
+            message: "Available products fetched successfully", 
+            products: products
+        });
+    } catch (error) {
+        console.error("Error fetching available products:", error);
+        res.status(500).json({ 
+            message: "Error fetching available products",
+            error: "Internal server error" 
+        });
+    }
+}
+
 export async function getproductbyvender(req, res) {
     try {
         // Fetch products for the logged-in vendor
