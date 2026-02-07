@@ -159,7 +159,7 @@ export default function Registrationpage() {
       style={{
         backgroundImage: imagesLoaded 
           ? `url('${backgroundImages[currentBgIndex]}')` 
-          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Fallback gradient
+          : 'linear-gradient(135deg, #0A2540 0%, #1F3C88 100%)', 
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
