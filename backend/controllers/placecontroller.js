@@ -1,11 +1,7 @@
 import Place from "../model/places.js";
-import { isAdmin } from "./usercontroller.js";
 
 export async function createPlace(req, res) {
     try{
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: "Access denied. Only admins can create places." });
-        }
         const newPlace = new Place(req.body);
         try{
             const savedPlace = await newPlace.save();
@@ -77,6 +73,24 @@ export async function deletePlace(req, res) {
         console.error("Error deleting place:", error);
         res.status(500).json({
             message: "Error deleting place",
+            error: "Internal server error"
+        });
+    }
+}
+
+export async function updatePlace(req, res) {
+    const data = req.body;
+    const placeId = req.params.id;
+    data.placeId = placeId;
+    try {
+        await Place.updateOne({ _id: placeId }, data);
+        res.status(200).json({
+            message: "Place updated successfully"
+        });
+    } catch (error) {
+        console.error("Error updating place:", error);
+        res.status(500).json({
+            message: "Error updating place",
             error: "Internal server error"
         });
     }
