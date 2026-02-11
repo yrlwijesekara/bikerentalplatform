@@ -3,6 +3,12 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export function createUser(req, res) {
+    // Check if trying to create admin and ensure only admin can do it
+    if (req.body.role === 'admin') {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Only admins can create admin users" });
+        }
+    }
 
     const passwordHash = bcrypt.hashSync(req.body.password, 10);
 
@@ -103,17 +109,27 @@ export function loginUser(req, res) {
         .catch((error) => res.status(500).send({ error: error.message }));
 }
 
-export function isvender(req, res) {
+export function isVendor(req, res, next) {
     if(req.user == null || req.user.role !== 'vendor') {
-        return false;
-    }else {
-        return true;
+        return res.status(403).json({ error: "Vendor access required" });
+    } else {
+        next();
     }
 }
-export function isadmin(req, res) {
+
+export function isAdmin(req, res, next) {
     if(req.user == null || req.user.role !== 'admin') {
-        return false;
-    }else {
-        return true;
+        return res.status(403).json({ error: "Admin access required" });
+    } else {
+        next();
     }
+}
+
+// Helper functions for checking roles
+export function checkVendor(user) {
+    return user != null && user.role === 'vendor';
+}
+
+export function checkAdmin(user) {
+    return user != null && user.role === 'admin';
 }

@@ -1,9 +1,9 @@
 import Product from "../model/product.js";
-import { isvender, isadmin } from "./usercontroller.js";
+import { checkVendor, checkAdmin } from "./usercontroller.js";
 
 export async function createProduct(req, res) {
     // Check if user is a vendor
-    if (!isvender(req, res)) {
+    if (!checkVendor(req.user)) {
         return res.status(403).json({
             message: "Access denied. Only vendors can create products."
         });
@@ -73,7 +73,7 @@ export async function getAvailableProducts(req, res) {
 export async function getproductbyvender(req, res) {
     try {
         // Fetch products for the logged-in vendor
-        if (!isvender(req, res)) {
+        if (!checkVendor(req.user)) {
             return res.status(403).json({
                 message: "Access denied. Only vendors can view their products."
             });
@@ -93,7 +93,7 @@ export async function getproductbyvender(req, res) {
 }
 
 export async function updateProduct(req, res) {
-    if (!isvender(req, res)) {
+    if (!checkVendor(req.user)) {
         return res.status(403).json({
             message: "Access denied. Only vendors can update products.",
             error: "Unauthorized"
@@ -140,7 +140,7 @@ export async function updateProduct(req, res) {
 }
 
 export async function deleteProduct(req, res) {
-    if (!isvender(req, res)) {
+    if (!checkVendor(req.user)) {
         return res.status(403).json({
             message: "Access denied. Only vendors can delete products.",
             error: "Unauthorized"
@@ -176,7 +176,7 @@ export async function getproductinfo(req, res) {
         const productId = req.params.id;
         let product;
         
-        if(isadmin(req, res) || isvender(req, res)) {
+        if(checkAdmin(req.user) || checkVendor(req.user)) {
             product = await Product.findById(productId);
         } else {
             product = await Product.findOne({ _id: productId, isAvailable: true  });
@@ -203,7 +203,7 @@ export async function getproductinfo(req, res) {
 
 export async function updateProductApproval(req, res) {
     // Check if user is an admin
-    if (!isadmin(req, res)) {
+    if (!checkAdmin(req.user)) {
         return res.status(403).json({
             message: "Access denied. Only admins can update product approval status.",
             error: "Unauthorized"
