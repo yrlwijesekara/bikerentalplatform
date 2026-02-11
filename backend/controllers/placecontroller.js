@@ -1,4 +1,5 @@
 import Place from "../model/places.js";
+import { isAdmin } from "./usercontroller.js";
 
 export async function createPlace(req, res) {
     try{
@@ -56,4 +57,27 @@ export async function getPlaceById(req, res) {
         res.status(500).json({ message: "Error fetching place", error });
     }
 }
-  
+
+export async function deletePlace(req, res) {
+    try {
+        const placeId = req.params.id;
+        const result = await Place.deleteOne({ _id: placeId });
+        
+        if (result.deletedCount === 0) {
+            return res.status(404).json({
+                message: "Place not found",
+                error: "Not found"
+            });
+        }
+        
+        res.status(200).json({
+            message: "Place deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting place:", error);
+        res.status(500).json({
+            message: "Error deleting place",
+            error: "Internal server error"
+        });
+    }
+}
