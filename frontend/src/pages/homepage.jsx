@@ -21,7 +21,7 @@ export default function Homepage() {
           navigate("/vendor/dashboard");
           break;
         case "user":
-          navigate("/find-bikes");
+          // Users can stay on homepage instead of auto-redirecting to find-bikes
           break;
         default:
           // If role is invalid, clear localStorage and stay on homepage

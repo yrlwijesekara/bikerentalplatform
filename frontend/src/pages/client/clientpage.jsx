@@ -3,15 +3,16 @@ import Header from "../../components/header";
 import { Route } from "react-router-dom";
 import Notfoundpage from "../notfound.jsx";
 import Footer from "../../components/footer.jsx";
-import Findbike from "./findbike.jsx";
+import Findbike from "./user/findbike.jsx";
 import Bikes from "./vendor/bikes.jsx";
 import AddbikePage from "./vendor/addbikePage.jsx";
 import ProtectedRoute from "../../components/ProtectedRoute.jsx";
 import UpdatebikePage from "./vendor/updatebikepage.jsx";
+import BikeOverview from "./user/bikeoverview.jsx";
 
 export default function Clientpage() {
   return (
-    <div className="w-full h-screen max-h-screen bg-(--main-background) flex flex-col overflow-y-auto">
+    <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col overflow-hidden">
         <Header />
         <Routes>
             <Route path="/find-bikes" element={<Findbike />} />
@@ -70,6 +71,7 @@ export default function Clientpage() {
             <Route path="/about-sri-lanka" element={<h1 className="text-black">About Sri Lanka Travel Page</h1>} />
            
             <Route path="/*" element={<Notfoundpage />} />
+            <Route path="/bikeoverview/:bikeid" element={<BikeOverview />} />
         </Routes>
        
     </div>
