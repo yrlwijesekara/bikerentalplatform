@@ -6,10 +6,12 @@ A comprehensive full-stack bike rental platform that connects bike owners (vendo
 
 - **Multi-role Authentication**: Support for Users, Vendors, and Admins
 - **Bike Management**: Vendors can list their bikes with detailed specifications
+- **Places Management**: Admins can manage tourist places and destinations
 - **User-friendly Interface**: Clean, modern UI built with React and Tailwind CSS
-- **Real-time Location**: Geolocation support for bike listings
+- **Real-time Location**: Geolocation support for bike and place listings
+- **Role-based Access Control**: Granular permissions for different user types
 - **Secure Authentication**: JWT-based authentication with bcrypt password hashing
-- **Admin Panel**: Administrative controls for platform management
+- **Admin Panel**: Comprehensive administrative controls for platform management
 - **Responsive Design**: Mobile-first, responsive design
 
 ## 🛠️ Tech Stack
@@ -40,14 +42,17 @@ bikerentalplatform/
 │   ├── index.js              # Main server file
 │   ├── package.json          # Backend dependencies
 │   ├── controllers/          # Business logic
-│   │   ├── productcontroller.js
-│   │   └── usercontroller.js
+│   │   ├── placecontroller.js   # Places management
+│   │   ├── productcontroller.js # Bike management
+│   │   └── usercontroller.js    # User management & auth
 │   ├── model/               # Database schemas
+│   │   ├── places.js        # Places model
 │   │   ├── product.js       # Bike model
 │   │   └── user.js         # User model
 │   └── routes/             # API routes
-│       ├── productRouter.js
-│       └── userRouter.js
+│       ├── placeRouter.js   # Places routes
+│       ├── productRouter.js # Product routes
+│       └── userRouter.js    # User routes
 └── frontend/
     ├── package.json         # Frontend dependencies
     ├── index.html          # Main HTML file
@@ -57,7 +62,14 @@ bikerentalplatform/
         ├── App.jsx         # Main App component
         ├── main.jsx        # Entry point
         ├── components/     # Reusable components
-        │   └── productcard.jsx
+        │   ├── footer.jsx
+        │   ├── header.jsx
+        │   ├── loader.jsx
+        │   ├── productcard.jsx
+        │   ├── ProtectedRoute.jsx
+        │   ├── PublicNavbar.jsx
+        │   ├── UserNavbar.jsx
+        │   └── VendorNavbar.jsx
         ├── pages/          # Page components
         │   ├── homepage.jsx
         │   ├── loginpage.jsx
@@ -67,7 +79,14 @@ bikerentalplatform/
         │   ├── admin/
         │   │   └── productAdmin.jsx
         │   └── client/
-        │       └── addbikePage.jsx
+        │       ├── clientpage.jsx
+        │       ├── user/
+        │       │   ├── bikeoverview.jsx
+        │       │   └── findbike.jsx
+        │       └── vendor/
+        │           ├── addbikePage.jsx
+        │           ├── bikes.jsx
+        │           └── updatebikePage.jsx
         └── utils/
             └── mediaupload.jsx
 ```
@@ -128,8 +147,9 @@ bikerentalplatform/
 ## 🔐 User Roles
 
 ### Customer (User)
-- Browse available bikes
+- Browse available bikes and places
 - Search and filter bikes by location, type, and specifications
+- View active tourist places and destinations
 - Book bikes for rental
 - Manage rental history
 
@@ -138,15 +158,19 @@ bikerentalplatform/
 - Manage bike inventory
 - Set rental prices and availability
 - View rental requests and bookings
+- Access vendor-specific dashboard
 
 ### Admin
-- Oversee platform operations
-- Manage users and vendors
-- Monitor platform activity
-- Handle disputes and support
+- **Full Platform Control**: Oversee all platform operations
+- **User Management**: Create, manage, and block user accounts
+- **Places Management**: Create, update, and delete tourist places
+- **Bike Oversight**: Monitor and approve bike listings
+- **Admin-only Features**: Only admins can create other admin accounts
+- **Content Moderation**: Control visibility of places (active/inactive status)
 
-## 🏍️ Bike Features
+## 🏍️ Platform Features
 
+### Bike Management
 The platform supports detailed bike specifications including:
 - **Bike Type**: Scooter, Gear Bike
 - **Engine Capacity**: CC specifications
@@ -155,6 +179,34 @@ The platform supports detailed bike specifications including:
 - **Location**: GPS coordinates for accurate positioning
 - **Pricing**: Flexible pricing models
 - **Availability**: Real-time availability status
+
+### Places Management
+Tourist destinations and places with comprehensive details:
+- **Categories**: Beach, Mountain, Historical, Waterfall, Wildlife, Religious, Scenic
+- **Location Information**: City, district, and precise coordinates
+- **Visitor Information**: Opening hours, entrance fees, and descriptions
+- **Featured Places**: Highlight popular destinations
+- **Status Control**: Active/Inactive visibility for users
+
+### API Endpoints
+
+#### Authentication & Users
+- `POST /api/users/register` - User registration
+- `POST /api/users/login` - User authentication
+- `POST /api/users/create-admin` - Admin-only user creation
+
+#### Bikes/Products
+- `GET /api/products` - Get all bikes
+- `POST /api/products` - Create bike (vendor only)
+- `PUT /api/products/:id` - Update bike (vendor only)
+- `DELETE /api/products/:id` - Delete bike (vendor only)
+
+#### Places
+- `GET /api/places` - Get all places (active only for users/vendors)
+- `GET /api/places/:id` - Get specific place
+- `POST /api/places` - Create place (admin only)
+- `PUT /api/places/:id` - Update place (admin only)
+- `DELETE /api/places/:id` - Delete place (admin only)
 
 ## 📱 Pages & Components
 
