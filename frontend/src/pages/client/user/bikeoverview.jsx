@@ -41,7 +41,7 @@ export default function BikeOverview()   {
     }, [status, params.bikeid]);
 
     return (
-        <div className="w-full h-screen overflow-hidden flex justify-center items-center"> 
+        <div className="w-full h-screen overflow-hidden flex justify-center items-center" style={{ backgroundColor: 'var(--main-background)' }}> 
             {status === 'loading' && <Loader />} 
             {status === 'success' && bike && (
                 <div className="max-w-7xl w-full h-full overflow-y-auto flex flex-col p-4 sm:p-6 md:p-8">
@@ -61,7 +61,7 @@ export default function BikeOverview()   {
                         </h1>
 
                         {/* Bike Specifications */}
-                        <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="p-4 rounded-lg shadow-md" style={{ backgroundColor: 'var(--card-background)', boxShadow: '0 2px 8px var(--shadow-color)' }}>
                             <h3 className="text-lg font-semibold mb-3 text-gray-800">Specifications</h3>
                             <div className="grid grid-cols-2 gap-3 text-sm">
                                 <div>
@@ -86,9 +86,9 @@ export default function BikeOverview()   {
                         </div>
 
                         {/* Location Information */}
-                        <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="p-4 rounded-lg shadow-md" style={{ backgroundColor: 'var(--card-background)', boxShadow: '0 2px 8px var(--shadow-color)' }}>
                             <h3 className="text-lg font-semibold mb-3 text-gray-800">Location & Contact</h3>
-                            <div className="space-y-2 text-sm">
+                            <div className="space-y-3 text-sm">
                                 <div>
                                     <span className="text-gray-600">City:</span>
                                     <span className="ml-2 font-medium">{bike.city}</span>
@@ -97,31 +97,80 @@ export default function BikeOverview()   {
                                     <span className="text-gray-600">Contact:</span>
                                     <span className="ml-2 font-medium">{bike.phoneNumber}</span>
                                 </div>
-                                {bike.mapUrl && (
-                                    <div>
+                                
+                                {/* Map Display */}
+                                {bike.mapUrl ? (
+                                    <div className="mt-3">
+                                        <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-300 mb-2">
+                                            <iframe
+                                                src={bike.mapUrl.includes('embed') 
+                                                    ? bike.mapUrl 
+                                                    : `https://maps.google.com/maps?q=${encodeURIComponent(bike.city)}&output=embed`
+                                                }
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                allowFullScreen=""
+                                                loading="lazy"
+                                                referrerPolicy="no-referrer-when-downgrade"
+                                                title="Bike Location Map"
+                                            />
+                                        </div>
                                         <a 
                                             href={bike.mapUrl} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 underline"
+                                            className="underline text-sm"
+                                            style={{ color: 'var(--brand-primary)' }}
                                         >
-                                            View on Map
+                                            View in Google Maps
                                         </a>
+                                    </div>
+                                ) : (
+                                    <div className="mt-3">
+                                        <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-300 mb-2">
+                                            <iframe
+                                                src={`https://maps.google.com/maps?q=${encodeURIComponent(bike.city)}&output=embed`}
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                allowFullScreen=""
+                                                loading="lazy"
+                                                referrerPolicy="no-referrer-when-downgrade"
+                                                title="Bike Location Map"
+                                            />
+                                        </div>
+                                        <p className="text-gray-600 text-sm">
+                                            Approximate location: {bike.city}
+                                        </p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         {/* Pricing */}
-                        <div className="bg-green-50 p-4 rounded-lg">
+                        <div className="p-4 rounded-lg shadow-md" style={{ backgroundColor: 'var(--card-background)', boxShadow: '0 2px 8px var(--shadow-color)' }}>
                             <h3 className="text-lg font-semibold mb-2 text-gray-800">Rental Price</h3>
-                            <div className="text-2xl font-bold text-green-600">
+                            <div className="text-2xl font-bold" style={{ color: 'var(--brand-success)' }}>
                                 Rs. {bike.pricePerDay ? bike.pricePerDay.toFixed(2) : '0.00'} / day
                             </div>
                         </div>
                         <div className="w-full mt-2 sm:mt-4">
                             <button 
-                                className="w-full bg-blue-500 border-2 text-white py-2 sm:py-3 text-sm sm:text-base rounded hover:bg-white hover:text-blue-600 transition-colors duration-300 cursor-pointer"
+                                className="w-full border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300 cursor-pointer"
+                                style={{ 
+                                    backgroundColor: 'var(--button-primary-bg)', 
+                                    color: 'var(--button-primary-text)',
+                                    borderColor: 'var(--button-primary-bg)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = 'var(--button-primary-hover)';
+                                    e.target.style.borderColor = 'var(--button-primary-hover)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = 'var(--button-primary-bg)';
+                                    e.target.style.borderColor = 'var(--button-primary-bg)';
+                                }}
                                 onClick={() => {
                                     addToCart(bike, 1);
                                     toast.success("Product added to cart");
@@ -131,7 +180,20 @@ export default function BikeOverview()   {
                                 Add to cart 
                             </button>
                             <button 
-                                className="w-full mt-2 bg-green-500 border-2 text-white py-2 sm:py-3 text-sm sm:text-base rounded hover:bg-white hover:text-green-600 transition-colors duration-300 cursor-pointer"
+                                className="w-full mt-2 border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300 cursor-pointer"
+                                style={{ 
+                                    backgroundColor: 'var(--brand-success)', 
+                                    color: 'white',
+                                    borderColor: 'var(--brand-success)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = '#27AE60';
+                                    e.target.style.borderColor = '#27AE60';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = 'var(--brand-success)';
+                                    e.target.style.borderColor = 'var(--brand-success)';
+                                }}
                                 onClick={() => {
                                     addToCart(bike, 1);
                                     navigate('/checkout', { state: { items: getCart() } });
