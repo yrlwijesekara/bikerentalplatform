@@ -76,6 +76,10 @@ export default function BikeOverview()   {
                                     <span className="text-gray-600">Fuel Type:</span>
                                     <span className="ml-2 font-medium">{bike.fuelType}</span>
                                 </div>
+                                <div>
+                                    <span className="text-gray-600">Suitable Terrain:</span>
+                                    <span className="ml-2 font-medium capitalize">{bike.suitableTerrain}</span>
+                                </div>
                                 {bike.lastServiceDate && (
                                     <div>
                                         <span className="text-gray-600">Last Service:</span>
