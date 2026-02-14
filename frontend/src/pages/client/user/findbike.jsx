@@ -84,7 +84,7 @@ export default function Findbike() {
            scrollbarWidth: 'none',
            msOverflowStyle: 'none',
          }}>
-      <style jsx>{`
+      <style>{`
         div::-webkit-scrollbar {
           display: none;
         }
