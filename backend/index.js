@@ -6,6 +6,7 @@ import userRouter from './routes/userRouter.js';
 import jwt from 'jsonwebtoken';
 import productRouter from './routes/productRouter.js';
 import placeRouter from './routes/placeRouter.js';
+import orderRouter from './routes/orderRouter.js';
 import cors from 'cors';
 
 dotenv.config();
@@ -32,8 +33,9 @@ app.use((req, res, next) => {
 app.use('/api/users', userRouter);
 app.use('/api/products', productRouter);
 app.use('/api/places', placeRouter);
+app.use('/api/orders', orderRouter);
 const connectionString = process.env.MONGODB_URI;
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 mongoose.connect(connectionString).then(() => {
     console.log('Connected to MongoDB');

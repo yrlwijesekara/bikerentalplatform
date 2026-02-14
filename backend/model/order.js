@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema(
     // 🚲 Selected Bike
     bike: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Bike",
+      ref: "Product",
       required: true,
     },
 
