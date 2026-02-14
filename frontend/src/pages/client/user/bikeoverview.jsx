@@ -203,7 +203,7 @@ export default function BikeOverview()   {
                                     navigate('/checkout', { state: { items: getCart() } });
                                 }}
                             >
-                                Buy Now
+                                Rent Now
                             </button>
                         </div>
                     </div>
