@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function ImageSlider({ images }) {
     const imageList = images || [];
@@ -17,6 +17,29 @@ export default function ImageSlider({ images }) {
             thumbnailContainerRef.current.scrollBy({ left: 120, behavior: 'smooth' });
         }
     };
+
+    // Add passive touch event listeners to prevent scroll blocking
+    useEffect(() => {
+        const container = thumbnailContainerRef.current;
+        if (container) {
+            const handleTouchStart = (e) => {
+                // Handle touch start passively
+            };
+
+            const handleTouchMove = (e) => {
+                // Handle touch move passively
+            };
+
+            // Add passive listeners to prevent scroll blocking warnings
+            container.addEventListener('touchstart', handleTouchStart, { passive: true });
+            container.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+            return () => {
+                container.removeEventListener('touchstart', handleTouchStart);
+                container.removeEventListener('touchmove', handleTouchMove);
+            };
+        }
+    }, []);
     
     if (!imageList || imageList.length === 0) {
         return <div className="w-full h-96 flex justify-center items-center rounded-lg" style={{ backgroundColor: 'var(--card-background)', color: '#6B7280' }}>No images available</div>;
@@ -58,7 +81,9 @@ export default function ImageSlider({ images }) {
                         scrollbarWidth: 'none',
                         msOverflowStyle: 'none',
                         maxWidth: '320px',
-                        width: '100%'
+                        width: '100%',
+                        touchAction: 'pan-x', // Allow only horizontal panning
+                        WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
                     }}
                 >
                     {imageList.map((image, index) => (
