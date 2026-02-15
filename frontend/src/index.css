@@ -30,3 +30,24 @@
     --shadow-color: rgba(0,0,0,0.08);
 
 }
+
+/* Hide scrollbars globally */
+::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+* {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+body, html {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+body::-webkit-scrollbar, html::-webkit-scrollbar {
+    display: none !important;
+}

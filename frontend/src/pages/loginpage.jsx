@@ -58,7 +58,14 @@ export default function Loginpage() {
         email, 
         password 
       });
-      console.log("Login successful:", response.data );
+      
+      // Log login success without exposing the token
+      console.log("Login successful:", {
+        message: response.data.message,
+        user: response.data.user,
+        tokenReceived: !!response.data.token // Just confirm token was received
+      });
+      
       toast.success(`Login successful! Welcome back, ${response.data.user.firstname}`);
       
       // Store token and role in localStorage
