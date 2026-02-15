@@ -59,8 +59,9 @@ export default function Header() {
   return (
     <header className="w-full h-[80px] bg-[var(--navbar-bg)] text-[var(--navbar-text)] flex items-center justify-between px-6 shadow-lg border-b border-[var(--navbar-border)] relative">
       <Link to="/" className="text-2xl font-bold text-[var(--navbar-text)] hover:text-[var(--navbar-active)] transition-colors flex items-center gap-2">
-      <GiFullMotorcycleHelmet />
-        BikeRental Sri Lanka
+      <GiFullMotorcycleHelmet className="pt-0.5"/>
+      
+        RideLanka
       </Link>
       
       <div className="relative">

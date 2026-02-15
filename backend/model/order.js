@@ -15,19 +15,39 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    // 🏪 Vendor who owns the bike
-    vendor: {
+    // 🏪 Vendors involved in this order (array of vendor IDs)
+    vendors: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-    },
+    }],
 
-    // 🚲 Selected Bike
-    bike: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
-    },
+    // 🚲 Selected Bikes (array to support multiple bikes)
+    bikes: [{
+      bike: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+      },
+      vendor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+        min: 1,
+        default: 1,
+      },
+      pricePerDay: {
+        type: Number,
+        required: true,
+      },
+      subtotal: {
+        type: Number,
+        required: true,
+      }
+    }],
 
     // 📅 Rental Period
     startDate: {
@@ -46,14 +66,16 @@ const orderSchema = new mongoose.Schema(
     },
 
     // 💰 Pricing
-    pricePerDay: {
+    totalAmount: {
       type: Number,
       required: true,
     },
 
-    totalAmount: {
+    // Summary of bikes count
+    totalBikes: {
       type: Number,
       required: true,
+      default: 0,
     },
 
     // 💳 Payment Information
@@ -134,6 +156,7 @@ const orderSchema = new mongoose.Schema(
     },
     notes: {
       type: String,
+      default: "No additional notes.",
     },
   },
   { timestamps: true },
