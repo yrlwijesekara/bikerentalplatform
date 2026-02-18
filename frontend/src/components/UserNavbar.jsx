@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { HiMenu, HiX } from "react-icons/hi";
+import { FaOpencart } from "react-icons/fa";
 
 const UserNavbar = () => {
   const navigate = useNavigate();
@@ -43,6 +44,11 @@ const UserNavbar = () => {
         
         <Link to="/profile" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Profile
+        </Link>
+        
+        <Link to="/cart" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium flex items-center gap-1">
+          <FaOpencart className="h-5 w-5" />
+          
         </Link>
         
         <button 
@@ -118,6 +124,15 @@ const UserNavbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Profile
+              </Link>
+              
+              <Link 
+                to="/cart" 
+                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0 flex items-center gap-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FaOpencart className="h-5 w-5" />
+                
               </Link>
               
               <button 
