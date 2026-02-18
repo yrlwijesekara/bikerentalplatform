@@ -13,6 +13,7 @@ export default function BikeOverview()   {
     const [bike, setBike] = useState(null);
     const [status, setStatus] = useState("loading");
     const [isInCart, setIsInCart] = useState(false);
+    const [rentalDays, setRentalDays] = useState(1);
 
     useEffect(() => {
         if(status === "loading") {
@@ -159,11 +160,60 @@ export default function BikeOverview()   {
                             </div>
                         </div>
 
-                        {/* Pricing */}
+                        {/* Pricing and Rental Days */}
                         <div className="p-4 rounded-lg shadow-md" style={{ backgroundColor: 'var(--card-background)', boxShadow: '0 2px 8px var(--shadow-color)' }}>
-                            <h3 className="text-lg font-semibold mb-2 text-gray-800">Rental Price</h3>
-                            <div className="text-2xl font-bold" style={{ color: 'var(--brand-success)' }}>
-                                Rs. {bike.pricePerDay ? bike.pricePerDay.toFixed(2) : '0.00'} / day
+                            <h3 className="text-lg font-semibold mb-3 text-gray-800">Rental Details</h3>
+                            
+                            {/* Rental Days Selector */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Number of Rental Days:
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setRentalDays(Math.max(1, rentalDays - 1))}
+                                        disabled={rentalDays <= 1}
+                                        className="bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200"
+                                    >
+                                        -
+                                    </button>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="30"
+                                        value={rentalDays}
+                                        onChange={(e) => {
+                                            const days = parseInt(e.target.value);
+                                            if (days >= 1 && days <= 30) {
+                                                setRentalDays(days);
+                                            }
+                                        }}
+                                        className="w-20 px-3 py-2 text-center border border-gray-300 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <button
+                                        onClick={() => setRentalDays(Math.min(30, rentalDays + 1))}
+                                        disabled={rentalDays >= 30}
+                                        className="bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200"
+                                    >
+                                        +
+                                    </button>
+                                    <span className="text-sm text-gray-600">
+                                        day{rentalDays > 1 ? 's' : ''}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Price Display */}
+                            <div className="border-t pt-3">
+                                <div className="text-sm text-gray-600 mb-1">
+                                    Rs. {bike.pricePerDay ? bike.pricePerDay.toFixed(2) : '0.00'} per day
+                                </div>
+                                <div className="text-2xl font-bold" style={{ color: 'var(--brand-success)' }}>
+                                    Total: Rs. {bike.pricePerDay ? (bike.pricePerDay * rentalDays).toFixed(2) : '0.00'}
+                                </div>
+                                <div className="text-sm text-gray-500 mt-1">
+                                    Rs. {bike.pricePerDay ? bike.pricePerDay.toFixed(2) : '0.00'} × {rentalDays} day{rentalDays > 1 ? 's' : ''}
+                                </div>
                             </div>
                         </div>
                         <div className="w-full mt-2 sm:mt-4">
@@ -191,7 +241,7 @@ export default function BikeOverview()   {
                                 }}
                                 onClick={() => {
                                     if (isInCart) return; // Prevent action if already in cart
-                                    const result = addToCart(bike, 1);
+                                    const result = addToCart(bike, rentalDays);
                                     if (result.success) {
                                         toast.success(result.message);
                                         setIsInCart(true);
@@ -220,7 +270,13 @@ export default function BikeOverview()   {
                                     e.target.style.borderColor = 'var(--brand-success)';
                                 }}
                                 onClick={() => {
-                                    const result = addToCart(bike, 1);
+                                    if (isInCart) {
+                                        // If already in cart, just go to checkout
+                                        navigate('/checkout', { state: { items: getCart() } });
+                                        return;
+                                    }
+                                    
+                                    const result = addToCart(bike, rentalDays);
                                     if (result.success) {
                                         // Dispatch custom event to update cart count in navbar
                                         window.dispatchEvent(new Event('cartUpdated'));
@@ -231,7 +287,7 @@ export default function BikeOverview()   {
                                     }
                                 }}
                             >
-                                Rent Now
+                                {isInCart ? "Go to Checkout" : "Rent Now"}
                             </button>
                         </div>
                     </div>

@@ -8,7 +8,7 @@ export function getCart() {
     return cart;
 }
 
-export function addToCart(product, quantity = 1) {
+export function addToCart(product, rentalDays = 1) {
     const cart = getCart();
     const existingItemIndex = cart.findIndex((item) => {
         return item.productId === product._id;
@@ -24,7 +24,7 @@ export function addToCart(product, quantity = 1) {
             price: product.pricePerDay || product.price,
             name: product.bikeName || product.name,
             image: product.images?.[0] || product.image,
-            quantity: 1, // Always 1 for bike rentals
+            rentalDays: rentalDays, // Store rental days instead of quantity
             bikeType: product.bikeType,
             city: product.city
         });
@@ -45,15 +45,15 @@ export function removeFromCart(productId) {
     return filteredCart;
 }
 
-export function updateCartQuantity(productId, newQuantity) {
+export function updateCartRentalDays(productId, newRentalDays) {
     const cart = getCart();
     const itemIndex = cart.findIndex((item) => item.productId === productId);
     
     if(itemIndex !== -1) {
-        if(newQuantity <= 0) {
+        if(newRentalDays <= 0) {
             return removeFromCart(productId);
         } else {
-            cart[itemIndex].quantity = newQuantity;
+            cart[itemIndex].rentalDays = newRentalDays;
             localStorage.setItem("cart", JSON.stringify(cart));
             // Dispatch custom event to notify components about cart update
             window.dispatchEvent(new Event('cartUpdated'));
@@ -73,15 +73,19 @@ export function clearCart() {
 export function getCartTotal() {
     const cart = getCart();
     return cart.reduce((total, item) => {
-        return total + (item.price * item.quantity);
+        return total + (item.price * (item.rentalDays || 1));
     }, 0);
 }
 
 export function getCartItemCount() {
     const cart = getCart();
-    return cart.reduce((total, item) => {
-        return total + item.quantity;
-    }, 0);
+    return cart.length; // Count number of bikes, not rental days
+}
+
+export function getRentalDaysInCart(productId) {
+    const cart = getCart();
+    const item = cart.find(item => item.productId === productId);
+    return item ? item.rentalDays : 0;
 }
 
 export function isProductInCart(productId) {
