@@ -15,8 +15,8 @@ export function addToCart(product, quantity = 1) {
     });
     
     if(existingItemIndex !== -1) {
-        // Item already exists in cart, update quantity
-        cart[existingItemIndex].quantity += quantity;
+        // Item already exists in cart - for bike rentals, don't allow duplicates
+        return { success: false, message: "This bike is already in your cart" };
     } else {
         // New item, add to cart
         cart.push({
@@ -24,7 +24,7 @@ export function addToCart(product, quantity = 1) {
             price: product.pricePerDay || product.price,
             name: product.bikeName || product.name,
             image: product.images?.[0] || product.image,
-            quantity: quantity,
+            quantity: 1, // Always 1 for bike rentals
             bikeType: product.bikeType,
             city: product.city
         });
@@ -33,7 +33,7 @@ export function addToCart(product, quantity = 1) {
     localStorage.setItem("cart", JSON.stringify(cart));
     // Dispatch custom event to notify components about cart update
     window.dispatchEvent(new Event('cartUpdated'));
-    return cart;
+    return { success: true, message: "Bike added to cart", cart: cart };
 }
 
 export function removeFromCart(productId) {
@@ -82,4 +82,9 @@ export function getCartItemCount() {
     return cart.reduce((total, item) => {
         return total + item.quantity;
     }, 0);
+}
+
+export function isProductInCart(productId) {
+    const cart = getCart();
+    return cart.some(item => item.productId === productId);
 }

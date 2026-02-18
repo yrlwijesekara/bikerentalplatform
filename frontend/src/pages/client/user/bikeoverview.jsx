@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Loader from "../../../components/loader";
 import ImageSlider from "../../../components/imagesilder";
-import { addToCart, getCart } from "../../../utils/cart";
+import { addToCart, getCart, isProductInCart } from "../../../utils/cart";
 
 export default function BikeOverview()   {
 
@@ -12,12 +12,15 @@ export default function BikeOverview()   {
     const navigate = useNavigate();
     const [bike, setBike] = useState(null);
     const [status, setStatus] = useState("loading");
+    const [isInCart, setIsInCart] = useState(false);
 
     useEffect(() => {
         if(status === "loading") {
             axios.get(import.meta.env.VITE_BACKEND_URL + `/products/${params.bikeid}`)
             .then(response => {
                 setBike(response.data.product);
+                // Check if bike is already in cart
+                setIsInCart(isProductInCart(response.data.product._id));
                 toast.success("Bike details fetched successfully");
                 setStatus("success");
             })
@@ -29,6 +32,20 @@ export default function BikeOverview()   {
 
         }
     }, [status, params.bikeid]);
+
+    // Listen for cart updates to refresh isInCart status
+    useEffect(() => {
+        const handleCartUpdate = () => {
+            if (bike) {
+                setIsInCart(isProductInCart(bike._id));
+            }
+        };
+
+        window.addEventListener('cartUpdated', handleCartUpdate);
+        return () => {
+            window.removeEventListener('cartUpdated', handleCartUpdate);
+        };
+    }, [bike]);
 
     return (
         <div className="w-full h-screen overflow-hidden flex justify-center items-center" style={{ backgroundColor: 'var(--main-background)' }}> 
@@ -151,29 +168,41 @@ export default function BikeOverview()   {
                         </div>
                         <div className="w-full mt-2 sm:mt-4">
                             <button 
-                                className="w-full border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300 cursor-pointer"
+                                className="w-full border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300"
+                                disabled={isInCart}
                                 style={{ 
-                                    backgroundColor: 'var(--button-primary-bg)', 
-                                    color: 'var(--button-primary-text)',
-                                    borderColor: 'var(--button-primary-bg)'
+                                    backgroundColor: isInCart ? '#95a5a6' : 'var(--button-primary-bg)', 
+                                    color: isInCart ? '#7f8c8d' : 'var(--button-primary-text)',
+                                    borderColor: isInCart ? '#95a5a6' : 'var(--button-primary-bg)',
+                                    cursor: isInCart ? 'not-allowed' : 'pointer',
+                                    opacity: isInCart ? 0.7 : 1
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = 'var(--button-primary-hover)';
-                                    e.target.style.borderColor = 'var(--button-primary-hover)';
+                                    if (!isInCart) {
+                                        e.target.style.backgroundColor = 'var(--button-primary-hover)';
+                                        e.target.style.borderColor = 'var(--button-primary-hover)';
+                                    }
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = 'var(--button-primary-bg)';
-                                    e.target.style.borderColor = 'var(--button-primary-bg)';
+                                    if (!isInCart) {
+                                        e.target.style.backgroundColor = 'var(--button-primary-bg)';
+                                        e.target.style.borderColor = 'var(--button-primary-bg)';
+                                    }
                                 }}
                                 onClick={() => {
-                                    addToCart(bike, 1);
-                                    toast.success("Product added to cart");
-                                    // Dispatch custom event to update cart count in navbar
-                                    window.dispatchEvent(new Event('cartUpdated'));
-                                    console.log(getCart());
+                                    if (isInCart) return; // Prevent action if already in cart
+                                    const result = addToCart(bike, 1);
+                                    if (result.success) {
+                                        toast.success(result.message);
+                                        setIsInCart(true);
+                                        // Dispatch custom event to update cart count in navbar
+                                        window.dispatchEvent(new Event('cartUpdated'));
+                                    } else {
+                                        toast.warning(result.message);
+                                    }
                                 }}
                             >
-                                Add to cart 
+                                {isInCart ? "Already in Cart" : "Add to cart"}
                             </button>
                             <button 
                                 className="w-full mt-2 border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300 cursor-pointer"
@@ -191,10 +220,15 @@ export default function BikeOverview()   {
                                     e.target.style.borderColor = 'var(--brand-success)';
                                 }}
                                 onClick={() => {
-                                    addToCart(bike, 1);
-                                    // Dispatch custom event to update cart count in navbar
-                                    window.dispatchEvent(new Event('cartUpdated'));
-                                    navigate('/checkout', { state: { items: getCart() } });
+                                    const result = addToCart(bike, 1);
+                                    if (result.success) {
+                                        // Dispatch custom event to update cart count in navbar
+                                        window.dispatchEvent(new Event('cartUpdated'));
+                                        navigate('/checkout', { state: { items: getCart() } });
+                                    } else {
+                                        // If already in cart, just go to checkout
+                                        navigate('/checkout', { state: { items: getCart() } });
+                                    }
                                 }}
                             >
                                 Rent Now
