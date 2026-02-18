@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Loader from "../../../components/loader";
 import ImageSlider from "../../../components/imagesilder";
+import { addToCart, getCart } from "../../../utils/cart";
 
 export default function BikeOverview()   {
 
@@ -11,17 +12,6 @@ export default function BikeOverview()   {
     const navigate = useNavigate();
     const [bike, setBike] = useState(null);
     const [status, setStatus] = useState("loading");
-
-    // Simple cart functions for this component
-    const addToCart = (product, quantity) => {
-        // Add your cart logic here
-        console.log('Adding to cart:', product, quantity);
-    };
-
-    const getCart = () => {
-        // Add your get cart logic here
-        return [];
-    };
 
     useEffect(() => {
         if(status === "loading") {
@@ -178,6 +168,8 @@ export default function BikeOverview()   {
                                 onClick={() => {
                                     addToCart(bike, 1);
                                     toast.success("Product added to cart");
+                                    // Dispatch custom event to update cart count in navbar
+                                    window.dispatchEvent(new Event('cartUpdated'));
                                     console.log(getCart());
                                 }}
                             >
@@ -200,6 +192,8 @@ export default function BikeOverview()   {
                                 }}
                                 onClick={() => {
                                     addToCart(bike, 1);
+                                    // Dispatch custom event to update cart count in navbar
+                                    window.dispatchEvent(new Event('cartUpdated'));
                                     navigate('/checkout', { state: { items: getCart() } });
                                 }}
                             >
