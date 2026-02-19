@@ -92,10 +92,19 @@ export default function Cart() {
             toast.error('Your cart is empty');
             return;
         }
-        navigate('/checkout', { state: { items: cartItems } });
+        navigate('/checkout', { 
+            state: { 
+                items: cartItems,
+                subtotal: cartTotal,
+                serviceFee: serviceFee,
+                total: finalTotal
+            } 
+        });
     };
 
     const cartTotal = getCartTotal();
+    const serviceFee = cartTotal * 0.10; // 10% service fee
+    const finalTotal = cartTotal + serviceFee;
 
     if (loading) {
         return (
@@ -288,15 +297,18 @@ export default function Cart() {
                                 </div>
                                 
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Service Fee:</span>
-                                    <span className="font-medium">Rs. 0.00</span>
+                                    <span className="text-gray-600">Service Fee (10%):</span>
+                                    <span className="font-medium">Rs. {serviceFee.toFixed(2)}</span>
+                                </div>
+                                <div className="text-xs text-gray-500 italic">
+                                    * A service fee is applied to cover platform maintenance and support. It helps us continue providing you with the best bike rental experience.
                                 </div>
                                 
                                 <hr style={{ borderColor: 'var(--section-divider)' }} />
                                 
                                 <div className="flex justify-between text-lg font-semibold">
                                     <span>Total:</span>
-                                    <span style={{ color: 'var(--brand-success)' }}>Rs. {cartTotal.toFixed(2)}</span>
+                                    <span style={{ color: 'var(--brand-success)' }}>Rs. {finalTotal.toFixed(2)}</span>
                                 </div>
                             </div>
                             

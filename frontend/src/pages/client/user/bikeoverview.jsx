@@ -14,6 +14,29 @@ export default function BikeOverview()   {
     const [status, setStatus] = useState("loading");
     const [isInCart, setIsInCart] = useState(false);
     const [rentalDays, setRentalDays] = useState(1);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    // Check if user is logged in
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        setIsLoggedIn(!!token);
+        
+        // Listen for login/logout changes
+        const handleAuthChange = () => {
+            const newToken = localStorage.getItem('token');
+            setIsLoggedIn(!!newToken);
+        };
+        
+        window.addEventListener('storage', handleAuthChange);
+        
+        // Check periodically for auth changes within the same tab
+        const interval = setInterval(handleAuthChange, 1000);
+        
+        return () => {
+            window.removeEventListener('storage', handleAuthChange);
+            clearInterval(interval);
+        };
+    }, []);
 
     useEffect(() => {
         if(status === "loading") {
@@ -219,27 +242,32 @@ export default function BikeOverview()   {
                         <div className="w-full mt-2 sm:mt-4">
                             <button 
                                 className="w-full border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300"
-                                disabled={isInCart}
+                                disabled={isInCart || !isLoggedIn}
                                 style={{ 
-                                    backgroundColor: isInCart ? '#95a5a6' : 'var(--button-primary-bg)', 
-                                    color: isInCart ? '#7f8c8d' : 'var(--button-primary-text)',
-                                    borderColor: isInCart ? '#95a5a6' : 'var(--button-primary-bg)',
-                                    cursor: isInCart ? 'not-allowed' : 'pointer',
-                                    opacity: isInCart ? 0.7 : 1
+                                    backgroundColor: (isInCart || !isLoggedIn) ? '#95a5a6' : 'var(--button-primary-bg)', 
+                                    color: (isInCart || !isLoggedIn) ? '#7f8c8d' : 'var(--button-primary-text)',
+                                    borderColor: (isInCart || !isLoggedIn) ? '#95a5a6' : 'var(--button-primary-bg)',
+                                    cursor: (isInCart || !isLoggedIn) ? 'not-allowed' : 'pointer',
+                                    opacity: (isInCart || !isLoggedIn) ? 0.7 : 1
                                 }}
                                 onMouseEnter={(e) => {
-                                    if (!isInCart) {
+                                    if (!isInCart && isLoggedIn) {
                                         e.target.style.backgroundColor = 'var(--button-primary-hover)';
                                         e.target.style.borderColor = 'var(--button-primary-hover)';
                                     }
                                 }}
                                 onMouseLeave={(e) => {
-                                    if (!isInCart) {
+                                    if (!isInCart && isLoggedIn) {
                                         e.target.style.backgroundColor = 'var(--button-primary-bg)';
                                         e.target.style.borderColor = 'var(--button-primary-bg)';
                                     }
                                 }}
                                 onClick={() => {
+                                    if (!isLoggedIn) {
+                                        toast.error('Please login first to add items to cart');
+                                        navigate('/login');
+                                        return;
+                                    }
                                     if (isInCart) return; // Prevent action if already in cart
                                     const result = addToCart(bike, rentalDays);
                                     if (result.success) {
@@ -252,24 +280,37 @@ export default function BikeOverview()   {
                                     }
                                 }}
                             >
-                                {isInCart ? "Already in Cart" : "Add to cart"}
+                                {!isLoggedIn ? "Login to Add Cart" : (isInCart ? "Already in Cart" : "Add to cart")}
                             </button>
                             <button 
-                                className="w-full mt-2 border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300 cursor-pointer"
+                                className="w-full mt-2 border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300"
+                                disabled={!isLoggedIn}
                                 style={{ 
-                                    backgroundColor: 'var(--brand-success)', 
-                                    color: 'white',
-                                    borderColor: 'var(--brand-success)'
+                                    backgroundColor: !isLoggedIn ? '#95a5a6' : 'var(--brand-success)', 
+                                    color: !isLoggedIn ? '#7f8c8d' : 'white',
+                                    borderColor: !isLoggedIn ? '#95a5a6' : 'var(--brand-success)',
+                                    cursor: !isLoggedIn ? 'not-allowed' : 'pointer',
+                                    opacity: !isLoggedIn ? 0.7 : 1
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = '#27AE60';
-                                    e.target.style.borderColor = '#27AE60';
+                                    if (isLoggedIn) {
+                                        e.target.style.backgroundColor = '#27AE60';
+                                        e.target.style.borderColor = '#27AE60';
+                                    }
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = 'var(--brand-success)';
-                                    e.target.style.borderColor = 'var(--brand-success)';
+                                    if (isLoggedIn) {
+                                        e.target.style.backgroundColor = 'var(--brand-success)';
+                                        e.target.style.borderColor = 'var(--brand-success)';
+                                    }
                                 }}
                                 onClick={() => {
+                                    if (!isLoggedIn) {
+                                        toast.error('Please login first to rent a bike');
+                                        navigate('/login');
+                                        return;
+                                    }
+                                    
                                     if (isInCart) {
                                         // If already in cart, just go to checkout
                                         navigate('/checkout', { state: { items: getCart() } });
@@ -287,7 +328,7 @@ export default function BikeOverview()   {
                                     }
                                 }}
                             >
-                                {isInCart ? "Go to Checkout" : "Rent Now"}
+                                {!isLoggedIn ? "Login to Rent" : (isInCart ? "Go to Checkout" : "Rent Now")}
                             </button>
                         </div>
                     </div>
