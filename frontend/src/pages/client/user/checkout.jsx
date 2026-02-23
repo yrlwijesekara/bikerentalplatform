@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { getCart, removeFromCart, getCartTotal, clearCart, updateCartRentalDays } from '../../../utils/cart';
+
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { getCartTotal } from '../../../utils/cart.js';
 import { FaTrash} from 'react-icons/fa';
 import { FaOpencart } from 'react-icons/fa';
 import { CiLocationOn } from 'react-icons/ci';
@@ -10,25 +11,31 @@ import Loader from '../../../components/loader';
 
 
 
-export default function Cart() {
-    const [cartItems, setCartItems] = useState([]);
-    const [loading, setLoading] = useState(true);
+
+export default function Checkout() {
+    const location = useLocation();
     const navigate = useNavigate();
+    const [cartItems, setCartItems] = useState(location.state.items || []);
+    const [loading, setLoading] = useState(false);
+    if(location.state.items == null) {
+        toast.error('please add items to cart before checkout');
+        navigate('/find-bikes');
+    }
 
-    useEffect(() => {
-        loadCartItems();
-        
-        // Listen for cart updates
-        const handleCartUpdate = () => {
-            loadCartItems();
-        };
-        
-        window.addEventListener('cartUpdated', handleCartUpdate);
-        return () => {
-            window.removeEventListener('cartUpdated', handleCartUpdate);
-        };
-    }, []);
+    function gettotal() {
+        let total = 0;
+        cartItems.forEach(item => {
+            total += item.price * item.rentalDays;
+        });
+        return total;
+    }
 
+    // Calculate totals for checkout
+    const cartTotal = gettotal();
+    const serviceFee = cartTotal * 0.10; // 10% service fee
+    const finalTotal = cartTotal + serviceFee;
+
+    
     const loadCartItems = () => {
         try {
             const items = getCart();
@@ -41,77 +48,21 @@ export default function Cart() {
         }
     };
 
-    const handleUpdateRentalDays = (productId, newRentalDays) => {
-        if (newRentalDays < 1) return;
-        
-        try {
-            updateCartRentalDays(productId, newRentalDays);
-            setCartItems(prevItems => 
-                prevItems.map(item => 
-                    item.productId === productId 
-                        ? { ...item, rentalDays: newRentalDays }
-                        : item
-                )
-            );
-            toast.success('Rental days updated');
-            // Dispatch event for navbar and total update
-            window.dispatchEvent(new Event('cartUpdated'));
-        } catch (error) {
-            console.error('Error updating rental days:', error);
-            toast.error('Failed to update rental days');
-        }
-    };
+   
 
-    const handleRemoveItem = (productId, productName) => {
-        try {
-            removeFromCart(productId);
-            setCartItems(prevItems => prevItems.filter(item => item.productId !== productId));
-            toast.success(`${productName} removed from cart`);
-            // Dispatch event for navbar update
-            window.dispatchEvent(new Event('cartUpdated'));
-        } catch (error) {
-            console.error('Error removing item:', error);
-            toast.error('Failed to remove item');
-        }
-    };
+    
 
-    const handleClearCart = () => {
-        try {
-            clearCart();
-            setCartItems([]);
-            toast.success('Cart cleared successfully');
-            // Dispatch event for navbar update
-            window.dispatchEvent(new Event('cartUpdated'));
-        } catch (error) {
-            console.error('Error clearing cart:', error);
-            toast.error('Failed to clear cart');
-        }
-    };
+    
 
-    const handleCheckout = () => {
-        if (cartItems.length === 0) {
-            toast.error('Your cart is empty');
-            return;
-        }
-        navigate('/checkout', { 
-            state: { 
-                items: cartItems,
-                subtotal: cartTotal,
-                serviceFee: serviceFee,
-                total: finalTotal
-            } 
-        });
-    };
+    
 
-    const cartTotal = getCartTotal();
-    const serviceFee = cartTotal * 0.10; // 10% service fee
-    const finalTotal = cartTotal + serviceFee;
+  
 
     if (loading) {
         return (
-           <div className="flex justify-center items-center min-h-[50vh]">
-                       <Loader />
-                     </div>
+            <div className="flex justify-center items-center min-h-[50vh]">
+                        <Loader />
+                      </div>
         );
     }
 
@@ -121,27 +72,11 @@ export default function Cart() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div className="flex items-center gap-3 mb-4 sm:mb-0">
                     <FaOpencart className="h-6 w-6" style={{ color: 'var(--brand-primary)' }} />
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Your Cart</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Checkout</h1>
                     <span className="text-sm font-medium px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--button-primary-disabled)', color: 'var(--brand-primary)' }}>
                         {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
                     </span>
                 </div>
-                
-                {cartItems.length > 0 && (
-                    <button
-                        onClick={handleClearCart}
-                        className="font-medium text-sm px-4 py-2 border rounded-md transition-colors duration-200"
-                        style={{ color: 'var(--brand-warning)', borderColor: 'var(--brand-warning)' }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#FFEAEA';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'transparent';
-                        }}
-                    >
-                        Clear All
-                    </button>
-                )}
             </div>
 
             {cartItems.length === 0 ? (
@@ -203,48 +138,9 @@ export default function Cart() {
                                                     </p>
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <span className="text-sm text-gray-500">Rental Days:</span>
-                                                        <div className="flex items-center gap-1">
-                                                            <button
-                                                                onClick={() => handleUpdateRentalDays(item.productId, (item.rentalDays || 1) - 1)}
-                                                                disabled={(item.rentalDays || 1) <= 1}
-                                                                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200 disabled:cursor-not-allowed"
-                                                                style={{ 
-                                                                    backgroundColor: (item.rentalDays || 1) <= 1 ? '#F0F0F0' : 'var(--button-primary-disabled)',
-                                                                    color: (item.rentalDays || 1) <= 1 ? '#A0A0A0' : 'var(--brand-primary)'
-                                                                }}
-                                                            >
-                                                                -
-                                                            </button>
-                                                            <input
-                                                                type="number"
-                                                                min="1"
-                                                                max="30"
-                                                                value={item.rentalDays || 1}
-                                                                onChange={(e) => {
-                                                                    const days = parseInt(e.target.value);
-                                                                    if (days >= 1 && days <= 30) {
-                                                                        handleUpdateRentalDays(item.productId, days);
-                                                                    }
-                                                                }}
-                                                                className="w-16 px-2 py-1 text-center border border-gray-300 rounded text-sm font-medium focus:outline-none focus:ring-2"
-                                                                style={{ 
-                                                                    focusRingColor: 'var(--brand-primary)',
-                                                                    borderColor: 'var(--section-divider)'
-                                                                }}
-                                                            />
-                                                            <button
-                                                                onClick={() => handleUpdateRentalDays(item.productId, (item.rentalDays || 1) + 1)}
-                                                                disabled={(item.rentalDays || 1) >= 30}
-                                                                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200 disabled:cursor-not-allowed"
-                                                                style={{ 
-                                                                    backgroundColor: (item.rentalDays || 1) >= 30 ? '#F0F0F0' : 'var(--button-primary-disabled)',
-                                                                    color: (item.rentalDays || 1) >= 30 ? '#A0A0A0' : 'var(--brand-primary)'
-                                                                }}
-                                                            >
-                                                                +
-                                                            </button>
-                                                        </div>
-                                                        <span className="text-xs text-gray-400">days</span>
+                                                        <span className="text-sm font-medium text-gray-800">
+                                                            {item.rentalDays || 1} day{(item.rentalDays || 1) > 1 ? 's' : ''}
+                                                        </span>
                                                     </div>
                                                 </div>
                                                 
@@ -258,25 +154,6 @@ export default function Cart() {
                                                             Rs. {item.price?.toFixed(2) || '0.00'} × {item.rentalDays || 1} day{(item.rentalDays || 1) > 1 ? 's' : ''}
                                                         </div>
                                                     </div>
-                                                    
-                                                    <button
-                                                        onClick={() => handleRemoveItem(item.productId, item.name)}
-                                                        className="p-2 rounded-md transition-colors duration-200 flex items-center gap-1"
-                                                        style={{ 
-                                                            backgroundColor: '#FFEAEA',
-                                                            color: 'var(--brand-warning)'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.target.style.backgroundColor = '#FFD6D6';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.target.style.backgroundColor = '#FFEAEA';
-                                                        }}
-                                                        title="Remove from cart"
-                                                    >
-                                                        <FaTrash className="h-4 w-4" />
-                                                        <span className="hidden sm:inline text-sm">Remove</span>
-                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -314,7 +191,7 @@ export default function Cart() {
                             </div>
                             
                             <button
-                                onClick={handleCheckout }
+                               
                                 className="w-full text-white font-semibold py-3 px-4 rounded-lg mt-6 transition-colors duration-200 flex items-center justify-center gap-2"
                                 style={{ backgroundColor: 'var(--button-primary-bg)' }}
                                 onMouseEnter={(e) => {
@@ -325,7 +202,7 @@ export default function Cart() {
                                 }}
                             >
                                 <FaOpencart className="h-5 w-5" />
-                                Proceed to Checkout
+                                Place order
                             </button>
                             
                             <button

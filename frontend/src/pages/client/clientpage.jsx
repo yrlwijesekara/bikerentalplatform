@@ -10,6 +10,7 @@ import ProtectedRoute from "../../components/ProtectedRoute.jsx";
 import UpdatebikePage from "./vendor/updatebikepage.jsx";
 import BikeOverview from "./user/bikeoverview.jsx";
 import Cart from "./user/cart.jsx";
+import Checkout from "./user/checkout.jsx";
 
 export default function Clientpage() {
   return (
@@ -49,6 +50,7 @@ export default function Clientpage() {
                 <AddbikePage />
               </ProtectedRoute>
             } />
+            
             <Route path="/vendor/bookings" element={
               <ProtectedRoute requiredRole="vendor">
                 <h1 className="text-black">Vendor Bookings Page</h1>
@@ -72,6 +74,11 @@ export default function Clientpage() {
             <Route path="/cart" element={
               <ProtectedRoute requiredRole="user">
                 <Cart />
+              </ProtectedRoute>
+            } />
+             <Route path="/checkout" element={
+              <ProtectedRoute requiredRole="user">
+                <Checkout />
               </ProtectedRoute>
             } />
             <Route path="/about-sri-lanka" element={<h1 className="text-black">About Sri Lanka Travel Page</h1>} />
