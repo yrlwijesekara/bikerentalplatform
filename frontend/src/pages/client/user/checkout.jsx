@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 import toast from 'react-hot-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getCartTotal } from '../../../utils/cart.js';
+import { getCartTotal, updateCartRentalDays, getCart } from '../../../utils/cart.js';
 import { FaTrash} from 'react-icons/fa';
 import { FaOpencart } from 'react-icons/fa';
 import { CiLocationOn } from 'react-icons/ci';
@@ -47,6 +47,41 @@ export default function Checkout() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Update rental days for a specific item
+    const handleRentalDaysChange = (productId, newRentalDays) => {
+        try {
+            const updatedCart = updateCartRentalDays(productId, newRentalDays);
+            setCartItems(updatedCart);
+            if (newRentalDays <= 0) {
+                toast.success('Item removed from cart');
+            } else {
+                toast.success('Rental days updated');
+            }
+        } catch (error) {
+            console.error('Error updating rental days:', error);
+            toast.error('Failed to update rental days');
+        }
+    };
+
+    const incrementRentalDays = (item) => {
+        const newRentalDays = (item.rentalDays || 1) + 1;
+        if (newRentalDays <= 30) {
+            handleRentalDaysChange(item.productId, newRentalDays);
+        }
+    };
+
+    const decrementRentalDays = (item) => {
+        const newRentalDays = (item.rentalDays || 1) - 1;
+        if (newRentalDays >= 1) {
+            handleRentalDaysChange(item.productId, newRentalDays);
+        }
+    };
+
+    const handleDirectRentalDaysChange = (item, value) => {
+        const newRentalDays = Math.max(1, Math.min(30, parseInt(value) || 1));
+        handleRentalDaysChange(item.productId, newRentalDays);
     };
 
    
@@ -139,9 +174,43 @@ export default function Checkout() {
                                                     </p>
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <span className="text-sm text-gray-500">Rental Days:</span>
-                                                        <span className="text-sm font-medium text-gray-800">
-                                                            {item.rentalDays || 1} day{(item.rentalDays || 1) > 1 ? 's' : ''}
-                                                        </span>
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                onClick={() => decrementRentalDays(item)}
+                                                                disabled={(item.rentalDays || 1) <= 1}
+                                                                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200 disabled:cursor-not-allowed"
+                                                                style={{ 
+                                                                    backgroundColor: (item.rentalDays || 1) <= 1 ? '#F0F0F0' : 'var(--button-primary-disabled)',
+                                                                    color: (item.rentalDays || 1) <= 1 ? '#A0A0A0' : 'var(--brand-primary)'
+                                                                }}
+                                                            >
+                                                                -
+                                                            </button>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max="30"
+                                                                value={item.rentalDays || 1}
+                                                                onChange={(e) => handleDirectRentalDaysChange(item, e.target.value)}
+                                                                className="w-16 px-2 py-1 text-center border border-gray-300 rounded text-sm font-medium focus:outline-none focus:ring-2"
+                                                                style={{ 
+                                                                    focusRingColor: 'var(--brand-primary)',
+                                                                    borderColor: 'var(--section-divider)'
+                                                                }}
+                                                            />
+                                                            <button
+                                                                onClick={() => incrementRentalDays(item)}
+                                                                disabled={(item.rentalDays || 1) >= 30}
+                                                                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200 disabled:cursor-not-allowed"
+                                                                style={{ 
+                                                                    backgroundColor: (item.rentalDays || 1) >= 30 ? '#F0F0F0' : 'var(--button-primary-disabled)',
+                                                                    color: (item.rentalDays || 1) >= 30 ? '#A0A0A0' : 'var(--brand-primary)'
+                                                                }}
+                                                            >
+                                                                +
+                                                            </button>
+                                                        </div>
+                                                        <span className="text-xs text-gray-400">days</span>
                                                     </div>
                                                 </div>
                                                 

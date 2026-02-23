@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { addToCart, getCart } from "../utils/cart";
 
 export default function ProductCard(props) {
   const bike = props.bike;
@@ -95,7 +96,34 @@ export default function ProductCard(props) {
                 navigate('/login');
                 return;
               }
-              navigate(`/bikeoverview/${bike._id}`);
+              
+              // Add bike to cart first
+              const result = addToCart(bike, 1); // Default 1 day rental
+              
+              if (result.success) {
+                // Get updated cart items
+                const cartItems = getCart();
+                
+                // Calculate totals
+                const cartTotal = cartItems.reduce((total, item) => {
+                  return total + (item.price * (item.rentalDays || 1));
+                }, 0);
+                const serviceFee = cartTotal * 0.10;
+                const finalTotal = cartTotal + serviceFee;
+                
+                // Navigate to checkout with cart data
+                navigate('/checkout', { 
+                  state: { 
+                    items: cartItems,
+                    subtotal: cartTotal,
+                    serviceFee: serviceFee,
+                    total: finalTotal
+                  } 
+                });
+                toast.success('Bike added to cart! Proceeding to checkout.');
+              } else {
+                toast.error(result.message);
+              }
             }}
           >
             {!isLoggedIn ? "Login to Rent" : "Rent Now"}
