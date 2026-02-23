@@ -109,6 +109,15 @@ export function loginUser(req, res) {
         .catch((error) => res.status(500).send({ error: error.message }));
 }
 
+export function getuser(req, res) {
+    if (!req.user) {
+        return res.status(401).json({ error: "user not found" });
+    }else {
+        res.status(200).json({ user: req.user });
+    }
+}
+
+
 export function isVendor(req, res, next) {
     if(req.user == null || req.user.role !== 'vendor') {
         return res.status(403).json({ error: "Vendor access required" });
