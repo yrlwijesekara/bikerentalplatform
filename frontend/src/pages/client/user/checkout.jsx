@@ -17,6 +17,7 @@ export default function Checkout() {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState(location.state.items || []);
     const [loading, setLoading] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('card');
     if(location.state.items == null) {
         toast.error('please add items to cart before checkout');
         navigate('/find-bikes');
@@ -188,6 +189,22 @@ export default function Checkout() {
                                     <span>Total:</span>
                                     <span style={{ color: 'var(--brand-success)' }}>Rs. {finalTotal.toFixed(2)}</span>
                                 </div>
+                            </div>
+                            
+                            {/* Payment Method Selection */}
+                            <div className="mt-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Payment Method
+                                </label>
+                                <select
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    style={{ borderColor: 'var(--section-divider)' }}
+                                >
+                                    <option value="card">Credit/Debit Card</option>
+                                    <option value="bank_slip">Bank Slip/online Bank</option>
+                                </select>
                             </div>
                             
                             <button
