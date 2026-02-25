@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import toast from 'react-hot-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { FaTrash} from 'react-icons/fa';
 import { FaOpencart } from 'react-icons/fa';
 import { CiLocationOn } from 'react-icons/ci';
 import Loader from '../../../components/loader';
+import PaymentDetails from '../../../components/PaymentDetails.jsx';
 
 
 
@@ -18,6 +19,12 @@ export default function Checkout() {
     const [cartItems, setCartItems] = useState(location.state.items || []);
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('card');
+    const [paymentData, setPaymentData] = useState({
+        paymentMethod: 'card'
+    });
+    const [isPaymentComplete, setIsPaymentComplete] = useState(false);
+    const [orderSuccess, setOrderSuccess] = useState(false);
+    const [orderPaymentStatus, setOrderPaymentStatus] = useState(null);
     if(location.state.items == null) {
         toast.error('please add items to cart before checkout');
         navigate('/find-bikes');
@@ -35,6 +42,12 @@ export default function Checkout() {
     const cartTotal = gettotal();
     const serviceFee = cartTotal * 0.10; // 10% service fee
     const finalTotal = cartTotal + serviceFee;
+
+    // Calculate rental period info for display
+    const maxRentalDays = cartItems.length > 0 ? Math.max(...cartItems.map(item => item.rentalDays || 1)) : 1;
+    const calculatedStartDate = new Date();
+    const calculatedEndDate = new Date(calculatedStartDate);
+    calculatedEndDate.setDate(calculatedStartDate.getDate() + maxRentalDays);
 
     
     const loadCartItems = () => {
@@ -84,7 +97,127 @@ export default function Checkout() {
         handleRentalDaysChange(item.productId, newRentalDays);
     };
 
-   
+    // Handle payment data changes from PaymentDetails component
+    const handlePaymentDataChange = useCallback((data) => {
+        setPaymentData(data);
+        
+        // Check if payment details are complete (only card payment supported)
+        setIsPaymentComplete(data.paymentMethod === 'card' && data.isCompleted);
+    }, []);
+
+    // Create order function
+    const handlePlaceOrder = async () => {
+        try {
+            // Validate inputs
+            if (cartItems.length === 0) {
+                toast.error('Your cart is empty');
+                return;
+            }
+
+            // Calculate dates from rental days
+            const startDate = new Date();
+            const maxRentalDays = Math.max(...cartItems.map(item => item.rentalDays || 1));
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + maxRentalDays);
+
+            // Only card payment is supported now
+            if (paymentData.paymentMethod !== 'card') {
+                toast.error('Only card payment is supported');
+                return;
+            }
+
+            setLoading(true);
+
+            // Get token for authentication
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error('Please login to place order');
+                navigate('/login');
+                return;
+            }
+
+            // Format cart items for API
+            const bikes = cartItems.map(item => ({
+                bikeId: item.productId,
+                quantity: 1, // For bike rentals, quantity is always 1
+                pricePerDay: item.price
+            }));
+
+            // Create order data
+            const orderData = {
+                bikes,
+                startDate: startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+                endDate: endDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+                paymentMethod: paymentData.paymentMethod
+            };
+
+            // Call order API
+            const response = await fetch('http://localhost:5000/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                console.error('Failed to parse JSON response:', jsonError);
+                throw new Error('Server error - invalid response format');
+            }
+
+            if (response.ok) {
+                setOrderSuccess(true);
+                
+                // Handle different payment statuses
+                const order = result.order;
+                const paymentStatus = order.paymentStatus;
+                setOrderPaymentStatus(paymentStatus);
+                
+                if (paymentStatus === "paid") {
+                    toast.success('Order created successfully! Your rental has started.');
+                } else if (paymentStatus === "pending") {
+                    toast.success('Order created successfully! Rental will start after payment verification.');
+                } else {
+                    toast.success('Order created successfully!');
+                }
+                
+                // Show success message for a moment before navigating
+                setTimeout(() => {
+                    // Clear cart after successful order
+                    localStorage.setItem('cart', '[]');
+                    window.dispatchEvent(new Event('cartUpdated'));
+                    
+                    // Navigate to order confirmation or orders page
+                    navigate('/client-page');
+                }, 3000); // Extended timeout for users to read payment status
+            } else {
+                toast.error(result.message || 'Failed to create order');
+            }
+
+        } catch (error) {
+            console.error('Error placing order:', error);
+            
+            if (error.message === 'Server error - invalid response format') {
+                toast.error('Backend server is not running or wrong port. Check if backend is running on port 5000.');
+            } else if (error.message.includes('fetch')) {
+                toast.error('Cannot connect to server. Make sure the backend is running on port 5000.');
+            } else {
+                toast.error('Failed to place order. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+ 
+    
+
+
+
 
     
 
@@ -260,35 +393,86 @@ export default function Checkout() {
                                 </div>
                             </div>
                             
-                            {/* Payment Method Selection */}
+                            {/* Rental Period Info */}
+                            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-2">Rental Period</h3>
+                                <div className="text-sm text-blue-800">
+                                    <p><strong>Start Date:</strong> {calculatedStartDate.toLocaleDateString()} (Today)</p>
+                                    <p><strong>End Date:</strong> {calculatedEndDate.toLocaleDateString()}</p>
+                                    <p><strong>Duration:</strong> {maxRentalDays} day{maxRentalDays > 1 ? 's' : ''}</p>
+                                </div>
+                                    <p className="text-xs text-blue-600 mt-2">
+                                        * Rental period will start after payment processing.
+                                    </p>
+                                </div>
+                            
+                            {/* Payment Details Component */}
                             <div className="mt-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Payment Method
-                                </label>
-                                <select
-                                    value={paymentMethod}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    style={{ borderColor: 'var(--section-divider)' }}
-                                >
-                                    <option value="card">Credit/Debit Card</option>
-                                    <option value="bank_slip">Bank Slip/online Bank</option>
-                                </select>
+                                <PaymentDetails 
+                                    paymentMethod={paymentMethod}
+                                    setPaymentMethod={setPaymentMethod}
+                                    onPaymentDataChange={handlePaymentDataChange}
+                                    totalAmount={finalTotal}
+                                />
                             </div>
                             
+                            {/* Order Success Indicator */}
+                            {orderSuccess && (
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-6">
+                                    <div className="flex items-center gap-2">
+                                        <FaOpencart className="h-5 w-5 text-green-500" />
+                                        <span className="text-green-700 font-medium">
+                                            {orderPaymentStatus === "paid" ? "Rental Started Successfully!" : 
+                                             orderPaymentStatus === "pending" ? "Order Placed - Pending Payment" :
+                                             "Order Placed Successfully!"}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-green-600 mt-1">
+                                        {orderPaymentStatus === "paid" ? "Your bikes are now reserved and rental period has begun." :
+                                         orderPaymentStatus === "pending" ? "Your rental will begin once payment is verified." :
+                                         "Redirecting to your orders page..."}
+                                    </p>
+                                    <div className="text-xs text-gray-600 mt-2">
+                                        <p><strong>Rental Period:</strong> {calculatedStartDate.toLocaleDateString()} to {calculatedEndDate.toLocaleDateString()}</p>
+                                        <p><strong>Status:</strong> {orderPaymentStatus === "paid" ? "Active" : "Pending Payment Verification"}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Progress Indicator */}
+                            {!orderSuccess && (
+                                <div className="bg-gray-50 p-3 rounded-lg mt-4">
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Order Progress:</h4>
+                                    <div className="space-y-1">
+                                        <div className={`flex items-center gap-2 text-sm text-green-600`}>
+                                            <FaOpencart className="h-3 w-3" />
+                                            Cart items ready ({cartItems.length} bikes)
+                                        </div>
+                                        <div className={`flex items-center gap-2 text-sm ${isPaymentComplete ? 'text-green-600' : 'text-gray-500'}`}>
+                                            {isPaymentComplete ? <FaOpencart className="h-3 w-3" /> : <div className="h-3 w-3 border border-gray-300 rounded-full"></div>}
+                                            Complete payment details
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
                             <button
-                               
-                                className="w-full text-white font-semibold py-3 px-4 rounded-lg mt-6 transition-colors duration-200 flex items-center justify-center gap-2"
-                                style={{ backgroundColor: 'var(--button-primary-bg)' }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = 'var(--button-primary-hover)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = 'var(--button-primary-bg)';
-                                }}
+                                onClick={handlePlaceOrder}
+                                disabled={loading || !isPaymentComplete || orderSuccess}
+                                className={`w-full font-semibold py-3 px-4 rounded-lg mt-6 transition-colors duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed ${
+                                    orderSuccess ? 'bg-green-500 text-white' : 
+                                    isPaymentComplete ? 'bg-blue-500 hover:bg-blue-600 text-white' : 
+                                    'bg-gray-300 text-gray-500'
+                                }`}
                             >
                                 <FaOpencart className="h-5 w-5" />
-                                Place order
+                                {orderSuccess ? 
+                                    (orderPaymentStatus === "paid" ? 'Rental Started!' : 
+                                     orderPaymentStatus === "pending" ? 'Order Created - Pending Payment' : 
+                                     'Order Placed Successfully!') :
+                                 loading ? 'Processing...' : 
+                                 !isPaymentComplete ? 'Complete Payment Details' :
+                                 'Place Order'}
                             </button>
                             
                             <button
@@ -300,7 +484,8 @@ export default function Checkout() {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
         </div>
-    );
+    )
 }

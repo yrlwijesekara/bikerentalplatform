@@ -81,7 +81,7 @@ const orderSchema = new mongoose.Schema(
     // 💳 Payment Information
     paymentMethod: {
       type: String,
-      enum: ["card", "bank_transfer"],
+      enum: ["card"],
       required: true,
     },
 
@@ -108,51 +108,6 @@ const orderSchema = new mongoose.Schema(
     reviewSubmitted: {
       type: Boolean,
       default: false,
-    },
-    // 💳 Bank Transfer Proof
-    paymentProof: {
-      slipImage: {
-        type: String, // uploaded image URL (Cloudinary/S3/local)
-      },
-
-      bankName: {
-        type: String,
-      },
-
-      accountHolderName: {
-        type: String,
-      },
-
-      referenceNumber: {
-        type: String,
-      },
-
-      transferredAmount: {
-        type: Number,
-      },
-
-      transferDate: {
-        type: Date,
-      },
-
-      verificationStatus: {
-        type: String,
-        enum: ["not_uploaded", "pending", "approved", "rejected"],
-        default: "not_uploaded",
-      },
-
-      verifiedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User", // admin or vendor
-      },
-
-      verifiedAt: {
-        type: Date,
-      },
-
-      rejectionReason: {
-        type: String,
-      },
     },
     notes: {
       type: String,

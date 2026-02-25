@@ -93,18 +93,7 @@ export async function createOrder(req, res) {
             totalBikes: totalBikes,
             paymentMethod: req.body.paymentMethod,
             paymentStatus: "pending", // default
-            orderStatus: "pending", // default
-            
-            // Payment proof fields (for bank transfer)
-            paymentProof: req.body.paymentMethod === "bank_transfer" ? {
-                slipImage: req.body.paymentProof?.slipImage,
-                bankName: req.body.paymentProof?.bankName,
-                accountHolderName: req.body.paymentProof?.accountHolderName,
-                referenceNumber: req.body.paymentProof?.referenceNumber,
-                transferredAmount: req.body.paymentProof?.transferredAmount,
-                transferDate: req.body.paymentProof?.transferDate ? new Date(req.body.paymentProof.transferDate) : null,
-                verificationStatus: req.body.paymentProof?.slipImage ? "pending" : "not_uploaded"
-            } : undefined
+            orderStatus: "pending" // default
         });
 
         // Save the order
