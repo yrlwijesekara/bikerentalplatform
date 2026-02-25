@@ -1,10 +1,29 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HiMenu, HiX } from "react-icons/hi";
+import { FaOpencart } from "react-icons/fa";
+import { getCartItemCount } from "../utils/cart";
 
 const UserNavbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  useEffect(() => {
+    const updateCartCount = () => {
+      setCartItemCount(getCartItemCount());
+    };
+    
+    updateCartCount();
+    
+    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('cartUpdated', updateCartCount);
+    
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -43,6 +62,16 @@ const UserNavbar = () => {
         
         <Link to="/profile" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Profile
+        </Link>
+        
+        <Link to="/cart" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium flex items-center gap-1 relative">
+          <FaOpencart className="h-5 w-5" />
+         
+          {cartItemCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+              {cartItemCount > 99 ? '99+' : cartItemCount}
+            </span>
+          )}
         </Link>
         
         <button 
@@ -118,6 +147,20 @@ const UserNavbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Profile
+              </Link>
+              
+              <Link 
+                to="/cart" 
+                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0 flex items-center gap-2 relative"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FaOpencart className="h-5 w-5" />
+              
+                {cartItemCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold ml-auto">
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                )}
               </Link>
               
               <button 

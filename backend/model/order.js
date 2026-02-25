@@ -15,19 +15,53 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    // 🏪 Vendor who owns the bike
-    vendor: {
+    // 🏪 Vendors involved in this order (array of vendor IDs)
+    vendors: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-    },
+    }],
 
-    // 🚲 Selected Bike
-    bike: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
-    },
+    // 🚲 Selected Bikes (array to support multiple bikes)
+    bikes: [{
+      bike: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+      },
+      vendor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+        min: 1,
+        default: 1,
+      },
+      rentalDays: {
+        type: Number,
+        required: true,
+        min: 1,
+        default: 1,
+      },
+      pricePerDay: {
+        type: Number,
+        required: true,
+      },
+      subtotal: {
+        type: Number,
+        required: true,
+      },
+      startDate: {
+        type: Date,
+        required: true,
+      },
+      endDate: {
+        type: Date,
+        required: true,
+      }
+    }],
 
     // 📅 Rental Period
     startDate: {
@@ -46,20 +80,33 @@ const orderSchema = new mongoose.Schema(
     },
 
     // 💰 Pricing
-    pricePerDay: {
-      type: Number,
-      required: true,
-    },
-
     totalAmount: {
       type: Number,
       required: true,
     },
 
+    serviceFee: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    finalTotal: {
+      type: Number,
+      required: true,
+    },
+
+    // Summary of bikes count
+    totalBikes: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
     // 💳 Payment Information
     paymentMethod: {
       type: String,
-      enum: ["card", "bank_transfer"],
+      enum: ["card"],
       required: true,
     },
 
@@ -87,53 +134,9 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    // 💳 Bank Transfer Proof
-    paymentProof: {
-      slipImage: {
-        type: String, // uploaded image URL (Cloudinary/S3/local)
-      },
-
-      bankName: {
-        type: String,
-      },
-
-      accountHolderName: {
-        type: String,
-      },
-
-      referenceNumber: {
-        type: String,
-      },
-
-      transferredAmount: {
-        type: Number,
-      },
-
-      transferDate: {
-        type: Date,
-      },
-
-      verificationStatus: {
-        type: String,
-        enum: ["not_uploaded", "pending", "approved", "rejected"],
-        default: "not_uploaded",
-      },
-
-      verifiedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User", // admin or vendor
-      },
-
-      verifiedAt: {
-        type: Date,
-      },
-
-      rejectionReason: {
-        type: String,
-      },
-    },
     notes: {
       type: String,
+      default: "No additional notes.",
     },
   },
   { timestamps: true },

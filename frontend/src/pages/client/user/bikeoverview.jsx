@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Loader from "../../../components/loader";
 import ImageSlider from "../../../components/imagesilder";
+import { addToCart, getCart, isProductInCart } from "../../../utils/cart";
 
 export default function BikeOverview()   {
 
@@ -11,23 +12,39 @@ export default function BikeOverview()   {
     const navigate = useNavigate();
     const [bike, setBike] = useState(null);
     const [status, setStatus] = useState("loading");
+    const [isInCart, setIsInCart] = useState(false);
+    const [rentalDays, setRentalDays] = useState(1);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    // Simple cart functions for this component
-    const addToCart = (product, quantity) => {
-        // Add your cart logic here
-        console.log('Adding to cart:', product, quantity);
-    };
-
-    const getCart = () => {
-        // Add your get cart logic here
-        return [];
-    };
+    // Check if user is logged in
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        setIsLoggedIn(!!token);
+        
+        // Listen for login/logout changes
+        const handleAuthChange = () => {
+            const newToken = localStorage.getItem('token');
+            setIsLoggedIn(!!newToken);
+        };
+        
+        window.addEventListener('storage', handleAuthChange);
+        
+        // Check periodically for auth changes within the same tab
+        const interval = setInterval(handleAuthChange, 1000);
+        
+        return () => {
+            window.removeEventListener('storage', handleAuthChange);
+            clearInterval(interval);
+        };
+    }, []);
 
     useEffect(() => {
         if(status === "loading") {
             axios.get(import.meta.env.VITE_BACKEND_URL + `/products/${params.bikeid}`)
             .then(response => {
                 setBike(response.data.product);
+                // Check if bike is already in cart
+                setIsInCart(isProductInCart(response.data.product._id));
                 toast.success("Bike details fetched successfully");
                 setStatus("success");
             })
@@ -39,6 +56,20 @@ export default function BikeOverview()   {
 
         }
     }, [status, params.bikeid]);
+
+    // Listen for cart updates to refresh isInCart status
+    useEffect(() => {
+        const handleCartUpdate = () => {
+            if (bike) {
+                setIsInCart(isProductInCart(bike._id));
+            }
+        };
+
+        window.addEventListener('cartUpdated', handleCartUpdate);
+        return () => {
+            window.removeEventListener('cartUpdated', handleCartUpdate);
+        };
+    }, [bike]);
 
     return (
         <div className="w-full h-screen overflow-hidden flex justify-center items-center" style={{ backgroundColor: 'var(--main-background)' }}> 
@@ -152,58 +183,152 @@ export default function BikeOverview()   {
                             </div>
                         </div>
 
-                        {/* Pricing */}
+                        {/* Pricing and Rental Days */}
                         <div className="p-4 rounded-lg shadow-md" style={{ backgroundColor: 'var(--card-background)', boxShadow: '0 2px 8px var(--shadow-color)' }}>
-                            <h3 className="text-lg font-semibold mb-2 text-gray-800">Rental Price</h3>
-                            <div className="text-2xl font-bold" style={{ color: 'var(--brand-success)' }}>
-                                Rs. {bike.pricePerDay ? bike.pricePerDay.toFixed(2) : '0.00'} / day
+                            <h3 className="text-lg font-semibold mb-3 text-gray-800">Rental Details</h3>
+                            
+                            {/* Rental Days Selector */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Number of Rental Days:
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setRentalDays(Math.max(1, rentalDays - 1))}
+                                        disabled={rentalDays <= 1}
+                                        className="bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200"
+                                    >
+                                        -
+                                    </button>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="30"
+                                        value={rentalDays}
+                                        onChange={(e) => {
+                                            const days = parseInt(e.target.value);
+                                            if (days >= 1 && days <= 30) {
+                                                setRentalDays(days);
+                                            }
+                                        }}
+                                        className="w-20 px-3 py-2 text-center border border-gray-300 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <button
+                                        onClick={() => setRentalDays(Math.min(30, rentalDays + 1))}
+                                        disabled={rentalDays >= 30}
+                                        className="bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200"
+                                    >
+                                        +
+                                    </button>
+                                    <span className="text-sm text-gray-600">
+                                        day{rentalDays > 1 ? 's' : ''}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Price Display */}
+                            <div className="border-t pt-3">
+                                <div className="text-sm text-gray-600 mb-1">
+                                    Rs. {bike.pricePerDay ? bike.pricePerDay.toFixed(2) : '0.00'} per day
+                                </div>
+                                <div className="text-2xl font-bold" style={{ color: 'var(--brand-success)' }}>
+                                    Total: Rs. {bike.pricePerDay ? (bike.pricePerDay * rentalDays).toFixed(2) : '0.00'}
+                                </div>
+                                <div className="text-sm text-gray-500 mt-1">
+                                    Rs. {bike.pricePerDay ? bike.pricePerDay.toFixed(2) : '0.00'} × {rentalDays} day{rentalDays > 1 ? 's' : ''}
+                                </div>
                             </div>
                         </div>
                         <div className="w-full mt-2 sm:mt-4">
                             <button 
-                                className="w-full border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300 cursor-pointer"
+                                className="w-full border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300"
+                                disabled={isInCart || !isLoggedIn}
                                 style={{ 
-                                    backgroundColor: 'var(--button-primary-bg)', 
-                                    color: 'var(--button-primary-text)',
-                                    borderColor: 'var(--button-primary-bg)'
+                                    backgroundColor: (isInCart || !isLoggedIn) ? '#95a5a6' : 'var(--button-primary-bg)', 
+                                    color: (isInCart || !isLoggedIn) ? '#7f8c8d' : 'var(--button-primary-text)',
+                                    borderColor: (isInCart || !isLoggedIn) ? '#95a5a6' : 'var(--button-primary-bg)',
+                                    cursor: (isInCart || !isLoggedIn) ? 'not-allowed' : 'pointer',
+                                    opacity: (isInCart || !isLoggedIn) ? 0.7 : 1
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = 'var(--button-primary-hover)';
-                                    e.target.style.borderColor = 'var(--button-primary-hover)';
+                                    if (!isInCart && isLoggedIn) {
+                                        e.target.style.backgroundColor = 'var(--button-primary-hover)';
+                                        e.target.style.borderColor = 'var(--button-primary-hover)';
+                                    }
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = 'var(--button-primary-bg)';
-                                    e.target.style.borderColor = 'var(--button-primary-bg)';
+                                    if (!isInCart && isLoggedIn) {
+                                        e.target.style.backgroundColor = 'var(--button-primary-bg)';
+                                        e.target.style.borderColor = 'var(--button-primary-bg)';
+                                    }
                                 }}
                                 onClick={() => {
-                                    addToCart(bike, 1);
-                                    toast.success("Product added to cart");
-                                    console.log(getCart());
+                                    if (!isLoggedIn) {
+                                        toast.error('Please login first to add items to cart');
+                                        navigate('/login');
+                                        return;
+                                    }
+                                    if (isInCart) return; // Prevent action if already in cart
+                                    const result = addToCart(bike, rentalDays);
+                                    if (result.success) {
+                                        toast.success(result.message);
+                                        setIsInCart(true);
+                                        // Dispatch custom event to update cart count in navbar
+                                        window.dispatchEvent(new Event('cartUpdated'));
+                                    } else {
+                                        toast.warning(result.message);
+                                    }
                                 }}
                             >
-                                Add to cart 
+                                {!isLoggedIn ? "Login to Add Cart" : (isInCart ? "Already in Cart" : "Add to cart")}
                             </button>
                             <button 
-                                className="w-full mt-2 border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300 cursor-pointer"
+                                className="w-full mt-2 border-2 py-2 sm:py-3 text-sm sm:text-base rounded transition-colors duration-300"
+                                disabled={!isLoggedIn}
                                 style={{ 
-                                    backgroundColor: 'var(--brand-success)', 
-                                    color: 'white',
-                                    borderColor: 'var(--brand-success)'
+                                    backgroundColor: !isLoggedIn ? '#95a5a6' : 'var(--brand-success)', 
+                                    color: !isLoggedIn ? '#7f8c8d' : 'white',
+                                    borderColor: !isLoggedIn ? '#95a5a6' : 'var(--brand-success)',
+                                    cursor: !isLoggedIn ? 'not-allowed' : 'pointer',
+                                    opacity: !isLoggedIn ? 0.7 : 1
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = '#27AE60';
-                                    e.target.style.borderColor = '#27AE60';
+                                    if (isLoggedIn) {
+                                        e.target.style.backgroundColor = '#27AE60';
+                                        e.target.style.borderColor = '#27AE60';
+                                    }
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = 'var(--brand-success)';
-                                    e.target.style.borderColor = 'var(--brand-success)';
+                                    if (isLoggedIn) {
+                                        e.target.style.backgroundColor = 'var(--brand-success)';
+                                        e.target.style.borderColor = 'var(--brand-success)';
+                                    }
                                 }}
                                 onClick={() => {
-                                    addToCart(bike, 1);
-                                    navigate('/checkout', { state: { items: getCart() } });
+                                    if (!isLoggedIn) {
+                                        toast.error('Please login first to rent a bike');
+                                        navigate('/login');
+                                        return;
+                                    }
+                                    
+                                    if (isInCart) {
+                                        // If already in cart, just go to checkout
+                                        navigate('/checkout', { state: { items: getCart() } });
+                                        return;
+                                    }
+                                    
+                                    const result = addToCart(bike, rentalDays);
+                                    if (result.success) {
+                                        // Dispatch custom event to update cart count in navbar
+                                        window.dispatchEvent(new Event('cartUpdated'));
+                                        navigate('/checkout', { state: { items: getCart() } });
+                                    } else {
+                                        // If already in cart, just go to checkout
+                                        navigate('/checkout', { state: { items: getCart() } });
+                                    }
                                 }}
                             >
-                                Rent Now
+                                {!isLoggedIn ? "Login to Rent" : (isInCart ? "Go to Checkout" : "Rent Now")}
                             </button>
                         </div>
                     </div>
