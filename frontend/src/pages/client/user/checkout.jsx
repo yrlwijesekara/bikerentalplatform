@@ -44,10 +44,20 @@ export default function Checkout() {
     const finalTotal = cartTotal + serviceFee;
 
     // Calculate rental period info for display
-    const maxRentalDays = cartItems.length > 0 ? Math.max(...cartItems.map(item => item.rentalDays || 1)) : 1;
-    const calculatedStartDate = new Date();
-    const calculatedEndDate = new Date(calculatedStartDate);
-    calculatedEndDate.setDate(calculatedStartDate.getDate() + maxRentalDays);
+    const getRentalPeriodInfo = () => {
+        if (cartItems.length === 0) return { minDays: 1, maxDays: 1, startDate: new Date(), endDate: new Date() };
+        
+        const rentalDays = cartItems.map(item => item.rentalDays || 1);
+        const minDays = Math.min(...rentalDays);
+        const maxDays = Math.max(...rentalDays);
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + maxDays);
+        
+        return { minDays, maxDays, startDate, endDate };
+    };
+    
+    const rentalInfo = getRentalPeriodInfo();
 
     
     const loadCartItems = () => {
@@ -114,12 +124,6 @@ export default function Checkout() {
                 return;
             }
 
-            // Calculate dates from rental days
-            const startDate = new Date();
-            const maxRentalDays = Math.max(...cartItems.map(item => item.rentalDays || 1));
-            const endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + maxRentalDays);
-
             // Only card payment is supported now
             if (paymentData.paymentMethod !== 'card') {
                 toast.error('Only card payment is supported');
@@ -140,19 +144,22 @@ export default function Checkout() {
             const bikes = cartItems.map(item => ({
                 bikeId: item.productId,
                 quantity: 1, // For bike rentals, quantity is always 1
-                pricePerDay: item.price
+                pricePerDay: item.price,
+                rentalDays: item.rentalDays || 1
             }));
 
+            // Calculate dates from rental days
+            const startDate = new Date();
+            
             // Create order data
             const orderData = {
                 bikes,
                 startDate: startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
-                endDate: endDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
                 paymentMethod: paymentData.paymentMethod
             };
 
             // Call order API
-            const response = await fetch(
+            const response = await fetch( 
                 (import.meta.env.VITE_BACKEND_URL) + "/orders/",
                 {
                     method: 'POST',
@@ -399,9 +406,13 @@ export default function Checkout() {
                             <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Rental Period</h3>
                                 <div className="text-sm text-blue-800">
-                                    <p><strong>Start Date:</strong> {calculatedStartDate.toLocaleDateString()} (Today)</p>
-                                    <p><strong>End Date:</strong> {calculatedEndDate.toLocaleDateString()}</p>
-                                    <p><strong>Duration:</strong> {maxRentalDays} day{maxRentalDays > 1 ? 's' : ''}</p>
+                                    <p><strong>Start Date:</strong> {rentalInfo.startDate.toLocaleDateString()} (Today)</p>
+                                    <p><strong>Latest End Date:</strong> {rentalInfo.endDate.toLocaleDateString()}</p>
+                                    <p><strong>Duration Range:</strong> 
+                                        {rentalInfo.minDays === rentalInfo.maxDays 
+                                            ? `${rentalInfo.maxDays} day${rentalInfo.maxDays > 1 ? 's' : ''}` 
+                                            : `${rentalInfo.minDays}-${rentalInfo.maxDays} days`}
+                                    </p>
                                 </div>
                                     <p className="text-xs text-blue-600 mt-2">
                                         * Rental period will start after payment processing.
@@ -435,7 +446,7 @@ export default function Checkout() {
                                          "Redirecting to your orders page..."}
                                     </p>
                                     <div className="text-xs text-gray-600 mt-2">
-                                        <p><strong>Rental Period:</strong> {calculatedStartDate.toLocaleDateString()} to {calculatedEndDate.toLocaleDateString()}</p>
+                                        <p><strong>Rental Period:</strong> {rentalInfo.startDate.toLocaleDateString()} to {rentalInfo.endDate.toLocaleDateString()}</p>
                                         <p><strong>Status:</strong> {orderPaymentStatus === "paid" ? "Active" : "Pending Payment Verification"}</p>
                                     </div>
                                 </div>

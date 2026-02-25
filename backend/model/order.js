@@ -39,12 +39,26 @@ const orderSchema = new mongoose.Schema(
         min: 1,
         default: 1,
       },
+      rentalDays: {
+        type: Number,
+        required: true,
+        min: 1,
+        default: 1,
+      },
       pricePerDay: {
         type: Number,
         required: true,
       },
       subtotal: {
         type: Number,
+        required: true,
+      },
+      startDate: {
+        type: Date,
+        required: true,
+      },
+      endDate: {
+        type: Date,
         required: true,
       }
     }],

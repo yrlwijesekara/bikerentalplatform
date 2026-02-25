@@ -25,14 +25,10 @@ export async function createOrder(req, res) {
             orderid = "R" + newOrderIdWithoutPrefix; // "R000221"
         }
 
-        // Calculate rental duration
-        const startDate = new Date(req.body.startDate);
-        const endDate = new Date(req.body.endDate);
-        const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-
-        if (totalDays <= 0) {
-            return res.status(400).json({ message: "Invalid date range" });
-        }
+        // Calculate rental duration based on individual bike rental days
+        const orderStartDate = new Date(req.body.startDate || new Date());
+        let minStartDate = orderStartDate;
+        let maxEndDate = orderStartDate;
 
         // Process each bike and validate
         const bikeItems = [];
@@ -65,20 +61,36 @@ export async function createOrder(req, res) {
 
             const pricePerDay = bikeRequest.pricePerDay || bike.pricePerDay;
             const quantity = bikeRequest.quantity;
-            const subtotal = pricePerDay * totalDays * quantity;
+            const rentalDays = bikeRequest.rentalDays || 1;
+            const subtotal = pricePerDay * rentalDays * quantity;
+
+            // Calculate individual bike rental period
+            const bikeStartDate = new Date(orderStartDate);
+            const bikeEndDate = new Date(bikeStartDate);
+            bikeEndDate.setDate(bikeStartDate.getDate() + rentalDays);
+
+            // Update order-level date range
+            if (bikeStartDate < minStartDate) minStartDate = bikeStartDate;
+            if (bikeEndDate > maxEndDate) maxEndDate = bikeEndDate;
 
             bikeItems.push({
                 bike: bike._id,
                 vendor: bike.vendor._id || bike.vendor,
                 quantity: quantity,
+                rentalDays: rentalDays,
                 pricePerDay: pricePerDay,
-                subtotal: subtotal
+                subtotal: subtotal,
+                startDate: bikeStartDate,
+                endDate: bikeEndDate
             });
 
             vendorSet.add((bike.vendor._id || bike.vendor).toString());
             totalAmount += subtotal;
             totalBikes += quantity;
         }
+
+        // Calculate order-level total days
+        const totalDays = Math.ceil((maxEndDate - minStartDate) / (1000 * 60 * 60 * 24));
 
         // Calculate service fee (10%)
         const serviceFee = totalAmount * 0.10;
@@ -90,8 +102,8 @@ export async function createOrder(req, res) {
             user: req.user.id, 
             vendors: Array.from(vendorSet), // Convert Set to Array
             bikes: bikeItems,
-            startDate: startDate,
-            endDate: endDate,
+            startDate: minStartDate,
+            endDate: maxEndDate,
             totalDays: totalDays,
             totalAmount: totalAmount,
             serviceFee: serviceFee,

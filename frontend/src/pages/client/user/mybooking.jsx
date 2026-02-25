@@ -77,7 +77,7 @@ export default function Mybooking() {
       }
 
       const response = await axios.get(
-        (import.meta.env.VITE_BACKEND_URL) + "/orders/my-orders",
+        `${import.meta.env.VITE_BACKEND_URL}/orders/my-orders`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -240,11 +240,19 @@ export default function Mybooking() {
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                       <span>Type: {bikeItem.bike.bikeType}</span>
                       <span>Qty: {bikeItem.quantity}</span>
+                      {bikeItem.rentalDays && (
+                        <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
+                      )}
                       <span>Rs. {bikeItem.pricePerDay}/day</span>
                       <span className="font-medium text-blue-600">
                         Subtotal: Rs. {bikeItem.subtotal.toFixed(2)}
                       </span>
                     </div>
+                    {bikeItem.startDate && bikeItem.endDate && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        <span>Rental: {new Date(bikeItem.startDate).toLocaleDateString()} - {new Date(bikeItem.endDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
