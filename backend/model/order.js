@@ -71,6 +71,17 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    serviceFee: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    finalTotal: {
+      type: Number,
+      required: true,
+    },
+
     // Summary of bikes count
     totalBikes: {
       type: Number,

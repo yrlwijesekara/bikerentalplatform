@@ -152,12 +152,14 @@ export default function Checkout() {
             };
 
             // Call order API
-            const response = await fetch('http://localhost:5000/api/orders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+            const response = await fetch(
+                (import.meta.env.VITE_BACKEND_URL) + "/orders/",
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                 body: JSON.stringify(orderData)
             });
 

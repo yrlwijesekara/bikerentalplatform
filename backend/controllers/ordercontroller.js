@@ -80,6 +80,10 @@ export async function createOrder(req, res) {
             totalBikes += quantity;
         }
 
+        // Calculate service fee (10%)
+        const serviceFee = totalAmount * 0.10;
+        const finalTotal = totalAmount + serviceFee;
+
         // Create order object with all required fields
         const order = new Order({
             orderid: orderid,
@@ -90,6 +94,8 @@ export async function createOrder(req, res) {
             endDate: endDate,
             totalDays: totalDays,
             totalAmount: totalAmount,
+            serviceFee: serviceFee,
+            finalTotal: finalTotal,
             totalBikes: totalBikes,
             paymentMethod: req.body.paymentMethod,
             paymentStatus: "pending", // default
@@ -127,7 +133,9 @@ export async function createOrder(req, res) {
             orderId: orderid,
             summary: {
                 totalBikes: totalBikes,
-                totalAmount: totalAmount,
+                subtotal: totalAmount,
+                serviceFee: serviceFee,
+                finalTotal: finalTotal,
                 vendors: Array.from(vendorSet).length
             }
         });
@@ -149,9 +157,9 @@ export async function getUserOrders(req, res) {
         }
 
         const orders = await Order.find({ user: req.user.id })
-            .populate('vendors', 'name email phoneNumber')
+            .populate('vendors', 'name email phone')
             .populate('bikes.bike', 'bikeName bikeType images pricePerDay')
-            .populate('bikes.vendor', 'name email')
+            .populate('bikes.vendor', 'name email phone')
             .sort({ createdAt: -1 });
 
         res.status(200).json({
@@ -179,8 +187,8 @@ export async function getVendorOrders(req, res) {
         const orders = await Order.find({ vendors: req.user.id })
             .populate('user', 'name email phoneNumber')
             .populate('bikes.bike', 'bikeName bikeType images')
-            .populate('bikes.vendor', 'name email')
-            .populate('vendors', 'name email')
+            .populate('bikes.vendor', 'name email phone')
+            .populate('vendors', 'name email phone')
             .sort({ createdAt: -1 });
 
         res.status(200).json({

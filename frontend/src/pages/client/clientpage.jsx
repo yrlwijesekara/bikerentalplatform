@@ -11,6 +11,7 @@ import UpdatebikePage from "./vendor/updatebikepage.jsx";
 import BikeOverview from "./user/bikeoverview.jsx";
 import Cart from "./user/cart.jsx";
 import Checkout from "./user/checkout.jsx";
+import Mybooking from "./user/mybooking.jsx";
 
 export default function Clientpage() {
   return (
@@ -21,7 +22,7 @@ export default function Clientpage() {
             <Route path="/ai-suggestions" element={<h1 className="text-black">AI Suggestions Page</h1>} />
             <Route path="/my-bookings" element={
               <ProtectedRoute requiredRole="user">
-                <h1 className="text-black">My Bookings Page</h1>
+                <Mybooking />
               </ProtectedRoute>
             } />
             <Route path="/routes" element={<h1 className="text-black">Routes & Safety Page</h1>} />
