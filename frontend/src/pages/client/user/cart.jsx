@@ -45,15 +45,17 @@ export default function Cart() {
         if (newRentalDays < 1) return;
         
         try {
-            updateCartRentalDays(productId, newRentalDays);
+            // Update ALL bikes in cart to have the same rental days
+            cartItems.forEach(item => {
+                updateCartRentalDays(item.productId, newRentalDays);
+            });
+            
+            // Update local state
             setCartItems(prevItems => 
-                prevItems.map(item => 
-                    item.productId === productId 
-                        ? { ...item, rentalDays: newRentalDays }
-                        : item
-                )
+                prevItems.map(item => ({ ...item, rentalDays: newRentalDays }))
             );
-            toast.success('Rental days updated');
+            
+            toast.success(`All bikes updated to ${newRentalDays} day${newRentalDays > 1 ? 's' : ''}`);
             // Dispatch event for navbar and total update
             window.dispatchEvent(new Event('cartUpdated'));
         } catch (error) {
@@ -170,6 +172,8 @@ export default function Cart() {
                 <div className="flex flex-col xl:flex-row gap-8">
                     {/* Cart Items List */}
                     <div className="xl:w-2/3">
+                        
+                        
                         <div className="space-y-4">
                             {cartItems.map((item) => (
                                 <div
@@ -202,7 +206,7 @@ export default function Cart() {
                                                         {item.city && <span className="text-gray-500 flex items-center gap-1 mt-1"><CiLocationOn className="h-4 w-4" /> {item.city}</span>}
                                                     </p>
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-sm text-gray-500">Rental Days:</span>
+                                                        <span className="text-sm text-gray-500">Rental Days (All Items):</span>
                                                         <div className="flex items-center gap-1">
                                                             <button
                                                                 onClick={() => handleUpdateRentalDays(item.productId, (item.rentalDays || 1) - 1)}
@@ -212,6 +216,7 @@ export default function Cart() {
                                                                     backgroundColor: (item.rentalDays || 1) <= 1 ? '#F0F0F0' : 'var(--button-primary-disabled)',
                                                                     color: (item.rentalDays || 1) <= 1 ? '#A0A0A0' : 'var(--brand-primary)'
                                                                 }}
+                                                                title="Decrease rental days for all bikes"
                                                             >
                                                                 -
                                                             </button>
@@ -231,6 +236,7 @@ export default function Cart() {
                                                                     focusRingColor: 'var(--brand-primary)',
                                                                     borderColor: 'var(--section-divider)'
                                                                 }}
+                                                                title="Set rental days for all bikes"
                                                             />
                                                             <button
                                                                 onClick={() => handleUpdateRentalDays(item.productId, (item.rentalDays || 1) + 1)}
@@ -240,6 +246,7 @@ export default function Cart() {
                                                                     backgroundColor: (item.rentalDays || 1) >= 30 ? '#F0F0F0' : 'var(--button-primary-disabled)',
                                                                     color: (item.rentalDays || 1) >= 30 ? '#A0A0A0' : 'var(--brand-primary)'
                                                                 }}
+                                                                title="Increase rental days for all bikes"
                                                             >
                                                                 +
                                                             </button>

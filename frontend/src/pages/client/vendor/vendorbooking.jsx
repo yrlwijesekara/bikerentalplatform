@@ -13,7 +13,7 @@ export default function VendorBooking() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState('');
+  const [selectedPaymentDate, setSelectedPaymentDate] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState({});
 
   // Available order statuses for vendors to set
@@ -51,14 +51,16 @@ export default function VendorBooking() {
       );
     }
 
-    if (selectedPaymentStatus) {
-      filtered = filtered.filter(booking => 
-        booking.paymentStatus.toLowerCase() === selectedPaymentStatus.toLowerCase()
-      );
+    if (selectedPaymentDate) {
+      filtered = filtered.filter(booking => {
+        const bookingDate = new Date(booking.createdAt).toDateString();
+        const filterDate = new Date(selectedPaymentDate).toDateString();
+        return bookingDate === filterDate;
+      });
     }
 
     setFilteredBookings(filtered);
-  }, [bookings, searchTerm, selectedStatus, selectedPaymentStatus]);
+  }, [bookings, searchTerm, selectedStatus, selectedPaymentDate]);
 
   // Get unique statuses for filter dropdowns
   const getOrderStatuses = () => {
@@ -66,15 +68,15 @@ export default function VendorBooking() {
     return [...new Set(statuses)];
   };
 
-  const getPaymentStatuses = () => {
-    const statuses = bookings.map(booking => booking.paymentStatus).filter(Boolean);
-    return [...new Set(statuses)];
+  const getPaymentDates = () => {
+    const dates = bookings.map(booking => new Date(booking.createdAt).toDateString()).filter(Boolean);
+    return [...new Set(dates)].sort((a, b) => new Date(b) - new Date(a));
   };
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedStatus('');
-    setSelectedPaymentStatus('');
+    setSelectedPaymentDate('');
   };
 
   const fetchBookings = async () => {
@@ -431,19 +433,15 @@ export default function VendorBooking() {
                 </select>
               </div>
 
-              {/* Payment Status Filter */}
+              {/* Payment Date Filter */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Payment Status</label>
-                <select
-                  value={selectedPaymentStatus}
-                  onChange={(e) => setSelectedPaymentStatus(e.target.value)}
+                <label className="block text-sm font-medium text-gray-700">Payment Date</label>
+                <input
+                  type="date"
+                  value={selectedPaymentDate}
+                  onChange={(e) => setSelectedPaymentDate(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All Payment Statuses</option>
-                  {getPaymentStatuses().map((status) => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
+                />
               </div>
 
               {/* Clear Filters */}
