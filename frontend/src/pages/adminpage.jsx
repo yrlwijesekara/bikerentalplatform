@@ -1,5 +1,5 @@
 import { Routes, Route, Link as Links, useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RiMotorbikeFill, RiDashboardLine } from "react-icons/ri";
 import { FaUserAlt } from "react-icons/fa";
 import { TiVendorAndroid } from "react-icons/ti";
@@ -8,15 +8,79 @@ import { VscCodeReview } from "react-icons/vsc";
 import { FiLogOut, FiSettings } from "react-icons/fi";
 import { HiMenu, HiX, HiBell } from "react-icons/hi";
 import ProductAdminPage from "./admin/productAdmin.jsx";
-
-
-
-
+import axios from "axios";
+import toast from "react-hot-toast";
+import Loader from "../components/loader";
 
 export default function Adminpage() {
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isAuthorizing, setIsAuthorizing] = useState(true);
+    const [userInfo, setUserInfo] = useState(null);
+
+    // Check authorization on component mount
+    useEffect(() => {
+        checkAdminAuthorization();
+    }, []);
+
+    const checkAdminAuthorization = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            
+            if (!token) {
+                toast.error("Please login to access admin panel");
+                navigate("/login");
+                return;
+            }
+
+            // Verify user role from backend
+            const response = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/users`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            const user = response.data;
+            
+            // Check if user has admin role
+            if (!user || user.role !== "admin") {
+                toast.error("Access denied. Admin privileges required.");
+                
+                // Redirect based on actual user role
+                switch (user?.role) {
+                    case "vendor":
+                        navigate("/vendor/dashboard");
+                        break;
+                    case "user":
+                        navigate("/find-bikes");
+                        break;
+                    default:
+                        localStorage.removeItem("token");
+                        localStorage.removeItem("role");
+                        navigate("/login");
+                        break;
+                }
+                return;
+            }
+
+            // User is authorized admin
+            setUserInfo(user);
+            localStorage.setItem("role", user.role);
+            
+        } catch (error) {
+            console.error("Authorization check failed:", error);
+            toast.error("Authorization failed. Please login again.");
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            navigate("/login");
+        } finally {
+            setIsAuthorizing(false);
+        }
+    };
 
     // Navigation items configuration
     const navigationItems = [
@@ -66,7 +130,10 @@ export default function Adminpage() {
         localStorage.removeItem('adminToken');
         localStorage.removeItem('token');
         localStorage.removeItem('userRole');
+        localStorage.removeItem('role');
         sessionStorage.clear();
+        
+        toast.success("Logged out successfully");
         
         // Redirect to login page
         navigate('/login');
@@ -79,6 +146,21 @@ export default function Adminpage() {
     const closeSidebar = () => {
         setIsSidebarOpen(false);
     };
+
+    // Show loading screen while checking authorization
+    if (isAuthorizing) {
+        return (
+            <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
+                <Loader />
+                <p className="text-lg text-gray-600 mt-4">Verifying admin access...</p>
+            </div>
+        );
+    }
+
+    // Don't render admin content if user is not authorized (failsafe)
+    if (!userInfo || userInfo.role !== "admin") {
+        return null;
+    }
 
     return (
         <div className="w-full min-h-screen flex relative bg-gray-50">
@@ -200,9 +282,13 @@ export default function Adminpage() {
                         </button>
                         <div className="flex items-center space-x-2">
                             <div className="w-8 h-8 bg-amber-900 rounded-full flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">A</span>
+                                <span className="text-white font-bold text-sm">
+                                    {userInfo?.firstname?.[0]?.toUpperCase() || 'A'}
+                                </span>
                             </div>
-                            <span className="text-gray-700 font-medium">Admin</span>
+                            <span className="text-gray-700 font-medium">
+                                {userInfo?.firstname ? `${userInfo.firstname} ${userInfo.lastname}` : 'Admin'}
+                            </span>
                         </div>
                     </div>
                 </div>
