@@ -6,6 +6,9 @@ import { BiReceipt } from "react-icons/bi";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../../../components/loader";
+import { FaPhone } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
+import { FaEnvelope } from "react-icons/fa";
 
 export default function Mybooking() {
   const [bookings, setBookings] = useState([]);
@@ -15,6 +18,7 @@ export default function Mybooking() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedPaymentDate, setSelectedPaymentDate] = useState('');
+  const [expandedBikeStatus, setExpandedBikeStatus] = useState({});
 
   // Fetch bookings from database
   useEffect(() => {
@@ -158,16 +162,59 @@ export default function Mybooking() {
               </div>
             </div>
             
-            <div className="flex gap-2">
-              <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(booking.orderStatus)}`}>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div 
+                className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(booking.orderStatus)} sm:cursor-help md:cursor-help sm:relative group`}
+                onClick={() => window.innerWidth < 640 && setExpandedBikeStatus(prev => ({ ...prev, [booking._id]: !prev[booking._id] }))}
+                title="View individual bike statuses"
+              >
                 {getStatusIcon(booking.orderStatus)}
                 {booking.orderStatus}
+                
+                {/* Mobile Arrow - Only visible on small screens */}
+                <span className="text-xs ml-1 sm:hidden">
+                  {expandedBikeStatus[booking._id] ? '▲' : '▼'}
+                </span>
+                
+                {/* Desktop Hover Tooltip - Only visible on medium screens and above */}
+                <div className="invisible group-hover:visible absolute top-full left-0 mt-2 bg-black text-white text-xs rounded p-2 whitespace-nowrap z-10 shadow-lg hidden sm:block">
+                  <div className="font-semibold mb-1">Individual Bike Statuses:</div>
+                  {booking.bikes && booking.bikes.map((bikeItem, idx) => (
+                    <div key={idx} className="flex items-center gap-1 py-0.5">
+                      {getStatusIcon(bikeItem.bikeStatus || 'pending')}
+                      <span className="truncate max-w-32">{bikeItem.bike.bikeName}</span>
+                      <span className="text-gray-300">:</span>
+                      <span className="capitalize">{bikeItem.bikeStatus || 'pending'}</span>
+                    </div>
+                  ))}
+                  <div className="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
+                </div>
               </div>
               <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(booking.paymentStatus)}`}>
                 {getPaymentStatusIcon(booking.paymentStatus)}
                 {booking.paymentStatus}
               </div>
             </div>
+            
+            {/* Mobile Expandable Section - Only visible on small screens */}
+            {expandedBikeStatus[booking._id] && (
+              <div className="mt-3 p-3 bg-gray-100 rounded-lg border border-gray-200 sm:hidden">
+                <div className="text-xs font-semibold text-gray-700 mb-2">Individual Bike Statuses:</div>
+                <div className="space-y-2">
+                  {booking.bikes && booking.bikes.map((bikeItem, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-2 py-1">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {getStatusIcon(bikeItem.bikeStatus || 'pending')}
+                        <span className="text-xs text-gray-800 truncate font-medium">{bikeItem.bike.bikeName}</span>
+                      </div>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(bikeItem.bikeStatus || 'pending')}`}>
+                        {bikeItem.bikeStatus || 'pending'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Rental Details */}
@@ -265,20 +312,57 @@ export default function Mybooking() {
           {booking.vendors && booking.vendors.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="font-medium text-gray-700 mb-2">Vendor Information</p>
-              <div className="space-y-1">
-                {booking.vendors.map((vendor, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                    <span className="font-medium">{vendor.name}</span>
-                    <span>•</span>
-                    <span>{vendor.email}</span>
-                    {vendor.phone && (
-                      <>
-                        <span>•</span>
-                        <span>{vendor.phone}</span>
-                      </>
-                    )}
-                  </div>
-                ))}
+              <div className="space-y-3">
+                {booking.vendors.map((vendor, index) => {
+                  // Filter bikes belonging to this vendor
+                  const vendorBikes = booking.bikes.filter(bikeItem => 
+                    bikeItem.vendor && bikeItem.vendor._id === vendor._id
+                  );
+                  
+                  return (
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mb-2">
+                        <div className="flex items-center gap-2">
+                          <FaUser className="text-gray-500 flex-shrink-0" size={14} />
+                          <span className="font-medium">{vendor.firstname} {vendor.lastname}</span>
+                        </div>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FaEnvelope className="text-gray-500 flex-shrink-0" size={14} />
+                          <span className="truncate">{vendor.email}</span>
+                        </div>
+                        {vendor.phone && (
+                          <div className="flex items-center gap-2">
+                            <FaPhone className="text-gray-500 flex-shrink-0" size={14} />
+                            <span>{vendor.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Vendor's Bikes */}
+                      {vendorBikes.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <div className="text-xs font-medium text-gray-600 mb-1">
+                            Bikes from this vendor:
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {vendorBikes.map((bikeItem, bikeIndex) => (
+                              <span 
+                                key={bikeIndex} 
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                              >
+                                <FaMotorcycle size={10} />
+                                {bikeItem.bike.bikeName}
+                                {bikeItem.quantity > 1 && (
+                                  <span className="text-blue-600 font-medium">x{bikeItem.quantity}</span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

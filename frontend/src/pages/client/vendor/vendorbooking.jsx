@@ -110,19 +110,19 @@ export default function VendorBooking() {
     }
   };
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateBikeStatus = async (orderId, bikeId, newStatus, bikeName) => {
     try {
-      setUpdatingStatus(prev => ({ ...prev, [orderId]: true }));
+      setUpdatingStatus(prev => ({ ...prev, [`${orderId}-${bikeId}`]: true }));
       const token = localStorage.getItem("token");
       
       if (!token) {
-        toast.error("Please login to update order status");
+        toast.error("Please login to update bike status");
         return;
       }
 
       const response = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/orders/${orderId}/status`,
-        { orderStatus: newStatus },
+        { bikeId: bikeId, bikeStatus: newStatus },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -131,26 +131,19 @@ export default function VendorBooking() {
       );
 
       if (response.data.success) {
-        // Update the booking in the local state
-        setBookings(prevBookings => 
-          prevBookings.map(booking => 
-            booking._id === orderId 
-              ? { ...booking, orderStatus: newStatus }
-              : booking
-          )
-        );
-        
-        toast.success(`Order status updated to ${newStatus}`);
+        // Refresh bookings to get updated data
+        fetchBookings();
+        toast.success(`${bikeName} status updated to ${newStatus}`);
       } else {
-        toast.error("Failed to update order status");
+        toast.error("Failed to update bike status");
       }
     } catch (error) {
-      console.error("Error updating order status:", error);
+      console.error("Error updating bike status:", error);
       console.error("Error response:", error.response?.data);
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update order status";
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update bike status";
       toast.error(errorMessage);
     } finally {
-      setUpdatingStatus(prev => ({ ...prev, [orderId]: false }));
+      setUpdatingStatus(prev => ({ ...prev, [`${orderId}-${bikeId}`]: false }));
     }
   };
 
@@ -292,78 +285,105 @@ export default function VendorBooking() {
             </div>
           </div>
 
-          {/* Bikes List */}
+          {/* Bikes List with Individual Status Management */}
           <div className="mb-4">
             <p className="font-medium text-gray-700 mb-2">
-              Bikes ({booking.totalBikes} bike{booking.totalBikes > 1 ? 's' : ''})
+              My Bikes in this Order ({booking.totalBikes} bike{booking.totalBikes > 1 ? 's' : ''})
             </p>
-            <div className="space-y-2">
+            <div className="space-y-4">
               {booking.bikes.map((bikeItem, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-16 h-16 flex-shrink-0">
-                    <img 
-                      src={bikeItem.bike.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
-                      alt={bikeItem.bike.bikeName}
-                      className="w-full h-full object-cover rounded-md"
-                    />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike.bikeName}</h4>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                      <span>Type: {bikeItem.bike.bikeType}</span>
-                      
-                      {bikeItem.rentalDays && (
-                        <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
-                      )}
-                      <span>Rs. {bikeItem.pricePerDay}/day</span>
-                      <span className="font-medium text-blue-600">
-                        Subtotal: Rs. {bikeItem.subtotal.toFixed(2)}
-                      </span>
+                <div key={index} className="border border-gray-300 rounded-lg p-4 bg-white">
+                  <div className="flex items-start gap-3">
+                    <div className="w-16 h-16 flex-shrink-0">
+                      <img 
+                        src={bikeItem.bike.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
+                        alt={bikeItem.bike.bikeName}
+                        className="w-full h-full object-cover rounded-md"
+                      />
                     </div>
-                    {bikeItem.startDate && bikeItem.endDate && (
-                      <div className="mt-1 text-xs text-gray-500">
-                        <span>Rental: {new Date(bikeItem.startDate).toLocaleDateString()} - {new Date(bikeItem.endDate).toLocaleDateString()}</span>
+                    
+                    <div className="flex-1 min-w-0">
+                      {/* Bike Details */}
+                      <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike.bikeName}</h4>
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
+                        <span>Type: {bikeItem.bike.bikeType}</span>
+                        <span>Qty: {bikeItem.quantity}</span>
+                        {bikeItem.rentalDays && (
+                          <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
+                        )}
+                        <span>Rs. {bikeItem.pricePerDay}/day</span>
+                        <span className="font-medium text-blue-600">
+                          Subtotal: Rs. {bikeItem.subtotal.toFixed(2)}
+                        </span>
                       </div>
-                    )}
+                      
+                      {/* Current Status */}
+                      <div className="mb-3">
+                        <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(bikeItem.bikeStatus || 'pending')}`}>
+                          {getStatusIcon(bikeItem.bikeStatus || 'pending')}
+                          Current Status: {(bikeItem.bikeStatus || 'pending').charAt(0).toUpperCase() + (bikeItem.bikeStatus || 'pending').slice(1)}
+                        </div>
+                      </div>
+                      
+                      {/* Status Management Buttons */}
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                          <MdEdit className="text-blue-600" size={16} />
+                          Update Status for {bikeItem.bike.bikeName}
+                        </h5>
+                        <div className="flex flex-wrap gap-2">
+                          {orderStatuses.map((status) => (
+                            <button
+                              key={status.value}
+                              onClick={() => updateBikeStatus(booking._id, bikeItem.bike._id, status.value, bikeItem.bike.bikeName)}
+                              disabled={updatingStatus[`${booking._id}-${bikeItem.bike._id}`] || (bikeItem.bikeStatus || 'pending').toLowerCase() === status.value.toLowerCase()}
+                              className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 flex items-center gap-1 ${
+                                (bikeItem.bikeStatus || 'pending').toLowerCase() === status.value.toLowerCase()
+                                  ? `${status.color} cursor-not-allowed opacity-75`
+                                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                              } ${updatingStatus[`${booking._id}-${bikeItem.bike._id}`] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {updatingStatus[`${booking._id}-${bikeItem.bike._id}`] && (bikeItem.bikeStatus || 'pending').toLowerCase() !== status.value.toLowerCase() ? (
+                                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                getStatusIcon(status.value)
+                              )}
+                              {status.label}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-600 mt-2">
+                          Update status for individual bikes. Order status will automatically update when all bikes are managed.
+                        </p>
+                      </div>
+                      
+                      {bikeItem.startDate && bikeItem.endDate && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          <span>Rental Period: {new Date(bikeItem.startDate).toLocaleDateString()} - {new Date(bikeItem.endDate).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Order Status Management */}
-          <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-            <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <MdEdit className="text-yellow-600" />
-              Manage Order Status
+          {/* Order Summary */}
+          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+            <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <BiReceipt className="text-green-600" />
+              Order Summary
             </h4>
-            <div className="flex flex-wrap gap-2">
-              {orderStatuses.map((status) => (
-                <button
-                  key={status.value}
-                  onClick={() => updateOrderStatus(booking._id, status.value)}
-                  disabled={updatingStatus[booking._id] || booking.orderStatus.toLowerCase() === status.value.toLowerCase()}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1 ${
-                    booking.orderStatus.toLowerCase() === status.value.toLowerCase()
-                      ? `${status.color} cursor-not-allowed`
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                  } ${updatingStatus[booking._id] ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {updatingStatus[booking._id] && booking.orderStatus.toLowerCase() !== status.value.toLowerCase() ? (
-                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    getStatusIcon(status.value)
-                  )}
-                  {status.label}
-                </button>
-              ))}
-            </div>
-            {booking.orderStatus.toLowerCase() !== 'cancelled' && (
-              <p className="text-xs text-gray-600 mt-2">
-                Click on a status button to update the order status
+            <div className="text-sm text-gray-600">
+              <p>Overall Order Status: <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ml-1 ${getStatusColor(booking.orderStatus)}`}>
+                {getStatusIcon(booking.orderStatus)}
+                {booking.orderStatus.charAt(0).toUpperCase() + booking.orderStatus.slice(1)}
+              </span></p>
+              <p className="mt-1">
+                Manage individual bike statuses above. Order status updates automatically based on bike statuses.
               </p>
-            )}
+            </div>
           </div>
         </div>
       </div>

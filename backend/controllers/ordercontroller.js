@@ -269,11 +269,11 @@ export async function updateOrderStatus(req, res) {
         }
 
         const { orderId } = req.params;
-        const { orderStatus, paymentStatus } = req.body;
+        const { orderStatus, paymentStatus, bikeId, bikeStatus } = req.body;
 
         // Validate input
-        if (!orderStatus && !paymentStatus) {
-            return res.status(400).json({ message: "Please provide orderStatus or paymentStatus to update" });
+        if (!orderStatus && !paymentStatus && !bikeStatus) {
+            return res.status(400).json({ message: "Please provide orderStatus, paymentStatus, or bikeStatus to update" });
         }
 
         const order = await Order.findById(orderId);
@@ -297,66 +297,110 @@ export async function updateOrderStatus(req, res) {
             return res.status(403).json({ message: "Not authorized to update this order" });
         }
 
-        // Prepare update object
-        const updateFields = {};
-        if (orderStatus) updateFields.orderStatus = orderStatus;
-        if (paymentStatus) updateFields.paymentStatus = paymentStatus;
+        // Handle bike-specific status update (for multi-vendor orders)
+        if (bikeId && bikeStatus) {
+            // Find the specific bike in the order
+            const bikeIndex = order.bikes.findIndex(bike => 
+                bike.bike.toString() === bikeId && 
+                bike.vendor.toString() === req.user.id.toString()
+            );
 
-        // Update the order using findByIdAndUpdate to avoid validation issues
-        const updatedOrder = await Order.findByIdAndUpdate(
-            orderId,
-            updateFields,
-            { new: true, runValidators: true }
-        );
+            if (bikeIndex === -1) {
+                return res.status(404).json({ message: "Bike not found or not owned by this vendor" });
+            }
 
-        console.log("Order updated successfully:", updatedOrder._id);
+            // Update the bike status
+            order.bikes[bikeIndex].bikeStatus = bikeStatus;
 
-        // If order is completed or cancelled, make all bikes available again
-        if (orderStatus && (orderStatus === "completed" || orderStatus === "cancelled")) {
-            try {
-                for (const bikeItem of order.bikes) {
-                    await Product.findByIdAndUpdate(bikeItem.bike, {
+            // Update bike availability based on status
+            if (bikeStatus === "completed" || bikeStatus === "cancelled") {
+                try {
+                    await Product.findByIdAndUpdate(bikeId, {
                         isAvailable: true,
                         isApproved: true
                     });
-                    console.log(`Bike ${bikeItem.bike} set back to available due to order ${orderStatus}`);
+                    console.log(`Bike ${bikeId} set to available due to ${bikeStatus}`);
+                } catch (bikeUpdateError) {
+                    console.error("Error updating bike availability:", bikeUpdateError);
                 }
-            } catch (bikeUpdateError) {
-                console.error("Error updating bike availability:", bikeUpdateError);
-                // Continue with order update even if bike update fails
-            }
-        }
-
-        // If payment status is set to "paid", update all bikes availability and approval status
-        if (paymentStatus === "paid") {
-            try {
-                for (const bikeItem of order.bikes) {
-                    await Product.findByIdAndUpdate(bikeItem.bike, {
+            } else if (bikeStatus === "confirmed" || bikeStatus === "ongoing") {
+                try {
+                    await Product.findByIdAndUpdate(bikeId, {
                         isAvailable: false,
                         isApproved: false
                     });
-                    console.log(`Bike ${bikeItem.bike} set to unavailable and unapproved due to paid order`);
+                    console.log(`Bike ${bikeId} set to unavailable due to ${bikeStatus}`);
+                } catch (bikeUpdateError) {
+                    console.error("Error updating bike availability:", bikeUpdateError);
                 }
-            } catch (bikeUpdateError) {
-                console.error("Error updating bike availability for paid order:", bikeUpdateError);
-                // Continue with order update even if bike update fails
+            }
+
+            // Calculate overall order status based on all bike statuses
+            const bikeStatuses = order.bikes.map(bike => bike.bikeStatus);
+            let newOrderStatus = order.orderStatus;
+
+            if (bikeStatuses.every(status => status === "completed")) {
+                newOrderStatus = "completed";
+            } else if (bikeStatuses.every(status => status === "cancelled")) {
+                newOrderStatus = "cancelled";
+            } else if (bikeStatuses.some(status => status === "ongoing")) {
+                newOrderStatus = "ongoing";
+            } else if (bikeStatuses.every(status => status === "confirmed" || status === "completed")) {
+                newOrderStatus = "confirmed";
+            } else {
+                newOrderStatus = "pending";
+            }
+
+            order.orderStatus = newOrderStatus;
+        }
+
+        // Handle overall order status update (admin only)
+        if (orderStatus && isAdmin) {
+            order.orderStatus = orderStatus;
+            
+            // Update all bikes to match order status
+            order.bikes.forEach(bike => {
+                bike.bikeStatus = orderStatus;
+            });
+            
+            // Update bike availability based on order status
+            if (orderStatus === "completed" || orderStatus === "cancelled") {
+                try {
+                    for (const bikeItem of order.bikes) {
+                        await Product.findByIdAndUpdate(bikeItem.bike, {
+                            isAvailable: true,
+                            isApproved: true
+                        });
+                        console.log(`Bike ${bikeItem.bike} set back to available due to order ${orderStatus}`);
+                    }
+                } catch (bikeUpdateError) {
+                    console.error("Error updating bike availability:", bikeUpdateError);
+                }
+            }
+        }
+        
+        // Handle payment status update
+        if (paymentStatus) {
+            order.paymentStatus = paymentStatus;
+
+            if (paymentStatus === "paid") {
+                for (const bikeItem of order.bikes) {
+                    try {
+                        await Product.findByIdAndUpdate(bikeItem.bike, {
+                            isAvailable: false,
+                            isApproved: false
+                        });
+                        console.log(`Bike ${bikeItem.bike} set to unavailable due to paid order`);
+                    } catch (bikeUpdateError) {
+                        console.error("Error updating bike availability for paid order:", bikeUpdateError);
+                    }
+                }
             }
         }
 
-        // If payment status is changed back from "paid", make all bikes available again
-        if (paymentStatus && paymentStatus !== "paid") {
-            try {
-                for (const bikeItem of order.bikes) {
-                    await Product.findByIdAndUpdate(bikeItem.bike, {
-                        isAvailable: true
-                    });
-                    console.log(`Bike ${bikeItem.bike} set back to available`);
-                }
-            } catch (bikeUpdateError) {
-                console.error("Error updating bike availability for unpaid order:", bikeUpdateError);
-                // Continue with order update even if bike update fails
-            }
-        }
+        // Save the updated order
+        const updatedOrder = await order.save();
+        console.log("Order updated successfully:", updatedOrder._id);
 
         res.status(200).json({
             success: true,
