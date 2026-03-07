@@ -144,7 +144,9 @@ export default function VendorBooking() {
       }
     } catch (error) {
       console.error("Error updating order status:", error);
-      toast.error("Failed to update order status");
+      console.error("Error response:", error.response?.data);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update order status";
+      toast.error(errorMessage);
     } finally {
       setUpdatingStatus(prev => ({ ...prev, [orderId]: false }));
     }

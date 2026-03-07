@@ -220,6 +220,13 @@ export async function getVendorOrders(req, res) {
 // Update order status (for vendors/admins)
 export async function updateOrderStatus(req, res) {
     try {
+        console.log("Update order status request:", {
+            orderId: req.params.orderId,
+            body: req.body,
+            userId: req.user?.id,
+            userType: req.user?.type
+        });
+
         if(!req.user) {
             return res.status(401).json({ message: "Please login first" });
         }
@@ -227,25 +234,49 @@ export async function updateOrderStatus(req, res) {
         const { orderId } = req.params;
         const { orderStatus, paymentStatus } = req.body;
 
+        // Validate input
+        if (!orderStatus && !paymentStatus) {
+            return res.status(400).json({ message: "Please provide orderStatus or paymentStatus to update" });
+        }
+
         const order = await Order.findById(orderId);
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
 
+        console.log("Found order:", {
+            orderId: order._id,
+            vendors: order.vendors,
+            currentStatus: order.orderStatus
+        });
+
         // Check if user is one of the vendors or admin
         const isVendor = order.vendors.some(vendor => vendor.toString() === req.user.id.toString());
         const isAdmin = req.user.type === "admin";
+        
+        console.log("Authorization check:", { isVendor, isAdmin, userId: req.user.id });
         
         if (!isVendor && !isAdmin) {
             return res.status(403).json({ message: "Not authorized to update this order" });
         }
 
-        // Update the order
-        if (orderStatus) {
-            order.orderStatus = orderStatus;
-            
-            // If order is completed or cancelled, make all bikes available again
-            if (orderStatus === "completed" || orderStatus === "cancelled") {
+        // Prepare update object
+        const updateFields = {};
+        if (orderStatus) updateFields.orderStatus = orderStatus;
+        if (paymentStatus) updateFields.paymentStatus = paymentStatus;
+
+        // Update the order using findByIdAndUpdate to avoid validation issues
+        const updatedOrder = await Order.findByIdAndUpdate(
+            orderId,
+            updateFields,
+            { new: true, runValidators: true }
+        );
+
+        console.log("Order updated successfully:", updatedOrder._id);
+
+        // If order is completed or cancelled, make all bikes available again
+        if (orderStatus && (orderStatus === "completed" || orderStatus === "cancelled")) {
+            try {
                 for (const bikeItem of order.bikes) {
                     await Product.findByIdAndUpdate(bikeItem.bike, {
                         isAvailable: true,
@@ -253,35 +284,45 @@ export async function updateOrderStatus(req, res) {
                     });
                     console.log(`Bike ${bikeItem.bike} set back to available due to order ${orderStatus}`);
                 }
+            } catch (bikeUpdateError) {
+                console.error("Error updating bike availability:", bikeUpdateError);
+                // Continue with order update even if bike update fails
             }
         }
-        
-        if (paymentStatus) order.paymentStatus = paymentStatus;
-
-        const updatedOrder = await order.save();
 
         // If payment status is set to "paid", update all bikes availability and approval status
         if (paymentStatus === "paid") {
-            for (const bikeItem of order.bikes) {
-                await Product.findByIdAndUpdate(bikeItem.bike, {
-                    isAvailable: false,
-                    isApproved: false
-                });
-                console.log(`Bike ${bikeItem.bike} set to unavailable and unapproved due to paid order`);
+            try {
+                for (const bikeItem of order.bikes) {
+                    await Product.findByIdAndUpdate(bikeItem.bike, {
+                        isAvailable: false,
+                        isApproved: false
+                    });
+                    console.log(`Bike ${bikeItem.bike} set to unavailable and unapproved due to paid order`);
+                }
+            } catch (bikeUpdateError) {
+                console.error("Error updating bike availability for paid order:", bikeUpdateError);
+                // Continue with order update even if bike update fails
             }
         }
 
         // If payment status is changed back from "paid", make all bikes available again
-        if (paymentStatus && paymentStatus !== "paid" && updatedOrder.paymentStatus !== "paid") {
-            for (const bikeItem of order.bikes) {
-                await Product.findByIdAndUpdate(bikeItem.bike, {
-                    isAvailable: true
-                });
-                console.log(`Bike ${bikeItem.bike} set back to available`);
+        if (paymentStatus && paymentStatus !== "paid") {
+            try {
+                for (const bikeItem of order.bikes) {
+                    await Product.findByIdAndUpdate(bikeItem.bike, {
+                        isAvailable: true
+                    });
+                    console.log(`Bike ${bikeItem.bike} set back to available`);
+                }
+            } catch (bikeUpdateError) {
+                console.error("Error updating bike availability for unpaid order:", bikeUpdateError);
+                // Continue with order update even if bike update fails
             }
         }
 
         res.status(200).json({
+            success: true,
             message: "Order updated successfully",
             order: updatedOrder
         });
@@ -289,8 +330,10 @@ export async function updateOrderStatus(req, res) {
     } catch (error) {
         console.error("Error updating order:", error);
         res.status(500).json({
+            success: false,
             message: "Error updating order",
-            error: error.message
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 }
