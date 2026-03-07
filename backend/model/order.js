@@ -60,6 +60,12 @@ const orderSchema = new mongoose.Schema(
       endDate: {
         type: Date,
         required: true,
+      },
+      // Individual bike status for multi-vendor support
+      bikeStatus: {
+        type: String,
+        enum: ["pending", "confirmed", "ongoing", "completed", "cancelled"],
+        default: "pending",
       }
     }],
 

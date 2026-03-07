@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FaCalendarAlt, FaMotorcycle, FaMoneyBillWave } from "react-icons/fa";
-import { MdPayment, MdPending, MdCheckCircle, MdCancel } from "react-icons/md";
+import { FaCalendarAlt, FaMotorcycle, FaMoneyBillWave, FaUser, FaPhone, FaEnvelope } from "react-icons/fa";
+import { MdPayment, MdPending, MdCheckCircle, MdCancel, MdEdit } from "react-icons/md";
 import { BiReceipt } from "react-icons/bi";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../../../components/loader";
-import { FaPhone } from "react-icons/fa";
-import { FaUser } from "react-icons/fa";
-import { FaEnvelope } from "react-icons/fa";
 
-export default function Mybooking() {
+export default function VendorBooking() {
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +14,16 @@ export default function Mybooking() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedPaymentDate, setSelectedPaymentDate] = useState('');
-  const [expandedBikeStatus, setExpandedBikeStatus] = useState({});
+  const [updatingStatus, setUpdatingStatus] = useState({});
+
+  // Available order statuses for vendors to set
+  const orderStatuses = [
+    { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-100 text-blue-800' },
+    { value: 'ongoing', label: 'Ongoing', color: 'bg-orange-100 text-orange-800' },
+    { value: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800' },
+    { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+  ];
 
   // Fetch bookings from database
   useEffect(() => {
@@ -32,6 +37,8 @@ export default function Mybooking() {
     if (searchTerm) {
       filtered = filtered.filter(booking => 
         booking.orderid.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.customer?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.bikes.some(bike => 
           bike.bike.bikeName.toLowerCase().includes(searchTerm.toLowerCase())
         )
@@ -83,7 +90,7 @@ export default function Mybooking() {
       }
 
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/orders/my-orders`,
+        `${import.meta.env.VITE_BACKEND_URL}/orders/vendor-orders`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -100,6 +107,43 @@ export default function Mybooking() {
       toast.error("Failed to fetch bookings");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateBikeStatus = async (orderId, bikeId, newStatus, bikeName) => {
+    try {
+      setUpdatingStatus(prev => ({ ...prev, [`${orderId}-${bikeId}`]: true }));
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        toast.error("Please login to update bike status");
+        return;
+      }
+
+      const response = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/orders/${orderId}/status`,
+        { bikeId: bikeId, bikeStatus: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Refresh bookings to get updated data
+        fetchBookings();
+        toast.success(`${bikeName} status updated to ${newStatus}`);
+      } else {
+        toast.error("Failed to update bike status");
+      }
+    } catch (error) {
+      console.error("Error updating bike status:", error);
+      console.error("Error response:", error.response?.data);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update bike status";
+      toast.error(errorMessage);
+    } finally {
+      setUpdatingStatus(prev => ({ ...prev, [`${orderId}-${bikeId}`]: false }));
     }
   };
 
@@ -132,18 +176,8 @@ export default function Mybooking() {
   };
 
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
-      case 'ongoing':
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-yellow-100 text-yellow-800';
-    }
+    const statusObj = orderStatuses.find(s => s.value.toLowerCase() === status.toLowerCase());
+    return statusObj ? statusObj.color : 'bg-gray-100 text-gray-800';
   };
 
   const BookingCard = ({ booking }) => (
@@ -162,63 +196,46 @@ export default function Mybooking() {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div 
-                className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(booking.orderStatus)} sm:cursor-help md:cursor-help sm:relative group`}
-                onClick={() => window.innerWidth < 640 && setExpandedBikeStatus(prev => ({ ...prev, [booking._id]: !prev[booking._id] }))}
-                title="View individual bike statuses"
-              >
+            <div className="flex gap-2">
+              <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(booking.orderStatus)}`}>
                 {getStatusIcon(booking.orderStatus)}
                 {booking.orderStatus}
-                
-                {/* Mobile Arrow - Only visible on small screens */}
-                <span className="text-xs ml-1 sm:hidden">
-                  {expandedBikeStatus[booking._id] ? '▲' : '▼'}
-                </span>
-                
-                {/* Desktop Hover Tooltip - Only visible on medium screens and above */}
-                <div className="invisible group-hover:visible absolute top-full left-0 mt-2 bg-black text-white text-xs rounded p-2 whitespace-nowrap z-10 shadow-lg hidden sm:block">
-                  <div className="font-semibold mb-1">Individual Bike Statuses:</div>
-                  {booking.bikes && booking.bikes.map((bikeItem, idx) => (
-                    <div key={idx} className="flex items-center gap-1 py-0.5">
-                      {getStatusIcon(bikeItem.bikeStatus || 'pending')}
-                      <span className="truncate max-w-32">{bikeItem.bike.bikeName}</span>
-                      <span className="text-gray-300">:</span>
-                      <span className="capitalize">{bikeItem.bikeStatus || 'pending'}</span>
-                    </div>
-                  ))}
-                  <div className="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
-                </div>
               </div>
               <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(booking.paymentStatus)}`}>
                 {getPaymentStatusIcon(booking.paymentStatus)}
                 {booking.paymentStatus}
               </div>
             </div>
-            
-            {/* Mobile Expandable Section - Only visible on small screens */}
-            {expandedBikeStatus[booking._id] && (
-              <div className="mt-3 p-3 bg-gray-100 rounded-lg border border-gray-200 sm:hidden">
-                <div className="text-xs font-semibold text-gray-700 mb-2">Individual Bike Statuses:</div>
-                <div className="space-y-2">
-                  {booking.bikes && booking.bikes.map((bikeItem, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-2 py-1">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {getStatusIcon(bikeItem.bikeStatus || 'pending')}
-                        <span className="text-xs text-gray-800 truncate font-medium">{bikeItem.bike.bikeName}</span>
-                      </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(bikeItem.bikeStatus || 'pending')}`}>
-                        {bikeItem.bikeStatus || 'pending'}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
+          {/* Customer Information */}
+          {booking.customer && (
+            <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <FaUser className="text-blue-500" />
+                Customer Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <FaUser className="text-gray-500" size={14} />
+                  <span className="font-medium">{booking.customer.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FaEnvelope className="text-gray-500" size={14} />
+                  <span>{booking.customer.email}</span>
+                </div>
+                {booking.customer.phone && (
+                  <div className="flex items-center gap-2">
+                    <FaPhone className="text-gray-500" size={14} />
+                    <span>{booking.customer.phone}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Rental Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 p-4">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <FaCalendarAlt className="text-blue-500" />
               <div>
@@ -268,104 +285,106 @@ export default function Mybooking() {
             </div>
           </div>
 
-          {/* Bikes List */}
-          <div>
+          {/* Bikes List with Individual Status Management */}
+          <div className="mb-4">
             <p className="font-medium text-gray-700 mb-2">
-              Bikes ({booking.totalBikes} bike{booking.totalBikes > 1 ? 's' : ''})
+              My Bikes in this Order ({booking.totalBikes} bike{booking.totalBikes > 1 ? 's' : ''})
             </p>
-            <div className="space-y-2">
+            <div className="space-y-4">
               {booking.bikes.map((bikeItem, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-16 h-16 flex-shrink-0">
-                    <img 
-                      src={bikeItem.bike.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
-                      alt={bikeItem.bike.bikeName}
-                      className="w-full h-full object-cover rounded-md"
-                    />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike.bikeName}</h4>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                      <span>Type: {bikeItem.bike.bikeType}</span>
-                      <span>Qty: {bikeItem.quantity}</span>
-                      {bikeItem.rentalDays && (
-                        <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
-                      )}
-                      <span>Rs. {bikeItem.pricePerDay}/day</span>
-                      <span className="font-medium text-blue-600">
-                        Subtotal: Rs. {bikeItem.subtotal.toFixed(2)}
-                      </span>
+                <div key={index} className="border border-gray-300 rounded-lg p-4 bg-white">
+                  <div className="flex items-start gap-3">
+                    <div className="w-16 h-16 flex-shrink-0">
+                      <img 
+                        src={bikeItem.bike.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
+                        alt={bikeItem.bike.bikeName}
+                        className="w-full h-full object-cover rounded-md"
+                      />
                     </div>
-                    {bikeItem.startDate && bikeItem.endDate && (
-                      <div className="mt-1 text-xs text-gray-500">
-                        <span>Rental: {new Date(bikeItem.startDate).toLocaleDateString()} - {new Date(bikeItem.endDate).toLocaleDateString()}</span>
+                    
+                    <div className="flex-1 min-w-0">
+                      {/* Bike Details */}
+                      <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike.bikeName}</h4>
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
+                        <span>Type: {bikeItem.bike.bikeType}</span>
+                        <span>Qty: {bikeItem.quantity}</span>
+                        {bikeItem.rentalDays && (
+                          <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
+                        )}
+                        <span>Rs. {bikeItem.pricePerDay}/day</span>
+                        <span className="font-medium text-blue-600">
+                          Subtotal: Rs. {bikeItem.subtotal.toFixed(2)}
+                        </span>
                       </div>
-                    )}
+                      
+                      {/* Current Status */}
+                      <div className="mb-3">
+                        <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(bikeItem.bikeStatus || 'pending')}`}>
+                          {getStatusIcon(bikeItem.bikeStatus || 'pending')}
+                          Current Status: {(bikeItem.bikeStatus || 'pending').charAt(0).toUpperCase() + (bikeItem.bikeStatus || 'pending').slice(1)}
+                        </div>
+                      </div>
+                      
+                      {/* Status Management Buttons */}
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                          <MdEdit className="text-blue-600" size={16} />
+                          Update Status for {bikeItem.bike.bikeName}
+                        </h5>
+                        <div className="flex flex-wrap gap-2">
+                          {orderStatuses.map((status) => (
+                            <button
+                              key={status.value}
+                              onClick={() => updateBikeStatus(booking._id, bikeItem.bike._id, status.value, bikeItem.bike.bikeName)}
+                              disabled={updatingStatus[`${booking._id}-${bikeItem.bike._id}`] || (bikeItem.bikeStatus || 'pending').toLowerCase() === status.value.toLowerCase()}
+                              className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 flex items-center gap-1 ${
+                                (bikeItem.bikeStatus || 'pending').toLowerCase() === status.value.toLowerCase()
+                                  ? `${status.color} cursor-not-allowed opacity-75`
+                                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+                              } ${updatingStatus[`${booking._id}-${bikeItem.bike._id}`] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {updatingStatus[`${booking._id}-${bikeItem.bike._id}`] && (bikeItem.bikeStatus || 'pending').toLowerCase() !== status.value.toLowerCase() ? (
+                                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                getStatusIcon(status.value)
+                              )}
+                              {status.label}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-600 mt-2">
+                          Update status for individual bikes. Order status will automatically update when all bikes are managed.
+                        </p>
+                      </div>
+                      
+                      {bikeItem.startDate && bikeItem.endDate && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          <span>Rental Period: {new Date(bikeItem.startDate).toLocaleDateString()} - {new Date(bikeItem.endDate).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Vendor Information */}
-          {booking.vendors && booking.vendors.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="font-medium text-gray-700 mb-2">Vendor Information</p>
-              <div className="space-y-3">
-                {booking.vendors.map((vendor, index) => {
-                  // Filter bikes belonging to this vendor
-                  const vendorBikes = booking.bikes.filter(bikeItem => 
-                    bikeItem.vendor && bikeItem.vendor._id === vendor._id
-                  );
-                  
-                  return (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mb-2">
-                        <div className="flex items-center gap-2">
-                          <FaUser className="text-gray-500 flex-shrink-0" size={14} />
-                          <span className="font-medium">{vendor.firstname} {vendor.lastname}</span>
-                        </div>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FaEnvelope className="text-gray-500 flex-shrink-0" size={14} />
-                          <span className="truncate">{vendor.email}</span>
-                        </div>
-                        {vendor.phone && (
-                          <div className="flex items-center gap-2">
-                            <FaPhone className="text-gray-500 flex-shrink-0" size={14} />
-                            <span>{vendor.phone}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Vendor's Bikes */}
-                      {vendorBikes.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-gray-200">
-                          <div className="text-xs font-medium text-gray-600 mb-1">
-                            Bikes from this vendor:
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {vendorBikes.map((bikeItem, bikeIndex) => (
-                              <span 
-                                key={bikeIndex} 
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                              >
-                                <FaMotorcycle size={10} />
-                                {bikeItem.bike.bikeName}
-                                {bikeItem.quantity > 1 && (
-                                  <span className="text-blue-600 font-medium">x{bikeItem.quantity}</span>
-                                )}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+          {/* Order Summary */}
+          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+            <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <BiReceipt className="text-green-600" />
+              Order Summary
+            </h4>
+            <div className="text-sm text-gray-600">
+              <p>Overall Order Status: <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ml-1 ${getStatusColor(booking.orderStatus)}`}>
+                {getStatusIcon(booking.orderStatus)}
+                {booking.orderStatus.charAt(0).toUpperCase() + booking.orderStatus.slice(1)}
+              </span></p>
+              <p className="mt-1">
+                Manage individual bike statuses above. Order status updates automatically based on bike statuses.
+              </p>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
@@ -375,7 +394,7 @@ export default function Mybooking() {
     return (
       <div className="flex flex-col justify-center items-center h-[calc(100vh-100px)]">
         <Loader />
-        <p className="text-lg text-gray-600">Loading your bookings...</p>
+        <p className="text-lg text-gray-600">Loading vendor bookings...</p>
       </div>
     );
   }
@@ -395,7 +414,7 @@ export default function Mybooking() {
         {/* Page Header */}
         <div className="max-w-7xl mx-auto mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Vendor Bookings</h1>
             <div className="text-sm text-gray-600">
               Total: {bookings.length} booking{bookings.length !== 1 ? 's' : ''} | 
               Showing: {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
@@ -412,7 +431,7 @@ export default function Mybooking() {
                 <label className="block text-sm font-medium text-gray-700">Search Orders</label>
                 <input
                   type="text"
-                  placeholder="Order ID or bike name..."
+                  placeholder="Order ID, customer name, bike name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -492,13 +511,7 @@ export default function Mybooking() {
                 <BiReceipt className="mx-auto text-6xl text-gray-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No bookings yet</h3>
-              <p className="text-gray-600 mb-6">Start by finding and renting your first bike</p>
-              <Link 
-                to="/find-bikes"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] font-semibold rounded-lg hover:bg-[var(--button-primary-hover)] transition-colors duration-200"
-              >
-                <FaMotorcycle size={20} /> Find Bikes to Rent
-              </Link>
+              <p className="text-gray-600 mb-6">Bookings from customers will appear here</p>
             </div>
           ) : (
             <div className="space-y-6 pb-24">

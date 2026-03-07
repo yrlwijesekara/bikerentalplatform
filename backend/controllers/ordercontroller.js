@@ -134,10 +134,10 @@ export async function createOrder(req, res) {
 
         // Populate the saved order with user, vendors, and bikes details for response
         const populatedOrder = await Order.findById(savedOrder._id)
-            .populate('user', 'name email')
-            .populate('vendors', 'name email')
+            .populate('user', 'firstname lastname email')
+            .populate('vendors', 'firstname lastname email')
             .populate('bikes.bike', 'bikeName bikeType images')
-            .populate('bikes.vendor', 'name email');
+            .populate('bikes.vendor', 'firstname lastname email');
 
         res.status(201).json({
             message: "Order created successfully",
@@ -169,9 +169,9 @@ export async function getUserOrders(req, res) {
         }
 
         const orders = await Order.find({ user: req.user.id })
-            .populate('vendors', 'name email phone')
+            .populate('vendors', 'firstname lastname email phone')
             .populate('bikes.bike', 'bikeName bikeType images pricePerDay')
-            .populate('bikes.vendor', 'name email phone')
+            .populate('bikes.vendor', 'firstname lastname email phone')
             .sort({ createdAt: -1 });
 
         res.status(200).json({
@@ -196,16 +196,53 @@ export async function getVendorOrders(req, res) {
         }
 
         // Find orders where the vendor is in the vendors array
-        const orders = await Order.find({ vendors: req.user.id })
-            .populate('user', 'name email phoneNumber')
+        const allOrders = await Order.find({ vendors: req.user.id })
+            .populate('user', 'firstname lastname email phone')
             .populate('bikes.bike', 'bikeName bikeType images')
-            .populate('bikes.vendor', 'name email phone')
-            .populate('vendors', 'name email phone')
+            .populate('bikes.vendor', 'firstname lastname email phone')
+            .populate('vendors', 'firstname lastname email phone')
             .sort({ createdAt: -1 });
+
+        // Filter and modify orders to show only vendor's bikes and calculate vendor-specific totals
+        const vendorOrders = allOrders.map(order => {
+            // Filter bikes to only include this vendor's bikes
+            const vendorBikes = order.bikes.filter(bikeItem => 
+                bikeItem.vendor._id.toString() === req.user.id.toString()
+            );
+
+            // Calculate totals based only on vendor's bikes
+            let vendorTotalAmount = 0;
+            let vendorTotalBikes = 0;
+
+            vendorBikes.forEach(bikeItem => {
+                vendorTotalAmount += bikeItem.subtotal;
+                vendorTotalBikes += bikeItem.quantity;
+            });
+
+            // Calculate vendor's share of service fee proportionally
+            const vendorServiceFee = order.serviceFee * (vendorTotalAmount / (order.totalAmount || 1));
+            const vendorFinalTotal = vendorTotalAmount + vendorServiceFee;
+
+            // Return modified order with only vendor's data
+            return {
+                ...order.toObject(),
+                bikes: vendorBikes,
+                totalAmount: vendorTotalAmount,
+                serviceFee: vendorServiceFee,
+                finalTotal: vendorFinalTotal,
+                totalBikes: vendorTotalBikes,
+                // Add customer info for vendor convenience
+                customer: order.user ? {
+                    name: `${order.user.firstname} ${order.user.lastname}`,
+                    email: order.user.email,
+                    phone: order.user.phone
+                } : null
+            };
+        });
 
         res.status(200).json({
             message: "Vendor orders retrieved successfully",
-            orders: orders
+            orders: vendorOrders
         });
 
     } catch (error) {
@@ -220,68 +257,153 @@ export async function getVendorOrders(req, res) {
 // Update order status (for vendors/admins)
 export async function updateOrderStatus(req, res) {
     try {
+        console.log("Update order status request:", {
+            orderId: req.params.orderId,
+            body: req.body,
+            userId: req.user?.id,
+            userType: req.user?.type
+        });
+
         if(!req.user) {
             return res.status(401).json({ message: "Please login first" });
         }
 
         const { orderId } = req.params;
-        const { orderStatus, paymentStatus } = req.body;
+        const { orderStatus, paymentStatus, bikeId, bikeStatus } = req.body;
+
+        // Validate input
+        if (!orderStatus && !paymentStatus && !bikeStatus) {
+            return res.status(400).json({ message: "Please provide orderStatus, paymentStatus, or bikeStatus to update" });
+        }
 
         const order = await Order.findById(orderId);
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
 
+        console.log("Found order:", {
+            orderId: order._id,
+            vendors: order.vendors,
+            currentStatus: order.orderStatus
+        });
+
         // Check if user is one of the vendors or admin
         const isVendor = order.vendors.some(vendor => vendor.toString() === req.user.id.toString());
         const isAdmin = req.user.type === "admin";
+        
+        console.log("Authorization check:", { isVendor, isAdmin, userId: req.user.id });
         
         if (!isVendor && !isAdmin) {
             return res.status(403).json({ message: "Not authorized to update this order" });
         }
 
-        // Update the order
-        if (orderStatus) {
-            order.orderStatus = orderStatus;
-            
-            // If order is completed or cancelled, make all bikes available again
-            if (orderStatus === "completed" || orderStatus === "cancelled") {
-                for (const bikeItem of order.bikes) {
-                    await Product.findByIdAndUpdate(bikeItem.bike, {
+        // Handle bike-specific status update (for multi-vendor orders)
+        if (bikeId && bikeStatus) {
+            // Find the specific bike in the order
+            const bikeIndex = order.bikes.findIndex(bike => 
+                bike.bike.toString() === bikeId && 
+                bike.vendor.toString() === req.user.id.toString()
+            );
+
+            if (bikeIndex === -1) {
+                return res.status(404).json({ message: "Bike not found or not owned by this vendor" });
+            }
+
+            // Update the bike status
+            order.bikes[bikeIndex].bikeStatus = bikeStatus;
+
+            // Update bike availability based on status
+            if (bikeStatus === "completed" || bikeStatus === "cancelled") {
+                try {
+                    await Product.findByIdAndUpdate(bikeId, {
                         isAvailable: true,
                         isApproved: true
                     });
-                    console.log(`Bike ${bikeItem.bike} set back to available due to order ${orderStatus}`);
+                    console.log(`Bike ${bikeId} set to available due to ${bikeStatus}`);
+                } catch (bikeUpdateError) {
+                    console.error("Error updating bike availability:", bikeUpdateError);
+                }
+            } else if (bikeStatus === "confirmed" || bikeStatus === "ongoing") {
+                try {
+                    await Product.findByIdAndUpdate(bikeId, {
+                        isAvailable: false,
+                        isApproved: false
+                    });
+                    console.log(`Bike ${bikeId} set to unavailable due to ${bikeStatus}`);
+                } catch (bikeUpdateError) {
+                    console.error("Error updating bike availability:", bikeUpdateError);
+                }
+            }
+
+            // Calculate overall order status based on all bike statuses
+            const bikeStatuses = order.bikes.map(bike => bike.bikeStatus);
+            let newOrderStatus = order.orderStatus;
+
+            if (bikeStatuses.every(status => status === "completed")) {
+                newOrderStatus = "completed";
+            } else if (bikeStatuses.every(status => status === "cancelled")) {
+                newOrderStatus = "cancelled";
+            } else if (bikeStatuses.some(status => status === "ongoing")) {
+                newOrderStatus = "ongoing";
+            } else if (bikeStatuses.every(status => status === "confirmed" || status === "completed")) {
+                newOrderStatus = "confirmed";
+            } else {
+                newOrderStatus = "pending";
+            }
+
+            order.orderStatus = newOrderStatus;
+        }
+
+        // Handle overall order status update (admin only)
+        if (orderStatus && isAdmin) {
+            order.orderStatus = orderStatus;
+            
+            // Update all bikes to match order status
+            order.bikes.forEach(bike => {
+                bike.bikeStatus = orderStatus;
+            });
+            
+            // Update bike availability based on order status
+            if (orderStatus === "completed" || orderStatus === "cancelled") {
+                try {
+                    for (const bikeItem of order.bikes) {
+                        await Product.findByIdAndUpdate(bikeItem.bike, {
+                            isAvailable: true,
+                            isApproved: true
+                        });
+                        console.log(`Bike ${bikeItem.bike} set back to available due to order ${orderStatus}`);
+                    }
+                } catch (bikeUpdateError) {
+                    console.error("Error updating bike availability:", bikeUpdateError);
                 }
             }
         }
         
-        if (paymentStatus) order.paymentStatus = paymentStatus;
+        // Handle payment status update
+        if (paymentStatus) {
+            order.paymentStatus = paymentStatus;
 
+            if (paymentStatus === "paid") {
+                for (const bikeItem of order.bikes) {
+                    try {
+                        await Product.findByIdAndUpdate(bikeItem.bike, {
+                            isAvailable: false,
+                            isApproved: false
+                        });
+                        console.log(`Bike ${bikeItem.bike} set to unavailable due to paid order`);
+                    } catch (bikeUpdateError) {
+                        console.error("Error updating bike availability for paid order:", bikeUpdateError);
+                    }
+                }
+            }
+        }
+
+        // Save the updated order
         const updatedOrder = await order.save();
-
-        // If payment status is set to "paid", update all bikes availability and approval status
-        if (paymentStatus === "paid") {
-            for (const bikeItem of order.bikes) {
-                await Product.findByIdAndUpdate(bikeItem.bike, {
-                    isAvailable: false,
-                    isApproved: false
-                });
-                console.log(`Bike ${bikeItem.bike} set to unavailable and unapproved due to paid order`);
-            }
-        }
-
-        // If payment status is changed back from "paid", make all bikes available again
-        if (paymentStatus && paymentStatus !== "paid" && updatedOrder.paymentStatus !== "paid") {
-            for (const bikeItem of order.bikes) {
-                await Product.findByIdAndUpdate(bikeItem.bike, {
-                    isAvailable: true
-                });
-                console.log(`Bike ${bikeItem.bike} set back to available`);
-            }
-        }
+        console.log("Order updated successfully:", updatedOrder._id);
 
         res.status(200).json({
+            success: true,
             message: "Order updated successfully",
             order: updatedOrder
         });
@@ -289,8 +411,10 @@ export async function updateOrderStatus(req, res) {
     } catch (error) {
         console.error("Error updating order:", error);
         res.status(500).json({
+            success: false,
             message: "Error updating order",
-            error: error.message
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 }
@@ -304,10 +428,10 @@ export async function getOrderById(req, res) {
 
         const { orderId } = req.params;
         const order = await Order.findById(orderId)
-            .populate('user', 'name email phoneNumber')
-            .populate('vendors', 'name email phoneNumber')
+            .populate('user', 'firstname lastname email phone')
+            .populate('vendors', 'firstname lastname email phone')
             .populate('bikes.bike', 'bikeName bikeType images pricePerDay')
-            .populate('bikes.vendor', 'name email');
+            .populate('bikes.vendor', 'firstname lastname email phone');
 
         if (!order) {
             return res.status(404).json({ message: "Order not found" });

@@ -33,7 +33,7 @@ const VendorNavbar = () => {
           Bookings
         </Link>
         
-        <Link to="/vendor/earnings" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
+        <Link to="/vendor/earning" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Earnings
         </Link>
         
@@ -93,7 +93,7 @@ const VendorNavbar = () => {
               </Link>
               
               <Link 
-                to="/vendor/earnings" 
+                to="/vendor/earning" 
                 className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
                 onClick={() => setIsMenuOpen(false)}
               >

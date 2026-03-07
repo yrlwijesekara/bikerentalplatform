@@ -15,6 +15,7 @@ export default function BikeOverview()   {
     const [isInCart, setIsInCart] = useState(false);
     const [rentalDays, setRentalDays] = useState(1);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [cartRentalDays, setCartRentalDays] = useState(null);
 
     // Check if user is logged in
     useEffect(() => {
@@ -45,6 +46,15 @@ export default function BikeOverview()   {
                 setBike(response.data.product);
                 // Check if bike is already in cart
                 setIsInCart(isProductInCart(response.data.product._id));
+                
+                // Check cart for existing rental days
+                const cart = getCart();
+                if (cart.length > 0) {
+                    const existingRentalDays = cart[0].rentalDays || 1;
+                    setCartRentalDays(existingRentalDays);
+                    setRentalDays(existingRentalDays);
+                }
+                
                 toast.success("Bike details fetched successfully");
                 setStatus("success");
             })
@@ -62,6 +72,17 @@ export default function BikeOverview()   {
         const handleCartUpdate = () => {
             if (bike) {
                 setIsInCart(isProductInCart(bike._id));
+            }
+            
+            // Update cart rental days
+            const cart = getCart();
+            if (cart.length > 0) {
+                const existingRentalDays = cart[0].rentalDays || 1;
+                setCartRentalDays(existingRentalDays);
+                setRentalDays(existingRentalDays);
+            } else {
+                setCartRentalDays(null);
+                setRentalDays(1);
             }
         };
 
@@ -187,15 +208,17 @@ export default function BikeOverview()   {
                         <div className="p-4 rounded-lg shadow-md" style={{ backgroundColor: 'var(--card-background)', boxShadow: '0 2px 8px var(--shadow-color)' }}>
                             <h3 className="text-lg font-semibold mb-3 text-gray-800">Rental Details</h3>
                             
+                           
+                            
                             {/* Rental Days Selector */}
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Number of Rental Days:
+                                    Number of Rental Days{cartRentalDays ? ` (Matches cart: ${cartRentalDays} day${cartRentalDays > 1 ? 's' : ''})` : ':'}:
                                 </label>
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => setRentalDays(Math.max(1, rentalDays - 1))}
-                                        disabled={rentalDays <= 1}
+                                        disabled={rentalDays <= 1 || cartRentalDays}
                                         className="bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200"
                                     >
                                         -
@@ -205,17 +228,18 @@ export default function BikeOverview()   {
                                         min="1"
                                         max="30"
                                         value={rentalDays}
+                                        disabled={cartRentalDays}
                                         onChange={(e) => {
                                             const days = parseInt(e.target.value);
                                             if (days >= 1 && days <= 30) {
                                                 setRentalDays(days);
                                             }
                                         }}
-                                        className="w-20 px-3 py-2 text-center border border-gray-300 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-20 px-3 py-2 text-center border border-gray-300 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     />
                                     <button
                                         onClick={() => setRentalDays(Math.min(30, rentalDays + 1))}
-                                        disabled={rentalDays >= 30}
+                                        disabled={rentalDays >= 30 || cartRentalDays}
                                         className="bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200"
                                     >
                                         +
@@ -224,6 +248,11 @@ export default function BikeOverview()   {
                                         day{rentalDays > 1 ? 's' : ''}
                                     </span>
                                 </div>
+                                {cartRentalDays && (
+                                    <div className="text-xs text-gray-500 mt-2">
+                                        Rental days are fixed to match your cart items. You can change them in the cart.
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Price Display */}
