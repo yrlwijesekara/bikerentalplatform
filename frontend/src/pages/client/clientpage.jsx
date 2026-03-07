@@ -13,6 +13,7 @@ import Cart from "./user/cart.jsx";
 import Checkout from "./user/checkout.jsx";
 import Mybooking from "./user/mybooking.jsx";
 import VendorBooking from "./vendor/vendorbooking.jsx";
+import EarningsPage from "./vendor/earning.jsx";
 
 export default function Clientpage() {
   return (
@@ -58,9 +59,9 @@ export default function Clientpage() {
                 <VendorBooking />
               </ProtectedRoute>
             } />
-            <Route path="/vendor/earnings" element={
+            <Route path="/vendor/earning" element={
               <ProtectedRoute requiredRole="vendor">
-                <h1 className="text-black">Vendor Earnings Page</h1>
+                <EarningsPage />
               </ProtectedRoute>
             } />
             <Route path="/vendor/reviews" element={

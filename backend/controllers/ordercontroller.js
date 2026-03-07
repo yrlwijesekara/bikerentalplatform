@@ -134,10 +134,10 @@ export async function createOrder(req, res) {
 
         // Populate the saved order with user, vendors, and bikes details for response
         const populatedOrder = await Order.findById(savedOrder._id)
-            .populate('user', 'name email')
-            .populate('vendors', 'name email')
+            .populate('user', 'firstname lastname email')
+            .populate('vendors', 'firstname lastname email')
             .populate('bikes.bike', 'bikeName bikeType images')
-            .populate('bikes.vendor', 'name email');
+            .populate('bikes.vendor', 'firstname lastname email');
 
         res.status(201).json({
             message: "Order created successfully",
@@ -169,9 +169,9 @@ export async function getUserOrders(req, res) {
         }
 
         const orders = await Order.find({ user: req.user.id })
-            .populate('vendors', 'name email phone')
+            .populate('vendors', 'firstname lastname email phone')
             .populate('bikes.bike', 'bikeName bikeType images pricePerDay')
-            .populate('bikes.vendor', 'name email phone')
+            .populate('bikes.vendor', 'firstname lastname email phone')
             .sort({ createdAt: -1 });
 
         res.status(200).json({
@@ -196,16 +196,53 @@ export async function getVendorOrders(req, res) {
         }
 
         // Find orders where the vendor is in the vendors array
-        const orders = await Order.find({ vendors: req.user.id })
-            .populate('user', 'name email phoneNumber')
+        const allOrders = await Order.find({ vendors: req.user.id })
+            .populate('user', 'firstname lastname email phone')
             .populate('bikes.bike', 'bikeName bikeType images')
-            .populate('bikes.vendor', 'name email phone')
-            .populate('vendors', 'name email phone')
+            .populate('bikes.vendor', 'firstname lastname email phone')
+            .populate('vendors', 'firstname lastname email phone')
             .sort({ createdAt: -1 });
+
+        // Filter and modify orders to show only vendor's bikes and calculate vendor-specific totals
+        const vendorOrders = allOrders.map(order => {
+            // Filter bikes to only include this vendor's bikes
+            const vendorBikes = order.bikes.filter(bikeItem => 
+                bikeItem.vendor._id.toString() === req.user.id.toString()
+            );
+
+            // Calculate totals based only on vendor's bikes
+            let vendorTotalAmount = 0;
+            let vendorTotalBikes = 0;
+
+            vendorBikes.forEach(bikeItem => {
+                vendorTotalAmount += bikeItem.subtotal;
+                vendorTotalBikes += bikeItem.quantity;
+            });
+
+            // Calculate vendor's share of service fee proportionally
+            const vendorServiceFee = order.serviceFee * (vendorTotalAmount / (order.totalAmount || 1));
+            const vendorFinalTotal = vendorTotalAmount + vendorServiceFee;
+
+            // Return modified order with only vendor's data
+            return {
+                ...order.toObject(),
+                bikes: vendorBikes,
+                totalAmount: vendorTotalAmount,
+                serviceFee: vendorServiceFee,
+                finalTotal: vendorFinalTotal,
+                totalBikes: vendorTotalBikes,
+                // Add customer info for vendor convenience
+                customer: order.user ? {
+                    name: `${order.user.firstname} ${order.user.lastname}`,
+                    email: order.user.email,
+                    phone: order.user.phone
+                } : null
+            };
+        });
 
         res.status(200).json({
             message: "Vendor orders retrieved successfully",
-            orders: orders
+            orders: vendorOrders
         });
 
     } catch (error) {
@@ -347,10 +384,10 @@ export async function getOrderById(req, res) {
 
         const { orderId } = req.params;
         const order = await Order.findById(orderId)
-            .populate('user', 'name email phoneNumber')
-            .populate('vendors', 'name email phoneNumber')
+            .populate('user', 'firstname lastname email phone')
+            .populate('vendors', 'firstname lastname email phone')
             .populate('bikes.bike', 'bikeName bikeType images pricePerDay')
-            .populate('bikes.vendor', 'name email');
+            .populate('bikes.vendor', 'firstname lastname email phone');
 
         if (!order) {
             return res.status(404).json({ message: "Order not found" });

@@ -33,7 +33,7 @@ const VendorNavbar = () => {
           Bookings
         </Link>
         
-        <Link to="/vendor/earnings" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
+        <Link to="/vendor/earning" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Earnings
         </Link>
         

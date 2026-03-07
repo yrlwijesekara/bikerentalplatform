@@ -242,7 +242,7 @@ export default function VendorBooking() {
           )}
 
           {/* Rental Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 p-4">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <FaCalendarAlt className="text-blue-500" />
               <div>
@@ -312,7 +312,7 @@ export default function VendorBooking() {
                     <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike.bikeName}</h4>
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                       <span>Type: {bikeItem.bike.bikeType}</span>
-                      <span>Qty: {bikeItem.quantity}</span>
+                      
                       {bikeItem.rentalDays && (
                         <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
                       )}
