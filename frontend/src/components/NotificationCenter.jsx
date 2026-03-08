@@ -22,7 +22,8 @@ const NotificationCenter = () => {
     markAsRead,
     deleteNotification,
     fetchNotifications,
-    isConnected
+    isConnected,
+    connectionStatus
   } = useNotifications();
 
   const [selectedTab, setSelectedTab] = useState('all'); // 'all', 'unread'
@@ -116,14 +117,25 @@ const NotificationCenter = () => {
           <div className="flex items-center gap-2">
             {/* Connection status */}
             <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-              isConnected 
+              connectionStatus === 'connected' 
                 ? 'bg-green-100 text-green-700' 
+                : connectionStatus === 'reconnecting'
+                ? 'bg-yellow-100 text-yellow-700'
                 : 'bg-red-100 text-red-700'
             }`}>
               <div className={`w-2 h-2 rounded-full ${
-                isConnected ? 'bg-green-500' : 'bg-red-500'
+                connectionStatus === 'connected' 
+                  ? 'bg-green-500' 
+                  : connectionStatus === 'reconnecting'
+                  ? 'bg-yellow-500 animate-pulse'
+                  : 'bg-red-500'
               }`} />
-              {isConnected ? 'Live' : 'Offline'}
+              {connectionStatus === 'connected' 
+                ? 'Live' 
+                : connectionStatus === 'reconnecting' 
+                ? 'Reconnecting...'
+                : 'Offline'
+              }
             </div>
             
             {/* Mark all as read */}

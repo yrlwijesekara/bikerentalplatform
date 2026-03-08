@@ -6,18 +6,28 @@ const NotificationBell = ({ className = '' }) => {
   const { 
     unreadCount, 
     setShowNotificationCenter, 
-    isConnected 
+    isConnected,
+    connectionStatus 
   } = useNotifications();
 
   const handleClick = () => {
     setShowNotificationCenter(true);
   };
 
+  const getConnectionStatusText = () => {
+    switch(connectionStatus) {
+      case 'connected': return 'Real-time notifications active';
+      case 'reconnecting': return 'Reconnecting to notification service...';
+      case 'disconnected': return 'Notifications offline';
+      default: return 'Notification status unknown';
+    }
+  };
+
   return (
     <button
       onClick={handleClick}
       className={`relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors ${className}`}
-      title={`${unreadCount} unread notifications`}
+      title={`${unreadCount} unread notifications • ${getConnectionStatusText()}`}
     >
       <FaBell className="text-xl" />
       
@@ -30,7 +40,11 @@ const NotificationBell = ({ className = '' }) => {
       
       {/* Connection status indicator */}
       <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-        isConnected ? 'bg-green-500' : 'bg-gray-400'
+        connectionStatus === 'connected' 
+          ? 'bg-green-500' 
+          : connectionStatus === 'reconnecting'
+          ? 'bg-yellow-500 animate-pulse'
+          : 'bg-gray-400'
       }`} />
     </button>
   );

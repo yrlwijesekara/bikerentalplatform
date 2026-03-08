@@ -19,6 +19,7 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('disconnected'); // 'connected', 'disconnected', 'reconnecting'
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const socketRef = useRef(null);
   
@@ -72,20 +73,66 @@ export const NotificationProvider = ({ children }) => {
         auth: { token },
         transports: ['websocket'],
         reconnection: true,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10, // Increased attempts
         reconnectionDelay: 1000,
-        timeout: 5000, // 5 second timeout
+        reconnectionDelayMax: 5000,
+        timeout: 5000,
+        forceNew: false, // Reuse connections when possible
       });
 
       newSocket.on('connect', () => {
-        console.log('Socket connected');
+        console.log('🔗 Socket connected successfully');
         setIsConnected(true);
+        setConnectionStatus('connected');
         fetchNotifications(); // Fetch notifications when connected
       });
 
-      newSocket.on('disconnect', () => {
-        console.log('Socket disconnected');
+      newSocket.on('disconnect', (reason) => {
+        console.log('🔌 Socket disconnected:', reason);
         setIsConnected(false);
+        setConnectionStatus('disconnected');
+        
+        // Don't show error toast for normal page refresh disconnections
+        if (reason !== 'io client disconnect' && reason !== 'transport close') {
+          console.warn('Unexpected disconnection:', reason);
+        }
+      });
+
+      newSocket.on('reconnect', (attemptNumber) => {
+        console.log('🔄 Socket reconnected after', attemptNumber, 'attempts');
+        setIsConnected(true);
+        setConnectionStatus('connected');
+        fetchNotifications(); // Refresh notifications on reconnect
+        
+        // Show success message only if there were multiple reconnection attempts
+        if (attemptNumber > 1) {
+          toast.success('🔗 Reconnected to notification service', {
+            duration: 3000,
+            style: { background: '#10B981', color: '#fff' }
+          });
+        }
+      });
+
+      newSocket.on('reconnect_attempt', (attemptNumber) => {
+        console.log('🔄 Attempting to reconnect...', attemptNumber);
+        setConnectionStatus('reconnecting');
+        
+        // Show reconnecting message only after first few attempts
+        if (attemptNumber === 3) {
+          toast('🔄 Reconnecting to notification service...', {
+            duration: 2000,
+            style: { background: '#F59E0B', color: '#fff' }
+          });
+        }
+      });
+
+      newSocket.on('reconnect_failed', () => {
+        console.error('❌ Failed to reconnect to server');
+        setIsConnected(false);
+        setConnectionStatus('disconnected');
+        toast.error('❌ Cannot connect to notification service', {
+          duration: 5000,
+        });
       });
 
       newSocket.on('connect_error', (error) => {
@@ -133,12 +180,7 @@ export const NotificationProvider = ({ children }) => {
           setUnreadCount(data.count);
           
           toast(`You have ${data.count} new notifications`, {
-            icon: '📬',
-            duration: 5000,
-            style: {
-              background: '#3B82F6',
-              color: '#fff',
-            },
+            
             onClick: () => {
               setShowNotificationCenter(true);
             },
@@ -204,13 +246,14 @@ export const NotificationProvider = ({ children }) => {
       );
 
       if (response.data.success) {
-        // Update local state
+        // Update local state (handle both id and _id)
         setNotifications(prev => 
-          prev.map(notification => 
-            !notificationIds || notificationIds.includes(notification.id) 
+          prev.map(notification => {
+            const notificationId = notification.id || notification._id;
+            return (!notificationIds || notificationIds.includes(notificationId))
               ? { ...notification, isRead: true }
-              : notification
-          )
+              : notification;
+          })
         );
         
         // Update unread count
@@ -236,21 +279,32 @@ export const NotificationProvider = ({ children }) => {
       const token = getAuthToken();
       if (!token) return;
 
+      // Find the notification before deleting to check if it was unread
+      const notificationToDelete = notifications.find(n => 
+        (n.id || n._id) === notificationId
+      );
+
       const response = await axios.delete(
         `${BACKEND_URL}/notifications/${notificationId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.success) {
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        // Remove notification from state (handle both id and _id)
+        setNotifications(prev => prev.filter(n => 
+          (n.id || n._id) !== notificationId
+        ));
+        
         // Decrease unread count if the deleted notification was unread
-        const deletedNotification = notifications.find(n => n.id === notificationId);
-        if (deletedNotification && !deletedNotification.isRead) {
+        if (notificationToDelete && !notificationToDelete.isRead) {
           setUnreadCount(prev => Math.max(0, prev - 1));
         }
+
+        toast.success('Notification deleted');
       }
     } catch (error) {
       console.error('Error deleting notification:', error);
+      toast.error('Failed to delete notification');
     }
   };
 
@@ -363,6 +417,7 @@ export const NotificationProvider = ({ children }) => {
     notifications,
     unreadCount,
     isConnected,
+    connectionStatus,
     showNotificationCenter,
     setShowNotificationCenter,
     fetchNotifications,

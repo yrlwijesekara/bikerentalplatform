@@ -74,7 +74,7 @@ io.use((socket, next) => {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`User ${socket.userId} connected with role ${socket.userRole}`);
+  console.log(`🔗 User ${socket.userId} connected with role ${socket.userRole}`);
   
   // Store the socket connection for this user
   notificationService.setUserSocketId(socket.userId, socket.id);
@@ -85,12 +85,14 @@ io.on('connection', (socket) => {
   // Handle joining room based on user role
   if (socket.userRole === 'vendor') {
     socket.join('vendors');
+    console.log(`👨‍💼 User ${socket.userId} joined vendors room`);
   } else if (socket.userRole === 'admin') {
     socket.join('admins');
+    console.log(`👨‍💼 User ${socket.userId} joined admins room`);
   }
   
-  socket.on('disconnect', () => {
-    console.log(`User ${socket.userId} disconnected`);
+  socket.on('disconnect', (reason) => {
+    console.log(`🔌 User ${socket.userId} disconnected (${reason})`);
     notificationService.removeUserSocketId(socket.userId);
   });
   
@@ -98,9 +100,16 @@ io.on('connection', (socket) => {
   socket.on('notification_read', async (notificationIds) => {
     try {
       await notificationService.markNotificationsAsRead(socket.userId, notificationIds);
+      console.log(`✅ Marked notifications as read for user ${socket.userId}`);
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
+  });
+
+  // Handle user going offline/online status
+  socket.on('user_status', (status) => {
+    console.log(`📶 User ${socket.userId} status: ${status}`);
+    // Could be used for showing online/offline status in the future
   });
 });
 
