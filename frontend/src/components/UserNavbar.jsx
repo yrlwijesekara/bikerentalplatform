@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { HiMenu, HiX } from "react-icons/hi";
 import { FaOpencart } from "react-icons/fa";
 import { getCartItemCount } from "../utils/cart";
+import NotificationBell from "./NotificationBell";
 
 const UserNavbar = () => {
   const navigate = useNavigate();
@@ -64,6 +65,9 @@ const UserNavbar = () => {
           Profile
         </Link>
         
+        {/* Notification Bell */}
+        <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
+        
         <Link to="/cart" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium flex items-center gap-1 relative">
           <FaOpencart className="h-5 w-5" />
          
@@ -83,7 +87,10 @@ const UserNavbar = () => {
       </nav>
 
       {/* Mobile Navigation */}
-      <div className="lg:hidden">
+      <div className="lg:hidden flex items-center gap-2">
+        {/* Notification Bell for mobile */}
+        <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
+        
         {/* Hamburger Button */}
         <button
           onClick={toggleMenu}

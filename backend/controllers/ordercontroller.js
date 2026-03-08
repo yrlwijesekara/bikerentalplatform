@@ -1,5 +1,7 @@
 import Order from "../model/order.js";
 import Product from "../model/product.js"; // Import as Product, not Bike
+import User from "../model/user.js";
+import NotificationService from "../services/notificationService.js";
 
 export async function createOrder(req, res) {
     try {
@@ -33,6 +35,7 @@ export async function createOrder(req, res) {
         // Process each bike and validate
         const bikeItems = [];
         const vendorSet = new Set();
+        const vendorBikes = new Map(); // Map vendor ID to array of bikes
         let totalAmount = 0;
         let totalBikes = 0;
 
@@ -84,7 +87,20 @@ export async function createOrder(req, res) {
                 endDate: bikeEndDate
             });
 
-            vendorSet.add((bike.vendor._id || bike.vendor).toString());
+            const vendorId = (bike.vendor._id || bike.vendor).toString();
+            vendorSet.add(vendorId);
+            
+            // Store bike info for notification
+            if (!vendorBikes.has(vendorId)) {
+                vendorBikes.set(vendorId, []);
+            }
+            vendorBikes.get(vendorId).push({
+                bikeName: bike.bikeName,
+                quantity: quantity,
+                rentalDays: rentalDays,
+                subtotal: subtotal
+            });
+
             totalAmount += subtotal;
             totalBikes += quantity;
         }
@@ -129,6 +145,40 @@ export async function createOrder(req, res) {
                     isApproved: false
                 });
                 console.log(`Bike ${bikeItem.bike} set to unavailable and unapproved due to card payment`);
+            }
+        }
+
+        // Get customer details for notifications
+        const customer = await User.findById(req.user.id);
+
+        // Send notifications to all vendors involved in the order
+        const notificationService = req.app.locals.notificationService;
+        if (notificationService && customer) {
+            for (const [vendorId, bikes] of vendorBikes.entries()) {
+                try {
+                    const bikeNames = bikes.map(bike => `${bike.bikeName} (${bike.quantity}x)`).join(', ');
+                    const vendorTotal = bikes.reduce((sum, bike) => sum + bike.subtotal, 0);
+                    
+                    await notificationService.createNotification({
+                        recipientId: vendorId,
+                        senderId: customer._id,
+                        type: 'booking_received',
+                        title: '🎉 New Booking Received!',
+                        message: `You have received a new booking from ${customer.firstname} ${customer.lastname}. Bikes: ${bikeNames}. Total: $${vendorTotal.toFixed(2)}`,
+                        data: {
+                            orderId: savedOrder._id,
+                            orderid: orderid,
+                            customerName: `${customer.firstname} ${customer.lastname}`,
+                            customerEmail: customer.email,
+                            bikes: bikes,
+                            vendorTotal: vendorTotal
+                        },
+                        priority: 'high',
+                        sendEmail: true
+                    });
+                } catch (notificationError) {
+                    console.error(`Error sending notification to vendor ${vendorId}:`, notificationError);
+                }
             }
         }
 
@@ -401,6 +451,85 @@ export async function updateOrderStatus(req, res) {
         // Save the updated order
         const updatedOrder = await order.save();
         console.log("Order updated successfully:", updatedOrder._id);
+
+        // Send notifications for status updates
+        const notificationService = req.app.locals.notificationService;
+        if (notificationService) {
+            try {
+                // Get user and vendor details for notifications
+                const customer = await User.findById(order.user);
+                const vendor = await User.findById(req.user.id);
+
+                // Send notification to customer about status change
+                if (customer && (orderStatus || bikeStatus)) {
+                    const status = orderStatus || bikeStatus;
+                    let message = '';
+                    let title = '';
+
+                    if (status === 'confirmed') {
+                        title = '✅ Booking Confirmed!';
+                        message = bikeId 
+                            ? `Your bike booking has been confirmed by the vendor.`
+                            : `Your booking #${order.orderid} has been confirmed!`;
+                    } else if (status === 'cancelled') {
+                        title = '❌ Booking Cancelled';
+                        message = bikeId 
+                            ? `Your bike booking has been cancelled by the vendor.`
+                            : `Your booking #${order.orderid} has been cancelled.`;
+                    } else if (status === 'completed') {
+                        title = '🎯 Booking Completed';
+                        message = bikeId 
+                            ? `Your bike rental has been completed. Thank you for choosing us!`
+                            : `Your booking #${order.orderid} has been completed. Thank you!`;
+                    } else if (status === 'ongoing') {
+                        title = '🚴‍♂️ Booking Started';
+                        message = bikeId 
+                            ? `Your bike rental has started. Enjoy your ride!`
+                            : `Your booking #${order.orderid} is now active. Enjoy!`;
+                    }
+
+                    if (title && message) {
+                        await notificationService.createNotification({
+                            recipientId: customer._id,
+                            senderId: vendor._id,
+                            type: status === 'confirmed' ? 'booking_confirmed' : 'general',
+                            title: title,
+                            message: message,
+                            data: {
+                                orderId: order._id,
+                                orderid: order.orderid,
+                                newStatus: status,
+                                bikeId: bikeId || null
+                            },
+                            priority: status === 'cancelled' ? 'high' : 'normal',
+                            sendEmail: true
+                        });
+                    }
+                }
+
+                // Send notification for payment confirmation
+                if (paymentStatus === 'paid' && customer && vendor) {
+                    await notificationService.createNotification({
+                        recipientId: vendor._id,
+                        senderId: customer._id,
+                        type: 'payment_received',
+                        title: '💰 Payment Received',
+                        message: `Payment has been received for booking #${order.orderid}. Total amount: $${order.finalTotal}`,
+                        data: {
+                            orderId: order._id,
+                            orderid: order.orderid,
+                            amount: order.finalTotal,
+                            customerName: `${customer.firstname} ${customer.lastname}`
+                        },
+                        priority: 'normal',
+                        sendEmail: true
+                    });
+                }
+
+            } catch (notificationError) {
+                console.error('Error sending status update notification:', notificationError);
+            }
+        }
 
         res.status(200).json({
             success: true,

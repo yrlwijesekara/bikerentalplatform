@@ -34,7 +34,23 @@ export default function Adminpage() {
                 return;
             }
 
-            // Verify user role from backend
+            // First check JWT token locally for quick validation
+            try {
+                const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+                console.log("Token payload:", tokenPayload); // Debug log
+                
+                // If token shows admin role, allow immediate access
+                if (tokenPayload.role === "admin") {
+                    setUserInfo(tokenPayload);
+                    localStorage.setItem("role", tokenPayload.role);
+                    setIsAuthorizing(false);
+                    return;
+                }
+            } catch (jwtError) {
+                console.warn("Could not parse JWT token:", jwtError);
+            }
+
+            // Verify user role from backend as secondary check
             const response = await axios.get(
                 `${import.meta.env.VITE_BACKEND_URL}/users`,
                 {
@@ -44,7 +60,8 @@ export default function Adminpage() {
                 }
             );
 
-            const user = response.data;
+            const user = response.data.user; // Fix: Access the user property
+            console.log("Backend user verification:", user); // Debug log
             
             // Check if user has admin role
             if (!user || user.role !== "admin") {
