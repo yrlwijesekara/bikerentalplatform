@@ -3,6 +3,69 @@ import Product from "../model/product.js"; // Import as Product, not Bike
 import User from "../model/user.js";
 import NotificationService from "../services/notificationService.js";
 
+// Status transition validation function
+function validateStatusTransition(currentStatus, newStatus) {
+    // Define allowed transitions
+    const allowedTransitions = {
+        'pending': ['confirmed', 'cancelled'], 
+        'confirmed': ['ongoing', 'cancelled'], 
+        'ongoing': ['completed'], // Once started, can only be completed
+        'completed': [], // Final state - no transitions allowed
+        'cancelled': [] // Final state - no transitions allowed
+    };
+
+    // Same status is allowed (no change)
+    if (currentStatus === newStatus) {
+        return { valid: true };
+    }
+
+    // Check if transition is allowed
+    const allowedNext = allowedTransitions[currentStatus.toLowerCase()] || [];
+    
+    if (!allowedNext.includes(newStatus.toLowerCase())) {
+        // Generate helpful error message based on current status
+        let message = '';
+        
+        switch (currentStatus.toLowerCase()) {
+            case 'cancelled':
+                message = `Cannot change status from 'Cancelled' to '${newStatus}'. Once cancelled, the booking cannot be modified.`;
+                break;
+            case 'completed':
+                message = `Cannot change status from 'Completed' to '${newStatus}'. The booking is already completed.`;
+                break;
+            case 'confirmed':
+                if (newStatus.toLowerCase() === 'pending') {
+                    message = `Cannot change status from 'Confirmed' back to 'Pending'. Please cancel or proceed to 'Ongoing' instead.`;
+                } else {
+                    message = `Invalid status transition from 'Confirmed' to '${newStatus}'. Allowed transitions: Ongoing, Cancelled.`;
+                }
+                break;
+            case 'ongoing':
+                if (newStatus.toLowerCase() === 'cancelled') {
+                    message = `Cannot cancel a rental that has already started. Once ongoing, the rental can only be completed.`;
+                } else if (newStatus.toLowerCase() === 'pending' || newStatus.toLowerCase() === 'confirmed') {
+                    message = `Cannot change status from 'Ongoing' to '${newStatus}'. The rental has already started and can only be completed.`;
+                } else {
+                    message = `Invalid status transition from 'Ongoing' to '${newStatus}'. Once started, rental can only be Completed.`;
+                }
+                break;
+            case 'pending':
+                message = `Invalid status transition from 'Pending' to '${newStatus}'. Allowed transitions: Confirmed, Cancelled.`;
+                break;
+            default:
+                message = `Invalid status transition from '${currentStatus}' to '${newStatus}'.`;
+        }
+        
+        return { 
+            valid: false, 
+            message: message,
+            allowedTransitions: allowedNext
+        };
+    }
+
+    return { valid: true };
+}
+
 export async function createOrder(req, res) {
     try {
         if(req.user == null) {
@@ -357,6 +420,19 @@ export async function updateOrderStatus(req, res) {
 
             if (bikeIndex === -1) {
                 return res.status(404).json({ message: "Bike not found or not owned by this vendor" });
+            }
+
+            // Get current bike status
+            const currentBikeStatus = order.bikes[bikeIndex].bikeStatus || 'pending';
+            
+            // Validate status transition
+            const validationResult = validateStatusTransition(currentBikeStatus, bikeStatus);
+            if (!validationResult.valid) {
+                return res.status(400).json({ 
+                    message: validationResult.message,
+                    currentStatus: currentBikeStatus,
+                    attemptedStatus: bikeStatus
+                });
             }
 
             // Update the bike status
