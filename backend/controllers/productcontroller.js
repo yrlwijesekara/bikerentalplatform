@@ -150,16 +150,65 @@ export async function deleteProduct(req, res) {
 
     try {
         const productId = req.params.id;
+        
+        // First check if product exists and belongs to vendor
+        const existingProduct = await Product.findOne({ 
+            _id: productId, 
+            vendor: req.user.id 
+        });
+        
+        if (!existingProduct) {
+            return res.status(404).json({
+                message: "Product not found or you don't have permission to delete this product.",
+                error: "Not found"
+            });
+        }
+
+        // Check if product is part of any active orders
+        const activeOrders = await Order.find({
+            'bikes.bike': productId,
+            orderStatus: { $in: ['pending', 'confirmed', 'ongoing'] }
+        });
+
+        if (activeOrders.length > 0) {
+            return res.status(400).json({
+                message: "Bikes on order",
+                error: "Product in use",
+                activeOrdersCount: activeOrders.length
+            });
+        }
+
+        // Check if product has any individual bike statuses that are active
+        const ordersWithActiveBikes = await Order.find({
+            bikes: {
+                $elemMatch: {
+                    bike: productId,
+                    bikeStatus: { $in: ['pending', 'confirmed', 'ongoing'] }
+                }
+            }
+        });
+
+        if (ordersWithActiveBikes.length > 0) {
+            return res.status(400).json({
+                message: "Bikes on order",
+                error: "Product in active booking",
+                activeBookingsCount: ordersWithActiveBikes.length
+            });
+        }
+
+        // If no active orders/bookings, proceed with deletion
         const result = await Product.deleteOne({ 
             _id: productId, 
             vendor: req.user.id 
         });
+        
         if (result.deletedCount === 0) {
             return res.status(404).json({
                 message: "Product not found or you don't have permission to delete this product.",
                 error: "Not found"
             });
         }
+        
         res.status(200).json({
             message: "Product deleted successfully"
         });

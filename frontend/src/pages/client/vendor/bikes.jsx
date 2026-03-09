@@ -117,7 +117,9 @@ export default function Bikes() {
       fetchBikes(); // Refresh the list
     } catch (error) {
       console.error("Error deleting bike:", error);
-      toast.error("Failed to delete bike");
+      // Display specific backend error message, fallback to generic message
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to delete bike";
+      toast.error(errorMessage);
     }
   };
 
