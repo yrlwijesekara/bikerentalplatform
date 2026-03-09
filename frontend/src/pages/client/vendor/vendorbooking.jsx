@@ -354,17 +354,17 @@ export default function VendorBooking() {
                   <div className="flex items-start gap-3">
                     <div className="w-16 h-16 flex-shrink-0">
                       <img 
-                        src={bikeItem.bike.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
-                        alt={bikeItem.bike.bikeName}
+                        src={bikeItem.bike?.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
+                        alt={bikeItem.bike?.bikeName || 'Unknown Bike'}
                         className="w-full h-full object-cover rounded-md"
                       />
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       {/* Bike Details */}
-                      <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike.bikeName}</h4>
+                      <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike?.bikeName || 'Unknown Bike'}</h4>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
-                        <span>Type: {bikeItem.bike.bikeType}</span>
+                        <span>Type: {bikeItem.bike?.bikeType || 'Unknown'}</span>
                         <span>Qty: {bikeItem.quantity}</span>
                         {bikeItem.rentalDays && (
                           <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
@@ -394,7 +394,7 @@ export default function VendorBooking() {
                       <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                         <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
                           <MdEdit className="text-blue-600" size={16} />
-                          Update Status for {bikeItem.bike.bikeName}
+                          Update Status for {bikeItem.bike?.bikeName || 'Unknown Bike'}
                         </h5>
                         
                         {(() => {
@@ -441,8 +441,8 @@ export default function VendorBooking() {
                                   return (
                                     <button
                                       key={status.value}
-                                      onClick={() => updateBikeStatus(booking._id, bikeItem.bike._id, status.value, bikeItem.bike.bikeName)}
-                                      disabled={updatingStatus[`${booking._id}-${bikeItem.bike._id}`]}
+                                      onClick={() => bikeItem.bike?._id && updateBikeStatus(booking._id, bikeItem.bike._id, status.value, bikeItem.bike?.bikeName || 'Unknown Bike')}
+                                      disabled={!bikeItem.bike?._id || updatingStatus[`${booking._id}-${bikeItem.bike._id}`]}
                                       className={`px-3 py-2 text-sm font-medium rounded transition-all duration-200 flex items-center gap-2 
                                         ${status.value === 'cancelled' 
                                           ? 'bg-red-600 hover:bg-red-700 text-white border-2 border-red-600 hover:border-red-700' 
@@ -450,10 +450,10 @@ export default function VendorBooking() {
                                             ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-600 hover:border-green-700'
                                             : 'bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-600 hover:border-blue-700'
                                         } 
-                                        ${updatingStatus[`${booking._id}-${bikeItem.bike._id}`] ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}
+                                        ${!bikeItem.bike?._id || updatingStatus[`${booking._id}-${bikeItem.bike?._id}`] ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}
                                         disabled:opacity-50 disabled:cursor-not-allowed`}
                                     >
-                                      {updatingStatus[`${booking._id}-${bikeItem.bike._id}`] ? (
+                                      {!bikeItem.bike?._id || updatingStatus[`${booking._id}-${bikeItem.bike?._id}`] ? (
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                       ) : (
                                         getStatusIcon(status.value)

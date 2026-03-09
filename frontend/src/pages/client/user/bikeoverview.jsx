@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Loader from "../../../components/loader";
 import ImageSlider from "../../../components/imagesilder";
 import { addToCart, getCart, isProductInCart } from "../../../utils/cart";
+import Footer from "../../../components/footer";
 
 export default function BikeOverview()   {
 
@@ -365,6 +366,8 @@ export default function BikeOverview()   {
                 </div>
             )}
             {status === 'error' && <div className="text-red-500 flex justify-center">Error loading product.</div>}
+            
         </div>
+        
     );
 }
