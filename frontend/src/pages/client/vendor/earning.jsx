@@ -5,6 +5,7 @@ import { BiReceipt, BiBarChart } from "react-icons/bi";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../../../components/loader";
+import Footer from "../../../components/footer";
 
 export default function VendorEarning() {
   const [orders, setOrders] = useState([]);
@@ -415,6 +416,7 @@ export default function VendorEarning() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

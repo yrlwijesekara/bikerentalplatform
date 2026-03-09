@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { HiMenu, HiX } from "react-icons/hi";
+import NotificationBell from "./NotificationBell";
 
 const VendorNavbar = () => {
   const navigate = useNavigate();
@@ -41,6 +42,9 @@ const VendorNavbar = () => {
           Reviews
         </Link>
         
+        {/* Notification Bell */}
+        <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
+        
         <button 
           onClick={handleLogout}
           className="px-4 py-2 bg-[var(--brand-warning)] rounded-md hover:bg-red-600 transition-colors duration-200 font-medium text-white"
@@ -50,7 +54,10 @@ const VendorNavbar = () => {
       </nav>
 
       {/* Mobile Navigation */}
-      <div className="lg:hidden">
+      <div className="lg:hidden flex items-center gap-2">
+        {/* Notification Bell for mobile */}
+        <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
+        
         {/* Hamburger Button */}
         <button
           onClick={toggleMenu}

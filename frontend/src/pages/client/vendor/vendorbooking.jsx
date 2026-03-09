@@ -5,6 +5,7 @@ import { BiReceipt } from "react-icons/bi";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../../../components/loader";
+import Footer from "../../../components/footer";
 
 export default function VendorBooking() {
   const [bookings, setBookings] = useState([]);
@@ -24,6 +25,37 @@ export default function VendorBooking() {
     { value: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800' },
     { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' }
   ];
+
+  // Status transition validation function
+  const getValidNextStatuses = (currentStatus) => {
+    const allowedTransitions = {
+      'pending': ['confirmed', 'cancelled'], 
+      'confirmed': ['ongoing', 'cancelled'], 
+      'ongoing': ['completed'], // Once started, can only be completed
+      'completed': [], // Final state - no transitions allowed
+      'cancelled': [] // Final state - no transitions allowed
+    };
+
+    return allowedTransitions[currentStatus?.toLowerCase()] || ['confirmed', 'cancelled'];
+  };
+
+  // Get transition message for user guidance
+  const getStatusTransitionMessage = (currentStatus) => {
+    switch (currentStatus?.toLowerCase()) {
+      case 'pending':
+        return 'Next: Confirm the booking to proceed, or cancel if needed';
+      case 'confirmed':
+        return 'Next: Start the rental (Ongoing) or cancel if customer doesn\'t show up';
+      case 'ongoing':
+        return 'Next: Mark as completed when rental period ends. Cannot cancel once rental has started.';
+      case 'completed':
+        return 'Booking completed successfully. No further actions needed.';
+      case 'cancelled':
+        return 'Booking has been cancelled. No further actions allowed.';
+      default:
+        return 'Please update the booking status appropriately';
+    }
+  };
 
   // Fetch bookings from database
   useEffect(() => {
@@ -133,15 +165,41 @@ export default function VendorBooking() {
       if (response.data.success) {
         // Refresh bookings to get updated data
         fetchBookings();
-        toast.success(`${bikeName} status updated to ${newStatus}`);
+        toast.success(`${bikeName} status updated to ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)} ✅`, {
+          duration: 4000,
+          position: 'top-center',
+        });
       } else {
         toast.error("Failed to update bike status");
       }
     } catch (error) {
       console.error("Error updating bike status:", error);
       console.error("Error response:", error.response?.data);
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update bike status";
-      toast.error(errorMessage);
+      
+      // Handle status transition validation errors specially
+      if (error.response?.status === 400 && error.response?.data?.message) {
+        const errorData = error.response.data;
+        
+        // Show detailed validation error
+        toast.error(
+          <div className="space-y-2">
+            <div className="font-semibold text-red-800">❌ Invalid Status Transition</div>
+            <div className="text-sm text-red-600">{errorData.message}</div>
+            {errorData.currentStatus && errorData.attemptedStatus && (
+              <div className="text-xs text-red-500 bg-red-50 p-2 rounded">
+                Attempted: {errorData.currentStatus} → {errorData.attemptedStatus}
+              </div>
+            )}
+          </div>, 
+          { 
+            duration: 6000,
+            position: 'top-center'
+          }
+        );
+      } else {
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update bike status";
+        toast.error(errorMessage);
+      }
     } finally {
       setUpdatingStatus(prev => ({ ...prev, [`${orderId}-${bikeId}`]: false }));
     }
@@ -296,17 +354,17 @@ export default function VendorBooking() {
                   <div className="flex items-start gap-3">
                     <div className="w-16 h-16 flex-shrink-0">
                       <img 
-                        src={bikeItem.bike.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
-                        alt={bikeItem.bike.bikeName}
+                        src={bikeItem.bike?.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
+                        alt={bikeItem.bike?.bikeName || 'Unknown Bike'}
                         className="w-full h-full object-cover rounded-md"
                       />
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       {/* Bike Details */}
-                      <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike.bikeName}</h4>
+                      <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike?.bikeName || 'Unknown Bike'}</h4>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
-                        <span>Type: {bikeItem.bike.bikeType}</span>
+                        <span>Type: {bikeItem.bike?.bikeType || 'Unknown'}</span>
                         <span>Qty: {bikeItem.quantity}</span>
                         {bikeItem.rentalDays && (
                           <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
@@ -325,35 +383,92 @@ export default function VendorBooking() {
                         </div>
                       </div>
                       
+                      {/* Status Transition Guidance */}
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                        <p className="text-sm text-gray-600 italic">
+                          💡 {getStatusTransitionMessage(bikeItem.bikeStatus || 'pending')}
+                        </p>
+                      </div>
+                      
                       {/* Status Management Buttons */}
                       <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                         <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
                           <MdEdit className="text-blue-600" size={16} />
-                          Update Status for {bikeItem.bike.bikeName}
+                          Update Status for {bikeItem.bike?.bikeName || 'Unknown Bike'}
                         </h5>
-                        <div className="flex flex-wrap gap-2">
-                          {orderStatuses.map((status) => (
-                            <button
-                              key={status.value}
-                              onClick={() => updateBikeStatus(booking._id, bikeItem.bike._id, status.value, bikeItem.bike.bikeName)}
-                              disabled={updatingStatus[`${booking._id}-${bikeItem.bike._id}`] || (bikeItem.bikeStatus || 'pending').toLowerCase() === status.value.toLowerCase()}
-                              className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 flex items-center gap-1 ${
-                                (bikeItem.bikeStatus || 'pending').toLowerCase() === status.value.toLowerCase()
-                                  ? `${status.color} cursor-not-allowed opacity-75`
-                                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                              } ${updatingStatus[`${booking._id}-${bikeItem.bike._id}`] ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                              {updatingStatus[`${booking._id}-${bikeItem.bike._id}`] && (bikeItem.bikeStatus || 'pending').toLowerCase() !== status.value.toLowerCase() ? (
-                                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                              ) : (
-                                getStatusIcon(status.value)
-                              )}
-                              {status.label}
-                            </button>
-                          ))}
-                        </div>
-                        <p className="text-xs text-gray-600 mt-2">
-                          Update status for individual bikes. Order status will automatically update when all bikes are managed.
+                        
+                        {(() => {
+                          const currentStatus = bikeItem.bikeStatus || 'pending';
+                          const validNextStatuses = getValidNextStatuses(currentStatus);
+                          const currentStatusObj = orderStatuses.find(s => s.value.toLowerCase() === currentStatus.toLowerCase());
+                          
+                          // If no valid next statuses (completed or cancelled), show completion message
+                          if (validNextStatuses.length === 0) {
+                            return (
+                              <div className="text-center py-4">
+                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${currentStatusObj?.color}`}>
+                                  {getStatusIcon(currentStatus)}
+                                  <span className="font-medium">
+                                    {currentStatus === 'completed' ? 'Booking Successfully Completed' : 'Booking Cancelled'}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-2">
+                                  No further status updates available.
+                                </p>
+                              </div>
+                            );
+                          }
+                          
+                          // Show current status (disabled) and valid next status buttons
+                          return (
+                            <div className="space-y-2">
+                              {/* Current Status Button (disabled) */}
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  disabled
+                                  className={`px-3 py-2 text-sm font-medium rounded transition-all duration-200 flex items-center gap-2 ${currentStatusObj?.color} cursor-not-allowed opacity-75 border-2 border-current`}
+                                >
+                                  {getStatusIcon(currentStatus)}
+                                  Current: {currentStatusObj?.label}
+                                </button>
+                              </div>
+                              
+                              {/* Valid Next Status Buttons */}
+                              <div className="flex flex-wrap gap-2">
+                                <span className="text-xs text-gray-600 font-medium mr-2 pt-2">Available actions:</span>
+                                {validNextStatuses.map((statusValue) => {
+                                  const status = orderStatuses.find(s => s.value === statusValue);
+                                  return (
+                                    <button
+                                      key={status.value}
+                                      onClick={() => bikeItem.bike?._id && updateBikeStatus(booking._id, bikeItem.bike._id, status.value, bikeItem.bike?.bikeName || 'Unknown Bike')}
+                                      disabled={!bikeItem.bike?._id || updatingStatus[`${booking._id}-${bikeItem.bike._id}`]}
+                                      className={`px-3 py-2 text-sm font-medium rounded transition-all duration-200 flex items-center gap-2 
+                                        ${status.value === 'cancelled' 
+                                          ? 'bg-red-600 hover:bg-red-700 text-white border-2 border-red-600 hover:border-red-700' 
+                                          : status.value === 'completed' 
+                                            ? 'bg-green-600 hover:bg-green-700 text-white border-2 border-green-600 hover:border-green-700'
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-600 hover:border-blue-700'
+                                        } 
+                                        ${!bikeItem.bike?._id || updatingStatus[`${booking._id}-${bikeItem.bike?._id}`] ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}
+                                        disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                      {!bikeItem.bike?._id || updatingStatus[`${booking._id}-${bikeItem.bike?._id}`] ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                      ) : (
+                                        getStatusIcon(status.value)
+                                      )}
+                                      {status.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        
+                        <p className="text-xs text-gray-600 mt-3 bg-yellow-50 p-2 rounded border-l-2 border-yellow-400">
+                          ⚠️ <strong>Status Flow:</strong> Pending → Confirmed → Ongoing → Completed. Once ongoing (rental started), can only be completed. Once cancelled or completed, no further changes allowed.
                         </p>
                       </div>
                       
@@ -522,6 +637,7 @@ export default function VendorBooking() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

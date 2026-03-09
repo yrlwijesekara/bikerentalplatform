@@ -1,5 +1,70 @@
 import Order from "../model/order.js";
 import Product from "../model/product.js"; // Import as Product, not Bike
+import User from "../model/user.js";
+import NotificationService from "../services/notificationService.js";
+
+// Status transition validation function
+function validateStatusTransition(currentStatus, newStatus) {
+    // Define allowed transitions
+    const allowedTransitions = {
+        'pending': ['confirmed', 'cancelled'], 
+        'confirmed': ['ongoing', 'cancelled'], 
+        'ongoing': ['completed'], // Once started, can only be completed
+        'completed': [], // Final state - no transitions allowed
+        'cancelled': [] // Final state - no transitions allowed
+    };
+
+    // Same status is allowed (no change)
+    if (currentStatus === newStatus) {
+        return { valid: true };
+    }
+
+    // Check if transition is allowed
+    const allowedNext = allowedTransitions[currentStatus.toLowerCase()] || [];
+    
+    if (!allowedNext.includes(newStatus.toLowerCase())) {
+        // Generate helpful error message based on current status
+        let message = '';
+        
+        switch (currentStatus.toLowerCase()) {
+            case 'cancelled':
+                message = `Cannot change status from 'Cancelled' to '${newStatus}'. Once cancelled, the booking cannot be modified.`;
+                break;
+            case 'completed':
+                message = `Cannot change status from 'Completed' to '${newStatus}'. The booking is already completed.`;
+                break;
+            case 'confirmed':
+                if (newStatus.toLowerCase() === 'pending') {
+                    message = `Cannot change status from 'Confirmed' back to 'Pending'. Please cancel or proceed to 'Ongoing' instead.`;
+                } else {
+                    message = `Invalid status transition from 'Confirmed' to '${newStatus}'. Allowed transitions: Ongoing, Cancelled.`;
+                }
+                break;
+            case 'ongoing':
+                if (newStatus.toLowerCase() === 'cancelled') {
+                    message = `Cannot cancel a rental that has already started. Once ongoing, the rental can only be completed.`;
+                } else if (newStatus.toLowerCase() === 'pending' || newStatus.toLowerCase() === 'confirmed') {
+                    message = `Cannot change status from 'Ongoing' to '${newStatus}'. The rental has already started and can only be completed.`;
+                } else {
+                    message = `Invalid status transition from 'Ongoing' to '${newStatus}'. Once started, rental can only be Completed.`;
+                }
+                break;
+            case 'pending':
+                message = `Invalid status transition from 'Pending' to '${newStatus}'. Allowed transitions: Confirmed, Cancelled.`;
+                break;
+            default:
+                message = `Invalid status transition from '${currentStatus}' to '${newStatus}'.`;
+        }
+        
+        return { 
+            valid: false, 
+            message: message,
+            allowedTransitions: allowedNext
+        };
+    }
+
+    return { valid: true };
+}
 
 export async function createOrder(req, res) {
     try {
@@ -33,6 +98,7 @@ export async function createOrder(req, res) {
         // Process each bike and validate
         const bikeItems = [];
         const vendorSet = new Set();
+        const vendorBikes = new Map(); // Map vendor ID to array of bikes
         let totalAmount = 0;
         let totalBikes = 0;
 
@@ -84,7 +150,20 @@ export async function createOrder(req, res) {
                 endDate: bikeEndDate
             });
 
-            vendorSet.add((bike.vendor._id || bike.vendor).toString());
+            const vendorId = (bike.vendor._id || bike.vendor).toString();
+            vendorSet.add(vendorId);
+            
+            // Store bike info for notification
+            if (!vendorBikes.has(vendorId)) {
+                vendorBikes.set(vendorId, []);
+            }
+            vendorBikes.get(vendorId).push({
+                bikeName: bike.bikeName,
+                quantity: quantity,
+                rentalDays: rentalDays,
+                subtotal: subtotal
+            });
+
             totalAmount += subtotal;
             totalBikes += quantity;
         }
@@ -129,6 +208,40 @@ export async function createOrder(req, res) {
                     isApproved: false
                 });
                 console.log(`Bike ${bikeItem.bike} set to unavailable and unapproved due to card payment`);
+            }
+        }
+
+        // Get customer details for notifications
+        const customer = await User.findById(req.user.id);
+
+        // Send notifications to all vendors involved in the order
+        const notificationService = req.app.locals.notificationService;
+        if (notificationService && customer) {
+            for (const [vendorId, bikes] of vendorBikes.entries()) {
+                try {
+                    const bikeNames = bikes.map(bike => `${bike.bikeName} (${bike.quantity}x)`).join(', ');
+                    const vendorTotal = bikes.reduce((sum, bike) => sum + bike.subtotal, 0);
+                    
+                    await notificationService.createNotification({
+                        recipientId: vendorId,
+                        senderId: customer._id,
+                        type: 'booking_received',
+                        title: '🎉 New Booking Received!',
+                        message: `You have received a new booking from ${customer.firstname} ${customer.lastname}. Bikes: ${bikeNames}. Total: $${vendorTotal.toFixed(2)}`,
+                        data: {
+                            orderId: savedOrder._id,
+                            orderid: orderid,
+                            customerName: `${customer.firstname} ${customer.lastname}`,
+                            customerEmail: customer.email,
+                            bikes: bikes,
+                            vendorTotal: vendorTotal
+                        },
+                        priority: 'high',
+                        sendEmail: true
+                    });
+                } catch (notificationError) {
+                    console.error(`Error sending notification to vendor ${vendorId}:`, notificationError);
+                }
             }
         }
 
@@ -309,6 +422,19 @@ export async function updateOrderStatus(req, res) {
                 return res.status(404).json({ message: "Bike not found or not owned by this vendor" });
             }
 
+            // Get current bike status
+            const currentBikeStatus = order.bikes[bikeIndex].bikeStatus || 'pending';
+            
+            // Validate status transition
+            const validationResult = validateStatusTransition(currentBikeStatus, bikeStatus);
+            if (!validationResult.valid) {
+                return res.status(400).json({ 
+                    message: validationResult.message,
+                    currentStatus: currentBikeStatus,
+                    attemptedStatus: bikeStatus
+                });
+            }
+
             // Update the bike status
             order.bikes[bikeIndex].bikeStatus = bikeStatus;
 
@@ -402,6 +528,85 @@ export async function updateOrderStatus(req, res) {
         const updatedOrder = await order.save();
         console.log("Order updated successfully:", updatedOrder._id);
 
+        // Send notifications for status updates
+        const notificationService = req.app.locals.notificationService;
+        if (notificationService) {
+            try {
+                // Get user and vendor details for notifications
+                const customer = await User.findById(order.user);
+                const vendor = await User.findById(req.user.id);
+
+                // Send notification to customer about status change
+                if (customer && (orderStatus || bikeStatus)) {
+                    const status = orderStatus || bikeStatus;
+                    let message = '';
+                    let title = '';
+
+                    if (status === 'confirmed') {
+                        title = '✅ Booking Confirmed!';
+                        message = bikeId 
+                            ? `Your bike booking has been confirmed by the vendor.`
+                            : `Your booking #${order.orderid} has been confirmed!`;
+                    } else if (status === 'cancelled') {
+                        title = '❌ Booking Cancelled';
+                        message = bikeId 
+                            ? `Your bike booking has been cancelled by the vendor.`
+                            : `Your booking #${order.orderid} has been cancelled.`;
+                    } else if (status === 'completed') {
+                        title = '🎯 Booking Completed';
+                        message = bikeId 
+                            ? `Your bike rental has been completed. Thank you for choosing us!`
+                            : `Your booking #${order.orderid} has been completed. Thank you!`;
+                    } else if (status === 'ongoing') {
+                        title = '🚴‍♂️ Booking Started';
+                        message = bikeId 
+                            ? `Your bike rental has started. Enjoy your ride!`
+                            : `Your booking #${order.orderid} is now active. Enjoy!`;
+                    }
+
+                    if (title && message) {
+                        await notificationService.createNotification({
+                            recipientId: customer._id,
+                            senderId: vendor._id,
+                            type: status === 'confirmed' ? 'booking_confirmed' : 'general',
+                            title: title,
+                            message: message,
+                            data: {
+                                orderId: order._id,
+                                orderid: order.orderid,
+                                newStatus: status,
+                                bikeId: bikeId || null
+                            },
+                            priority: status === 'cancelled' ? 'high' : 'normal',
+                            sendEmail: true
+                        });
+                    }
+                }
+
+                // Send notification for payment confirmation
+                if (paymentStatus === 'paid' && customer && vendor) {
+                    await notificationService.createNotification({
+                        recipientId: vendor._id,
+                        senderId: customer._id,
+                        type: 'payment_received',
+                        title: '💰 Payment Received',
+                        message: `Payment has been received for booking #${order.orderid}. Total amount: $${order.finalTotal}`,
+                        data: {
+                            orderId: order._id,
+                            orderid: order.orderid,
+                            amount: order.finalTotal,
+                            customerName: `${customer.firstname} ${customer.lastname}`
+                        },
+                        priority: 'normal',
+                        sendEmail: true
+                    });
+                }
+
+            } catch (notificationError) {
+                console.error('Error sending status update notification:', notificationError);
+            }
+        }
+
         res.status(200).json({
             success: true,
             message: "Order updated successfully",
@@ -460,4 +665,98 @@ export async function getOrderById(req, res) {
     }
 }
 
+// Get vendor earnings data for dashboard
+export async function getVendorEarnings(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        const vendorId = req.user.id;
+
+        // Get all completed orders for this vendor
+        const completedOrders = await Order.find({
+            vendors: vendorId,
+            orderStatus: "completed"
+        });
+
+        // Calculate total earnings
+        let totalEarnings = 0;
+        const monthlyEarnings = Array(12).fill(0);
+        
+        for (const order of completedOrders) {
+            // Calculate vendor's share from this order
+            const vendorBikes = order.bikes.filter(bike => 
+                bike.vendor.toString() === vendorId
+            );
+            
+            const vendorOrderTotal = vendorBikes.reduce((sum, bike) => sum + bike.subtotal, 0);
+            totalEarnings += vendorOrderTotal;
+            
+            // Add to monthly data
+            const orderMonth = order.endDate.getMonth(); // 0-11
+            monthlyEarnings[orderMonth] += vendorOrderTotal;
+        }
+
+        // Format monthly data for chart
+        const monthlyData = monthlyEarnings.map((amount, index) => ({
+            month: index + 1, // 1-12
+            amount: Math.round(amount)
+        })).filter(data => data.amount > 0);
+
+        res.status(200).json({
+            message: "Vendor earnings retrieved successfully",
+            total: Math.round(totalEarnings),
+            monthly: monthlyData
+        });
+
+    } catch (error) {
+        console.error("Error fetching vendor earnings:", error);
+        res.status(500).json({
+            message: "Error fetching vendor earnings",
+            error: error.message
+        });
+    }
+}
+
+// Get vendor booking statistics for dashboard
+export async function getVendorStats(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        const vendorId = req.user.id;
+
+        // Get booking statistics
+        const [activeBookings, completedBookings, allBookings] = await Promise.all([
+            Order.countDocuments({
+                vendors: vendorId,
+                orderStatus: { $in: ["confirmed", "ongoing"] }
+            }),
+            Order.countDocuments({
+                vendors: vendorId,
+                orderStatus: "completed"
+            }),
+            Order.countDocuments({
+                vendors: vendorId
+            })
+        ]);
+
+        res.status(200).json({
+            message: "Vendor statistics retrieved successfully",
+            active: activeBookings,
+            completed: completedBookings,
+            total: allBookings,
+            pending: allBookings - activeBookings - completedBookings
+        });
+
+    } catch (error) {
+        console.error("Error fetching vendor stats:", error);
+        res.status(500).json({
+            message: "Error fetching vendor statistics",
+            error: error.message
+        });
+    }
+}
    

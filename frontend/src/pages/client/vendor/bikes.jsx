@@ -7,6 +7,7 @@ import { IoIosEye } from "react-icons/io";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../../../components/loader";
+import Footer from "../../../components/footer";
 
 
 export default function Bikes() {
@@ -116,7 +117,9 @@ export default function Bikes() {
       fetchBikes(); // Refresh the list
     } catch (error) {
       console.error("Error deleting bike:", error);
-      toast.error("Failed to delete bike");
+      // Display specific backend error message, fallback to generic message
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to delete bike";
+      toast.error(errorMessage);
     }
   };
 
@@ -346,6 +349,7 @@ export default function Bikes() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

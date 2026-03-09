@@ -9,6 +9,7 @@ import Loader from "../../../components/loader";
 import { FaPhone } from "react-icons/fa";
 import { FaUser } from "react-icons/fa";
 import { FaEnvelope } from "react-icons/fa";
+import Footer from "../../../components/footer";
 
 export default function Mybooking() {
   const [bookings, setBookings] = useState([]);
@@ -182,7 +183,7 @@ export default function Mybooking() {
                   {booking.bikes && booking.bikes.map((bikeItem, idx) => (
                     <div key={idx} className="flex items-center gap-1 py-0.5">
                       {getStatusIcon(bikeItem.bikeStatus || 'pending')}
-                      <span className="truncate max-w-32">{bikeItem.bike.bikeName}</span>
+                      <span className="truncate max-w-32">{bikeItem.bike?.bikeName || 'Unknown Bike'}</span>
                       <span className="text-gray-300">:</span>
                       <span className="capitalize">{bikeItem.bikeStatus || 'pending'}</span>
                     </div>
@@ -205,7 +206,7 @@ export default function Mybooking() {
                     <div key={idx} className="flex items-center justify-between gap-2 py-1">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {getStatusIcon(bikeItem.bikeStatus || 'pending')}
-                        <span className="text-xs text-gray-800 truncate font-medium">{bikeItem.bike.bikeName}</span>
+                        <span className="text-xs text-gray-800 truncate font-medium">{bikeItem.bike?.bikeName || 'Unknown Bike'}</span>
                       </div>
                       <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(bikeItem.bikeStatus || 'pending')}`}>
                         {bikeItem.bikeStatus || 'pending'}
@@ -278,16 +279,16 @@ export default function Mybooking() {
                 <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <div className="w-16 h-16 flex-shrink-0">
                     <img 
-                      src={bikeItem.bike.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
-                      alt={bikeItem.bike.bikeName}
+                      src={bikeItem.bike?.images?.[0] || "https://via.placeholder.com/64x64?text=Bike"} 
+                      alt={bikeItem.bike?.bikeName || 'Unknown Bike'}
                       className="w-full h-full object-cover rounded-md"
                     />
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike.bikeName}</h4>
+                    <h4 className="font-medium text-gray-900 truncate">{bikeItem.bike?.bikeName || 'Unknown Bike'}</h4>
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                      <span>Type: {bikeItem.bike.bikeType}</span>
+                      <span>Type: {bikeItem.bike?.bikeType || 'Unknown'}</span>
                       <span>Qty: {bikeItem.quantity}</span>
                       {bikeItem.rentalDays && (
                         <span>Duration: {bikeItem.rentalDays} day{bikeItem.rentalDays > 1 ? 's' : ''}</span>
@@ -351,7 +352,7 @@ export default function Mybooking() {
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
                               >
                                 <FaMotorcycle size={10} />
-                                {bikeItem.bike.bikeName}
+                                {bikeItem.bike?.bikeName || 'Unknown Bike'}
                                 {bikeItem.quantity > 1 && (
                                   <span className="text-blue-600 font-medium">x{bikeItem.quantity}</span>
                                 )}
@@ -509,6 +510,7 @@ export default function Mybooking() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
