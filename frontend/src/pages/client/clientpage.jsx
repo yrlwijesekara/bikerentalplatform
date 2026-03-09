@@ -15,6 +15,7 @@ import Mybooking from "./user/mybooking.jsx";
 import VendorBooking from "./vendor/vendorbooking.jsx";
 import EarningsPage from "./vendor/earning.jsx";
 import Dashboard from "./vendor/dashboard.jsx";
+import Profile from "./user/profile.jsx";
 
 export default function Clientpage() {
   return (
@@ -31,7 +32,7 @@ export default function Clientpage() {
             <Route path="/routes" element={<h1 className="text-black">Routes & Safety Page</h1>} />
             <Route path="/profile" element={
               <ProtectedRoute>
-                <h1 className="text-black">User Profile Page</h1>
+                <Profile />
               </ProtectedRoute>
             } />
             <Route path="/bookings" element={

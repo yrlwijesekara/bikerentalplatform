@@ -366,7 +366,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
           <Link
             to="/vendor/add-bike"
             className="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] text-white p-6 rounded-lg hover:shadow-lg transition-all border border-[var(--section-divider)]"
@@ -401,38 +401,7 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* Your Bikes Section */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Your Bikes</h2>
-            <Link
-              to="/vendor/bikes"
-              className="px-4 py-2 bg-[var(--brand-primary)] text-white rounded hover:bg-[var(--brand-secondary)] transition-colors"
-            >
-              View All
-            </Link>
-          </div>
-
-          {dashboardData.bikes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {dashboardData.bikes.slice(0, 3).map((bike) => (
-                <ProductCard key={bike._id} bike={bike} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-[var(--card-background)] rounded-lg border border-[var(--section-divider)]">
-              <div className="text-6xl mb-4">🏍️</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No bikes listed yet</h3>
-              <p className="text-gray-500 mb-6">Start by adding your first bike to begin earning!</p>
-              <Link
-                to="/vendor/addbike"
-                className="px-6 py-3 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-[var(--brand-secondary)] transition-colors"
-              >
-                Add Your First Bike
-              </Link>
-            </div>
-          )}
-        </div>
+       
       </div>
       
     </div>
