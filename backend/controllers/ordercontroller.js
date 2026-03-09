@@ -665,4 +665,98 @@ export async function getOrderById(req, res) {
     }
 }
 
+// Get vendor earnings data for dashboard
+export async function getVendorEarnings(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        const vendorId = req.user.id;
+
+        // Get all completed orders for this vendor
+        const completedOrders = await Order.find({
+            vendors: vendorId,
+            orderStatus: "completed"
+        });
+
+        // Calculate total earnings
+        let totalEarnings = 0;
+        const monthlyEarnings = Array(12).fill(0);
+        
+        for (const order of completedOrders) {
+            // Calculate vendor's share from this order
+            const vendorBikes = order.bikes.filter(bike => 
+                bike.vendor.toString() === vendorId
+            );
+            
+            const vendorOrderTotal = vendorBikes.reduce((sum, bike) => sum + bike.subtotal, 0);
+            totalEarnings += vendorOrderTotal;
+            
+            // Add to monthly data
+            const orderMonth = order.endDate.getMonth(); // 0-11
+            monthlyEarnings[orderMonth] += vendorOrderTotal;
+        }
+
+        // Format monthly data for chart
+        const monthlyData = monthlyEarnings.map((amount, index) => ({
+            month: index + 1, // 1-12
+            amount: Math.round(amount)
+        })).filter(data => data.amount > 0);
+
+        res.status(200).json({
+            message: "Vendor earnings retrieved successfully",
+            total: Math.round(totalEarnings),
+            monthly: monthlyData
+        });
+
+    } catch (error) {
+        console.error("Error fetching vendor earnings:", error);
+        res.status(500).json({
+            message: "Error fetching vendor earnings",
+            error: error.message
+        });
+    }
+}
+
+// Get vendor booking statistics for dashboard
+export async function getVendorStats(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        const vendorId = req.user.id;
+
+        // Get booking statistics
+        const [activeBookings, completedBookings, allBookings] = await Promise.all([
+            Order.countDocuments({
+                vendors: vendorId,
+                orderStatus: { $in: ["confirmed", "ongoing"] }
+            }),
+            Order.countDocuments({
+                vendors: vendorId,
+                orderStatus: "completed"
+            }),
+            Order.countDocuments({
+                vendors: vendorId
+            })
+        ]);
+
+        res.status(200).json({
+            message: "Vendor statistics retrieved successfully",
+            active: activeBookings,
+            completed: completedBookings,
+            total: allBookings,
+            pending: allBookings - activeBookings - completedBookings
+        });
+
+    } catch (error) {
+        console.error("Error fetching vendor stats:", error);
+        res.status(500).json({
+            message: "Error fetching vendor statistics",
+            error: error.message
+        });
+    }
+}
    

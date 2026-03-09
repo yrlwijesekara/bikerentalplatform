@@ -21,7 +21,7 @@ const server = createServer(app);
 // Setup Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: process.env.FRONTEND_URL ,
     methods: ["GET", "POST"],
     allowedHeaders: ["*"],
     credentials: true
@@ -33,7 +33,7 @@ const notificationService = new NotificationService(io);
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: process.env.FRONTEND_URL,
   credentials: true
 }));
 

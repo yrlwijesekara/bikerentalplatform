@@ -64,6 +64,9 @@ const UserNavbar = () => {
         <Link to="/profile" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Profile
         </Link>
+        <Link to="/user/review/:orderId" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium hidden">
+          Review
+        </Link>
         
         {/* Notification Bell */}
         <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
@@ -154,6 +157,13 @@ const UserNavbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Profile
+              </Link>
+              <Link 
+                to="/review" 
+                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0 hidden"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Review
               </Link>
               
               <Link 

@@ -7,6 +7,7 @@ import { IoIosEye } from "react-icons/io";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../../../components/loader";
+import Footer from "../../../components/footer";
 
 
 export default function Bikes() {
@@ -346,6 +347,7 @@ export default function Bikes() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

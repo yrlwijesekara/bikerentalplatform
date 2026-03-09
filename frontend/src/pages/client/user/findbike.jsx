@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import Loader from '../../../components/loader';
 import ProductCard from '../../../components/productcard';
+import Footer from '../../../components/footer';
 export default function Findbike() {
 
   const [bikes, setBikes] = useState([]);
@@ -213,6 +214,7 @@ export default function Findbike() {
         )
       }
       </div>
+       <Footer />
     </div>
   )
 }

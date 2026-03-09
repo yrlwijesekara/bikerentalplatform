@@ -5,6 +5,7 @@ import { BiReceipt } from "react-icons/bi";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../../../components/loader";
+import Footer from "../../../components/footer";
 
 export default function VendorBooking() {
   const [bookings, setBookings] = useState([]);
@@ -636,6 +637,7 @@ export default function VendorBooking() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

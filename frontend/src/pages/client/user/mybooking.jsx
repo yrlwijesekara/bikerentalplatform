@@ -9,6 +9,7 @@ import Loader from "../../../components/loader";
 import { FaPhone } from "react-icons/fa";
 import { FaUser } from "react-icons/fa";
 import { FaEnvelope } from "react-icons/fa";
+import Footer from "../../../components/footer";
 
 export default function Mybooking() {
   const [bookings, setBookings] = useState([]);
@@ -509,6 +510,7 @@ export default function Mybooking() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
