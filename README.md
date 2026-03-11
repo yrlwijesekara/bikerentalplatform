@@ -1,7 +1,5 @@
 # 🏍️ Bike Rental Platform
 
-# 🏍️ Bike Rental Platform
-
 A comprehensive full-stack bike rental platform that connects bike owners (vendors) with customers looking to rent bikes. The platform supports multiple user roles, multi-vendor bookings, real-time order management, and provides a seamless experience for bike rentals with advanced analytics and mobile-responsive design.
 
 ## ✨ Key Features

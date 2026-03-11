@@ -180,11 +180,11 @@ export default function Profile() {
           className="rounded-xl p-8 mb-8"
           style={{ 
             backgroundColor: 'var(--card-background)',
-            boxShadow: `0 4px 6px var(--shadow-color)`
+            boxShadow: `0 10px 10px var(--shadow-color)`
           }}
         >
           {/* Profile Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-8 overflow-hidden">
             <div className="flex items-center gap-4">
               <div 
                 className="w-20 h-20 rounded-full flex items-center justify-center text-2xl text-white"
@@ -229,7 +229,7 @@ export default function Profile() {
                 onMouseEnter={(e) => e.target.style.opacity = '0.9'}
                 onMouseLeave={(e) => e.target.style.opacity = '1'}
               >
-                <FaEdit /> Edit Profile
+                <FaEdit />
               </button>
             )}
           </div>
