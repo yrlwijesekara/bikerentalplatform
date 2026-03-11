@@ -182,7 +182,7 @@ export default function Adminpage() {
     }
 
     return (
-        <div className="w-full min-h-screen flex relative bg-gray-50">
+        <div className="w-full h-screen flex relative bg-gray-50 overflow-hidden">
             <style jsx>{`
                 .scrollbar-hide {
                     -ms-overflow-style: none;
@@ -190,6 +190,16 @@ export default function Adminpage() {
                 }
                 .scrollbar-hide::-webkit-scrollbar {
                     display: none;
+                }
+                .admin-layout {
+                    height: 100vh;
+                    display: flex;
+                    overflow: hidden;
+                }
+                .sidebar-container {
+                    height: 100vh;
+                    position: sticky;
+                    top: 0;
                 }
             `}</style>
             {/* Mobile Header with Hamburger Menu */}
@@ -225,11 +235,12 @@ export default function Adminpage() {
 
             {/* Sidebar */}
             <div className={`
-                fixed lg:static inset-y-0 left-0 z-50
-                w-[300px] lg:w-[280px] min-h-screen bg-amber-900 
+                fixed lg:sticky inset-y-0 left-0 z-50 lg:top-0
+                w-[300px] lg:w-[280px] bg-amber-900 
                 transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 flex flex-col shadow-xl
+                h-screen
             `}>
                 {/* Sidebar Header */}
                 <div className="p-6 border-b border-amber-800">
@@ -286,9 +297,9 @@ export default function Adminpage() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 min-h-screen pt-16 lg:pt-0">
+            <div className="flex-1 flex flex-col h-screen pt-16 lg:pt-0 overflow-hidden">
                 {/* Desktop Header */}
-                <div className="hidden lg:flex bg-white border-b border-gray-200 px-6 py-4 justify-between items-center shadow-sm">
+                <div className="hidden lg:flex bg-white border-b border-gray-200 px-6 py-4 justify-between items-center shadow-sm flex-shrink-0">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-800">
                             {navigationItems.find(item => isActivePath(item.path, item.exact))?.label || 'Admin Panel'}
@@ -313,7 +324,7 @@ export default function Adminpage() {
                 </div>
 
                 {/* Page Content */}
-                <div className="w-full">
+                <div className="flex-1 overflow-y-auto scrollbar-hide">
                     <Routes>
                         <Route path="/" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Dashboard - To be implemented</h1></div>} />
                         <Route path="products" element={<ProductAdminPage />} />
