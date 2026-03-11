@@ -283,7 +283,7 @@ export async function getUserOrders(req, res) {
 
         const orders = await Order.find({ user: req.user.id })
             .populate('vendors', 'firstname lastname email phone')
-            .populate('bikes.bike', 'bikeName bikeType images pricePerDay')
+            .populate('bikes.bike', 'bikeName bikeType images pricePerDay city mapUrl')
             .populate('bikes.vendor', 'firstname lastname email phone')
             .sort({ createdAt: -1 });
 
@@ -311,7 +311,7 @@ export async function getVendorOrders(req, res) {
         // Find orders where the vendor is in the vendors array
         const allOrders = await Order.find({ vendors: req.user.id })
             .populate('user', 'firstname lastname email phone')
-            .populate('bikes.bike', 'bikeName bikeType images')
+            .populate('bikes.bike', 'bikeName bikeType images city mapUrl')
             .populate('bikes.vendor', 'firstname lastname email phone')
             .populate('vendors', 'firstname lastname email phone')
             .sort({ createdAt: -1 });
@@ -635,7 +635,7 @@ export async function getOrderById(req, res) {
         const order = await Order.findById(orderId)
             .populate('user', 'firstname lastname email phone')
             .populate('vendors', 'firstname lastname email phone')
-            .populate('bikes.bike', 'bikeName bikeType images pricePerDay')
+            .populate('bikes.bike', 'bikeName bikeType images pricePerDay city mapUrl')
             .populate('bikes.vendor', 'firstname lastname email phone');
 
         if (!order) {

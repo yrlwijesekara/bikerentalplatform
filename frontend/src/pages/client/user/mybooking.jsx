@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaCalendarAlt, FaMotorcycle, FaMoneyBillWave } from "react-icons/fa";
+import { FaCalendarAlt, FaMotorcycle, FaMoneyBillWave, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
 import { MdPayment, MdPending, MdCheckCircle, MdCancel } from "react-icons/md";
 import { BiReceipt } from "react-icons/bi";
 import axios from "axios";
@@ -298,6 +298,29 @@ export default function Mybooking() {
                         Subtotal: Rs. {bikeItem.subtotal.toFixed(2)}
                       </span>
                     </div>
+                    
+                    {/* Location Information */}
+                    {(bikeItem.bike?.city || bikeItem.bike?.mapUrl) && (
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-1">
+                        {bikeItem.bike?.city && (
+                          <div className="flex items-center gap-1">
+                            <FaMapMarkerAlt className="text-red-500" size={12} />
+                            <span>Location: {bikeItem.bike.city}</span>
+                          </div>
+                        )}
+                        {bikeItem.bike?.mapUrl && (
+                          <a
+                            href={bikeItem.bike.mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-800 rounded-full transition-colors duration-200 text-xs font-medium"
+                          >
+                            <FaExternalLinkAlt size={10} />
+                            View on Map
+                          </a>
+                        )}
+                      </div>
+                    )}
                     {bikeItem.startDate && bikeItem.endDate && (
                       <div className="mt-1 text-xs text-gray-500">
                         <span>Rental: {new Date(bikeItem.startDate).toLocaleDateString()} - {new Date(bikeItem.endDate).toLocaleDateString()}</span>

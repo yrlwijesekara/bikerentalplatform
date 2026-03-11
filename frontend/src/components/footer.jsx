@@ -241,7 +241,7 @@ export default function Footer() {
               <div className="flex items-center gap-2">
                 <MdEmail />
                 <span>
-                  {userRole === 'vendor' ? 'vendor@ridelanka.com' : userRole === 'customer' ? 'support@ridelanka.com' : 'info@ridelanka.com'}
+                  {userRole === 'vendor' ? 'ridelanka95@gmail.com' : userRole === 'customer' ? 'ridelanka95@gmail.com' : 'info@ridelanka.com'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
