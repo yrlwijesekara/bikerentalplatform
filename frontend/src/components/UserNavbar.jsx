@@ -60,8 +60,8 @@ const UserNavbar = () => {
         <Link to="/routes" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Routes & Safety
         </Link>
-        <Link to="/about-sri-lanka" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          About Sri Lanka Travel
+        <Link to="/destinations" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
+         Destinations
         </Link>
         
         <Link to="/profile" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
@@ -155,11 +155,11 @@ const UserNavbar = () => {
                 Routes & Safety
               </Link>
               <Link 
-                to="/about-sri-lanka" 
+                to="/destinations" 
                 className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
                 onClick={() => setIsMenuOpen(false)}
               >
-                About Sri Lanka Travel
+                Destinations
               </Link>
               
               <Link 
