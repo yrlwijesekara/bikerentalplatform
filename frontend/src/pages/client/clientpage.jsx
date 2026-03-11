@@ -16,6 +16,7 @@ import VendorBooking from "./vendor/vendorbooking.jsx";
 import EarningsPage from "./vendor/earning.jsx";
 import Dashboard from "./vendor/dashboard.jsx";
 import Profile from "./user/profile.jsx";
+import AboutSriLanka from "./user/aboutsrilanka.jsx";
 
 export default function Clientpage() {
   return (
@@ -86,7 +87,7 @@ export default function Clientpage() {
                 <Checkout />
               </ProtectedRoute>
             } />
-            <Route path="/about-sri-lanka" element={<h1 className="text-black">About Sri Lanka Travel Page</h1>} />
+            <Route path="/about-sri-lanka" element={<AboutSriLanka />} />
            
             <Route path="/*" element={<Notfoundpage />} />
             <Route path="/bikeoverview/:bikeid" element={<BikeOverview />} />
