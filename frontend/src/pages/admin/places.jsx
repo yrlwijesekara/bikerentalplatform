@@ -13,11 +13,13 @@ const samplePlaces = [];
 export default function PlacesAdminPage() {
   const [places, setPlaces] = useState(samplePlaces);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterCity, setFilterCity] = useState("");
+  const [filterFeatured, setFilterFeatured] = useState("");
   const [editingNote, setEditingNote] = useState(null);
   const [tempNote, setTempNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [filterCategory, setFilterCategory] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
 
   // Categories from your model
   const categories = ["Beach", "Mountain", "Historical", "Waterfall", "Wildlife", "Religious", "Scenic"];
@@ -118,6 +120,44 @@ export default function PlacesAdminPage() {
     setTempNote("");
   };
 
+  // Handle place deletion
+  const handleDeletePlace = async (place) => {
+    // Show confirmation dialog
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete "${place.name}"?\n\nThis action cannot be undone.`
+    );
+    
+    if (!isConfirmed) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `${import.meta.env.VITE_BACKEND_URL}/places/${place._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Remove from local state
+      setPlaces((prevPlaces) =>
+        prevPlaces.filter((p) => p._id !== place._id)
+      );
+
+      toast.success(`Place "${place.name}" deleted successfully`);
+    } catch (error) {
+      console.error("Failed to delete place:", error);
+      if (error.response?.status === 404) {
+        toast.error("Place not found");
+      } else {
+        toast.error("Failed to delete place");
+      }
+    }
+  };
+
   // Filter places based on search term and filters
   const filteredPlaces = places.filter((place) => {
     const searchLower = searchTerm.toLowerCase();
@@ -130,9 +170,27 @@ export default function PlacesAdminPage() {
     
     const matchesCategory = !filterCategory || place.category === filterCategory;
     const matchesStatus = !filterStatus || place.status === filterStatus;
+    const matchesCity = !filterCity || place.city?.toLowerCase().includes(filterCity.toLowerCase());
+    const matchesFeatured = !filterFeatured ||
+      (filterFeatured === "featured" && place.isFeatured) ||
+      (filterFeatured === "not-featured" && !place.isFeatured);
 
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesCategory && matchesStatus && matchesCity && matchesFeatured;
   });
+
+  // Get unique cities for filter dropdown
+  const getCities = () => {
+    const cities = places.map(place => place.city).filter(Boolean);
+    return [...new Set(cities)];
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterCategory('');
+    setFilterStatus('');
+    setFilterCity('');
+    setFilterFeatured('');
+  };
 
   useEffect(() => {
     const fetchPlaces = async () => {
@@ -176,76 +234,108 @@ export default function PlacesAdminPage() {
           </div>
         ) : (
           <>
+            <div className="mb-6 text-center">
+              <div className="text-sm text-gray-600 mt-2">
+                Total: {places.length} place{places.length !== 1 ? 's' : ''} | 
+                Showing: {filteredPlaces.length} place{filteredPlaces.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+
             {/* Search and Filter Section */}
-            <div className="mb-6 space-y-4">
-              {/* Search Bar */}
-              <div className="relative max-w-md mx-auto">
-                <input
-                  type="text"
-                  placeholder="Search places by name, city, category..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 pr-4 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                  <IoLocationOutline className="w-5 h-5 text-gray-400" />
+            <div className="mb-8">
+              <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                  {/* Search by Name */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Search Places</label>
+                    <input
+                      type="text"
+                      placeholder="Search by name, city, category..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+
+                  {/* Filter by Category */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Category</label>
+                    <select
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="">All Categories</option>
+                      {categories.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filter by City */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">City</label>
+                    <select
+                      value={filterCity}
+                      onChange={(e) => setFilterCity(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="">All Cities</option>
+                      {getCities().map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filter by Status */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  {/* Filter by Featured */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Featured</label>
+                    <select
+                      value={filterFeatured}
+                      onChange={(e) => setFilterFeatured(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="">All Places</option>
+                      <option value="featured">Featured</option>
+                      <option value="not-featured">Not Featured</option>
+                    </select>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 invisible">Clear</label>
+                    <button
+                      onClick={clearFilters}
+                      className="w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
                 </div>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+
+                {/* Filter Results Info */}
+                {(searchTerm || filterCategory || filterStatus || filterCity || filterFeatured) && (
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-600">
+                      Found {filteredPlaces.length} place(s) matching your criteria
+                    </p>
+                  </div>
                 )}
               </div>
-
-              {/* Filters */}
-              <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Categories</option>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-
-                {(filterCategory || filterStatus || searchTerm) && (
-                  <button
-                    onClick={() => {
-                      setFilterCategory("");
-                      setFilterStatus("");
-                      setSearchTerm("");
-                    }}
-                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    Clear Filters
-                  </button>
-                )}
-              </div>
-
-              {(searchTerm || filterCategory || filterStatus) && (
-                <p className="text-center text-sm text-gray-500">
-                  Found {filteredPlaces.length} place(s) matching your criteria
-                </p>
-              )}
             </div>
 
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -404,6 +494,7 @@ export default function PlacesAdminPage() {
                                 <FiEdit3 className="w-4 h-4" />
                               </Link>
                               <button 
+                                onClick={() => handleDeletePlace(place)}
                                 className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md transition-colors duration-200 flex items-center"
                                 title="Delete Place"
                               >
@@ -414,6 +505,29 @@ export default function PlacesAdminPage() {
                           </td>
                         </tr>
                       ))
+                    ) : places.length > 0 ? (
+                      <tr>
+                        <td
+                          colSpan="9"
+                          className="py-8 px-4 text-center text-gray-500 border border-gray-300"
+                        >
+                          <div className="flex flex-col items-center">
+                            <div className="text-4xl mb-2">🔍</div>
+                            <div className="font-medium">
+                              No places match your search criteria
+                            </div>
+                            <div className="text-sm mb-4">
+                              Try adjusting your search terms or clear the filters
+                            </div>
+                            <button 
+                              onClick={clearFilters}
+                              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200"
+                            >
+                              Clear Filters
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     ) : (
                       <tr>
                         <td
@@ -421,19 +535,9 @@ export default function PlacesAdminPage() {
                           className="py-8 px-4 text-center text-gray-500 border border-gray-300"
                         >
                           <div className="flex flex-col items-center">
-                            <div className="text-4xl mb-2">
-                              {searchTerm || filterCategory || filterStatus ? "🔍" : "🏞️"}
-                            </div>
-                            <div className="font-medium">
-                              {searchTerm || filterCategory || filterStatus
-                                ? "No places found matching your criteria"
-                                : "No places found"}
-                            </div>
-                            <div className="text-sm">
-                              {searchTerm || filterCategory || filterStatus
-                                ? "Try adjusting your search or filters"
-                                : "Add some places to get started"}
-                            </div>
+                            <div className="text-4xl mb-2">🏞️</div>
+                            <div className="font-medium">No places found</div>
+                            <div className="text-sm">Add some places to get started</div>
                           </div>
                         </td>
                       </tr>

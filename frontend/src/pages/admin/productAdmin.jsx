@@ -8,6 +8,11 @@ const sampleProducts = [];
 export default function ProductAdminPage() {
   const [product, setProduct] = useState(sampleProducts);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [filterApproval, setFilterApproval] = useState("");
+  const [filterAvailability, setFilterAvailability] = useState("");
   const [editingNote, setEditingNote] = useState(null);
   const [tempNote, setTempNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -69,15 +74,47 @@ export default function ProductAdminPage() {
     setTempNote("");
   };
 
-  // Filter products based on search term
+  // Filter products based on search term and filters
   const filteredProducts = product.filter((item) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = 
       item._id?.toLowerCase().includes(searchLower) ||
       item.bikeName?.toLowerCase().includes(searchLower) ||
-      item.bikeType?.toLowerCase().includes(searchLower)
-    );
+      item.bikeType?.toLowerCase().includes(searchLower) ||
+      item.city?.toLowerCase().includes(searchLower);
+    
+    const matchesType = !selectedType || item.bikeType?.toLowerCase() === selectedType.toLowerCase();
+    const matchesCity = !selectedCity || item.city?.toLowerCase().includes(selectedCity.toLowerCase());
+    const matchesPrice = !maxPrice || item.pricePerDay <= parseFloat(maxPrice);
+    const matchesApproval = !filterApproval || 
+      (filterApproval === "approved" && item.isApproved) ||
+      (filterApproval === "pending" && !item.isApproved);
+    const matchesAvailability = !filterAvailability ||
+      (filterAvailability === "available" && item.isAvailable) ||
+      (filterAvailability === "unavailable" && !item.isAvailable);
+
+    return matchesSearch && matchesType && matchesCity && matchesPrice && matchesApproval && matchesAvailability;
   });
+
+  // Get unique bike types and cities for filter dropdowns
+  const getBikeTypes = () => {
+    const types = product.map(bike => bike.bikeType).filter(Boolean);
+    return [...new Set(types)];
+  };
+
+  const getCities = () => {
+    const cities = product.map(bike => bike.city).filter(Boolean);
+    return [...new Set(cities)];
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedType('');
+    setSelectedCity('');
+    setMaxPrice('');
+    setFilterApproval('');
+    setFilterAvailability('');
+  };
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -118,58 +155,121 @@ export default function ProductAdminPage() {
           </div>
         ) : (
           <>
-            {/* Search Bar */}
-            <div className="mb-6">
-              <div className="relative max-w-md mx-auto">
-            <input
-              type="text"
-              placeholder="Search by ID, Bike Name, or Type..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 pl-10 pr-4 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg
-                className="w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+            <div className="mb-6 text-center">
+              <div className="text-sm text-gray-600 mt-2">
+                Total: {product.length} product{product.length !== 1 ? 's' : ''} | 
+                Showing: {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+              </div>
             </div>
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            )}
-          </div>
-          {searchTerm && (
-            <p className="text-center text-sm text-gray-500 mt-2">
-              Found {filteredProducts.length} product(s) matching "{searchTerm}"
-            </p>
-          )}
-        </div>
+
+            {/* Search and Filter Section */}
+            <div className="mb-8">
+              <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+                  {/* Search by Name */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Search by Name/ID</label>
+                    <input
+                      type="text"
+                      placeholder="Enter bike name or ID..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+
+                  {/* Filter by Type */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Filter by Type</label>
+                    <select
+                      value={selectedType}
+                      onChange={(e) => setSelectedType(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="">All Types</option>
+                      {getBikeTypes().map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filter by City */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Filter by City</label>
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => setSelectedCity(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="">All Cities</option>
+                      {getCities().map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filter by Max Price */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Max Price/Day</label>
+                    <input
+                      type="number"
+                      placeholder="Max price..."
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+
+                  {/* Filter by Approval Status */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Approval Status</label>
+                    <select
+                      value={filterApproval}
+                      onChange={(e) => setFilterApproval(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="">All Status</option>
+                      <option value="approved">Approved</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
+
+                  {/* Filter by Availability */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Availability</label>
+                    <select
+                      value={filterAvailability}
+                      onChange={(e) => setFilterAvailability(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      <option value="">All</option>
+                      <option value="available">Available</option>
+                      <option value="unavailable">Unavailable</option>
+                    </select>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 invisible">Clear</label>
+                    <button
+                      onClick={clearFilters}
+                      className="w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter Results Info */}
+                {(searchTerm || selectedType || selectedCity || maxPrice || filterApproval || filterAvailability) && (
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-600">
+                      Found {filteredProducts.length} product(s) matching your criteria
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="overflow-x-auto scrollbar-hide">
             <style jsx>{`
@@ -335,13 +435,36 @@ export default function ProductAdminPage() {
                       </td>
                       <td className="py-3 px-4 border border-gray-300 whitespace-nowrap ">
                         <div className="flex space-x-2">
-                          <button className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md transition-colors duration-200 flex items-center">
+                          <button className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md transition-colors duration-200 flex justify-center">
                             <IoEyeOutline className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
                     </tr>
                   ))
+                ) : product.length > 0 ? (
+                  <tr>
+                    <td
+                      colSpan="10"
+                      className="py-8 px-4 text-center text-gray-500 border border-gray-300"
+                    >
+                      <div className="flex flex-col items-center">
+                        <div className="text-4xl mb-2">🔍</div>
+                        <div className="font-medium">
+                          No products match your search criteria
+                        </div>
+                        <div className="text-sm mb-4">
+                          Try adjusting your search terms or clear the filters
+                        </div>
+                        <button 
+                          onClick={clearFilters}
+                          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200"
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
                   <tr>
                     <td
@@ -349,19 +472,9 @@ export default function ProductAdminPage() {
                       className="py-8 px-4 text-center text-gray-500 border border-gray-300"
                     >
                       <div className="flex flex-col items-center">
-                        <div className="text-4xl mb-2">
-                          {searchTerm ? "🔍" : "📦"}
-                        </div>
-                        <div className="font-medium">
-                          {searchTerm
-                            ? `No products found matching "${searchTerm}"`
-                            : "No products found"}
-                        </div>
-                        <div className="text-sm">
-                          {searchTerm
-                            ? "Try adjusting your search terms"
-                            : "Add some products to get started"}
-                        </div>
+                        <div className="text-4xl mb-2">📦</div>
+                        <div className="font-medium">No products found</div>
+                        <div className="text-sm">Add some products to get started</div>
                       </div>
                     </td>
                   </tr>
