@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BiArrowBack } from "react-icons/bi";
 import MediaUpload from "../../utils/mediaupload.jsx";
 import { IoIosStar } from "react-icons/io";
+import Loader from "../../components/loader.jsx";
 
-export default function AddPlaces() {
+export default function UpdatePlaces() {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [isLoading, setIsLoading] = useState(false);
+    const [isFetchingData, setIsFetchingData] = useState(true);
     const [formData, setFormData] = useState({
         name: "",
         description: "",
@@ -24,8 +27,55 @@ export default function AddPlaces() {
         note: ""
     });
     const [images, setImages] = useState([]);
+    const [currentImage, setCurrentImage] = useState("");
 
     const categories = ["Beach", "Mountain", "Historical", "Waterfall", "Wildlife", "Religious", "Scenic"];
+
+    // Fetch existing place data
+    useEffect(() => {
+        const fetchPlaceData = async () => {
+            try {
+                setIsFetchingData(true);
+                const token = localStorage.getItem("token");
+                const response = await axios.get(
+                    `${import.meta.env.VITE_BACKEND_URL}/places/${id}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                
+                const placeData = response.data;
+                setFormData({
+                    name: placeData.name || "",
+                    description: placeData.description || "",
+                    city: placeData.city || "",
+                    district: placeData.district || "Southern Province",
+                    category: placeData.category || "",
+                    image: placeData.image || "",
+                    mapUrl: placeData.mapUrl || "",
+                    openingHours: placeData.openingHours || "",
+                    entranceFee: placeData.entranceFee || "",
+                    isFeatured: placeData.isFeatured || false,
+                    status: placeData.status || "active",
+                    note: placeData.note || ""
+                });
+                setCurrentImage(placeData.image || "");
+                toast.success("Place data loaded successfully");
+            } catch (error) {
+                console.error("Error fetching place data:", error);
+                toast.error("Failed to load place data");
+                navigate("/admin/places");
+            } finally {
+                setIsFetchingData(false);
+            }
+        };
+
+        if (id) {
+            fetchPlaceData();
+        }
+    }, [id, navigate]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -55,10 +105,6 @@ export default function AddPlaces() {
             toast.error("Category is required");
             return;
         }
-        if (images.length === 0 && !formData.image.trim()) {
-            toast.error("Please upload at least one image or provide an image URL");
-            return;
-        }
         if (formData.note.length > 50) {
             toast.error("Note cannot exceed 50 characters");
             return;
@@ -67,20 +113,20 @@ export default function AddPlaces() {
         setIsLoading(true);
 
         try {
-            // Handle image upload to Supabase if files are selected
-            let finalImageUrl = formData.image; // Use URL if provided
+            // Handle new image upload to Supabase if files are selected
+            let finalImageUrl = formData.image; // Use existing image URL
             
             if (images && images.length > 0) {
                 try {
-                    toast.loading("Uploading images...");
+                    toast.loading("Uploading new images...");
                     const uploadPromises = Array.from(images).map((file) =>
                         MediaUpload(file)
                     );
                     const imageUrls = await Promise.all(uploadPromises);
                     toast.dismiss();
-                    toast.success(`${imageUrls.length} image(s) uploaded successfully!`);
+                    toast.success(`${imageUrls.length} new image(s) uploaded successfully!`);
                     finalImageUrl = imageUrls[0]; // Use first uploaded image as main image
-                    console.log("Uploaded image URLs:", imageUrls);
+                    console.log("Uploaded new image URLs:", imageUrls);
                 } catch (error) {
                     toast.dismiss();
                     toast.error("Failed to upload images: " + error.message);
@@ -95,8 +141,8 @@ export default function AddPlaces() {
             };
 
             const token = localStorage.getItem("token");
-            const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/places`,
+            const response = await axios.put(
+                `${import.meta.env.VITE_BACKEND_URL}/places/${id}`,
                 placeData,
                 {
                     headers: {
@@ -106,29 +152,39 @@ export default function AddPlaces() {
                 }
             );
 
-            if (response.status === 201 || response.status === 200) {
-                toast.success("Place added successfully!");
+            if (response.status === 200) {
+                toast.success("Place updated successfully!");
                 navigate("/admin/places");
             }
         } catch (error) {
-            console.error("Error adding place:", error);
+            console.error("Error updating place:", error);
             if (error.response?.data?.message) {
                 toast.error(error.response.data.message);
             } else {
-                toast.error("Failed to add place. Please try again.");
+                toast.error("Failed to update place. Please try again.");
             }
         } finally {
             setIsLoading(false);
         }
     };
 
+    if (isFetchingData) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <Loader />
+                    <p className="text-gray-600 mt-4">Loading place data...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen p-4 md:p-8 bg-gray-50">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6 justify-center">
-                
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 ">Add New Place</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Update Place</h1>
                 </div>
 
                 {/* Form */}
@@ -241,16 +297,30 @@ export default function AddPlaces() {
                             </select>
                         </div>
 
-                        {/* Image Upload & URL */}
+                        {/* Current Image & Upload New */}
                         <div className="md:col-span-2">
                             <label className="block text-gray-700 font-semibold mb-2">
                                 Place Images
                             </label>
                             
-                            {/* File Upload */}
+                            {/* Current Image Display */}
+                            {currentImage && (
+                                <div className="mb-4">
+                                    <label className="block text-sm text-gray-600 mb-2">
+                                        Current Image
+                                    </label>
+                                    <img 
+                                        src={currentImage} 
+                                        alt="Current place" 
+                                        className="w-32 h-32 object-cover rounded-md border border-gray-200"
+                                    />
+                                </div>
+                            )}
+                            
+                            {/* File Upload for New Images */}
                             <div className="mb-4">
                                 <label className="block text-sm text-gray-600 mb-2">
-                                    Upload Images (Recommended)
+                                    Upload New Images (Optional - will replace current image)
                                 </label>
                                 <input
                                     type="file"
@@ -261,14 +331,10 @@ export default function AddPlaces() {
                                 />
                                 {images.length > 0 && (
                                     <p className="text-sm text-green-600 mt-1">
-                                        {images.length} image(s) selected
+                                        {images.length} new image(s) selected
                                     </p>
                                 )}
                             </div>
-
-                          
-
-                         
                         </div>
 
                         {/* Map URL */}
@@ -376,10 +442,10 @@ export default function AddPlaces() {
                             {isLoading ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Adding Place...
+                                    Updating Place...
                                 </>
                             ) : (
-                                "Add Place"
+                                "Update Place"
                             )}
                         </button>
                     </div>

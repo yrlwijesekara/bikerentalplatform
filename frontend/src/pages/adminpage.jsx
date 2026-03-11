@@ -13,6 +13,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../components/loader";
 import AddPlacesPage from "./admin/addplaces.jsx";
+import UpdatePlacesPage from "./admin/updateplaces.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -182,7 +183,7 @@ export default function Adminpage() {
     }
 
     return (
-        <div className="w-full h-screen flex relative bg-gray-50 overflow-hidden">
+        <div className="w-full h-screen flex relative overflow-hidden" style={{ backgroundColor: 'var(--main-background)' }}>
             <style jsx>{`
                 .scrollbar-hide {
                     -ms-overflow-style: none;
@@ -203,23 +204,30 @@ export default function Adminpage() {
                 }
             `}</style>
             {/* Mobile Header with Hamburger Menu */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-amber-900 border-b border-amber-700 px-4 py-3 flex justify-between items-center shadow-lg">
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-50 border-b px-4 py-3 flex justify-between items-center shadow-lg" 
+                 style={{ backgroundColor: 'var(--navbar-bg)', borderColor: 'var(--navbar-border)' }}>
                 <div className="flex items-center space-x-3">
-                    <h1 className="text-white text-xl font-bold">Admin Panel</h1>
+                    <h1 className="text-xl font-bold" style={{ color: 'var(--navbar-text)' }}>Admin Panel</h1>
                 </div>
                 <div className="flex items-center space-x-3">
-                    <button className="p-2 text-white hover:bg-amber-800 rounded-lg transition-colors">
+                    <button className="p-2 rounded-lg transition-colors" 
+                            style={{ color: 'var(--navbar-text)' }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--navbar-hover)'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>
                         <HiBell className="h-5 w-5" />
                     </button>
                     <button
                         onClick={toggleSidebar}
-                        className="p-2 rounded-md hover:bg-amber-800 transition-colors duration-200"
+                        className="p-2 rounded-md transition-colors duration-200"
+                        style={{ color: 'var(--navbar-text)' }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--navbar-hover)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                         aria-label="Toggle sidebar"
                     >
                         {isSidebarOpen ? (
-                            <HiX className="h-6 w-6 text-white" />
+                            <HiX className="h-6 w-6" style={{ color: 'var(--navbar-text)' }} />
                         ) : (
-                            <HiMenu className="h-6 w-6 text-white" />
+                            <HiMenu className="h-6 w-6" style={{ color: 'var(--navbar-text)' }} />
                         )}
                     </button>
                 </div>
@@ -236,15 +244,15 @@ export default function Adminpage() {
             {/* Sidebar */}
             <div className={`
                 fixed lg:sticky inset-y-0 left-0 z-50 lg:top-0
-                w-[300px] lg:w-[280px] bg-amber-900 
+                w-[300px] lg:w-[280px] 
                 transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 flex flex-col shadow-xl
                 h-screen
-            `}>
+            `} style={{ backgroundColor: 'var(--navbar-bg)' }}>
                 {/* Sidebar Header */}
-                <div className="p-6 border-b border-amber-800">
-                    <h1 className="hidden lg:block text-white text-2xl font-bold text-center">
+                <div className="p-6 border-b" style={{ borderColor: 'var(--navbar-border)' }}>
+                    <h1 className="hidden lg:block text-2xl font-bold text-center" style={{ color: 'var(--navbar-text)' }}>
                         🚴‍♂️ Bike Rental Admin
                     </h1>
                     <div className="lg:hidden h-4"></div>
@@ -263,10 +271,24 @@ export default function Adminpage() {
                                 className={`
                                     flex items-center px-4 py-3 rounded-lg transition-all duration-200
                                     ${active 
-                                        ? 'bg-amber-800 text-white shadow-md transform scale-105' 
-                                        : 'text-amber-100 hover:bg-amber-800 hover:text-white hover:shadow-md hover:transform hover:scale-105'
+                                        ? 'shadow-md transform scale-105' 
+                                        : 'hover:shadow-md hover:transform hover:scale-105'
                                     }
                                 `}
+                                style={{
+                                    backgroundColor: active ? 'var(--navbar-active)' : 'transparent',
+                                    color: active ? 'var(--navbar-text)' : 'var(--navbar-text)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!active) {
+                                        e.target.style.backgroundColor = 'var(--navbar-hover)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!active) {
+                                        e.target.style.backgroundColor = 'transparent';
+                                    }
+                                }}
                                 onClick={closeSidebar}
                             >
                                 <Icon className="text-xl mr-3 flex-shrink-0" />
@@ -277,8 +299,11 @@ export default function Adminpage() {
                 </nav>
 
                 {/* Sidebar Footer */}
-                <div className="p-4 border-t border-amber-800 space-y-2">
-                    <button className="w-full flex items-center px-4 py-3 text-amber-100 hover:bg-amber-800 hover:text-white rounded-lg transition-all duration-200">
+                <div className="p-4 border-t space-y-2" style={{ borderColor: 'var(--navbar-border)' }}>
+                    <button className="w-full flex items-center px-4 py-3 rounded-lg transition-all duration-200"
+                            style={{ color: 'var(--navbar-text)' }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--navbar-hover)'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>
                         <FiSettings className="text-xl mr-3" />
                         <span className="font-medium">Settings</span>
                     </button>
@@ -288,7 +313,10 @@ export default function Adminpage() {
                             handleLogout();
                             closeSidebar();
                         }}
-                        className="w-full flex items-center px-4 py-3 text-amber-100 hover:bg-red-600 hover:text-white rounded-lg transition-all duration-200"
+                        className="w-full flex items-center px-4 py-3 rounded-lg transition-all duration-200"
+                        style={{ color: 'var(--navbar-text)' }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--brand-warning)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                     >
                         <FiLogOut className="text-xl mr-3" />
                         <span className="font-medium">Logout</span>
@@ -299,15 +327,19 @@ export default function Adminpage() {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col h-screen pt-16 lg:pt-0 overflow-hidden">
                 {/* Desktop Header */}
-                <div className="hidden lg:flex bg-white border-b border-gray-200 px-6 py-4 justify-between items-center shadow-sm flex-shrink-0">
+                <div className="hidden lg:flex border-b px-6 py-4 justify-between items-center shadow-sm flex-shrink-0" 
+                     style={{ backgroundColor: 'var(--card-background)', borderColor: 'var(--section-divider)' }}>
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-800">
+                        <h2 className="text-xl font-semibold" style={{ color: 'var(--brand-primary)' }}>
                             {navigationItems.find(item => isActivePath(item.path, item.exact))?.label || 'Admin Panel'}
                         </h2>
-                        <p className="text-sm text-gray-500">Manage your bike rental platform</p>
+                        <p className="text-sm" style={{ color: 'var(--navbar-border)' }}>Manage your bike rental platform</p>
                     </div>
                     <div className="flex items-center space-x-4">
-                        <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button className="p-2 rounded-lg transition-colors" 
+                                style={{ color: 'var(--navbar-border)' }}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--main-background)'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>
                             <HiBell className="h-5 w-5" />
                         </button>
                         <div className="flex items-center space-x-2">
@@ -334,6 +366,7 @@ export default function Adminpage() {
                         <Route path="bookings" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Bookings - To be implemented</h1></div>} />
                         <Route path="reviews" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Reviews - To be implemented</h1></div>} />
                         <Route path="add-places" element={<AddPlacesPage />} />
+                        <Route path="update-places/:id" element={<UpdatePlacesPage />} />
                     </Routes>
                 </div>
             </div>

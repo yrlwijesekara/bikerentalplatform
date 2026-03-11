@@ -6,6 +6,7 @@ import { IoEyeOutline, IoLocationOutline, IoMapOutline } from "react-icons/io5";
 import { FiEdit3, FiMapPin, FiClock, FiDollarSign } from "react-icons/fi";
 import { BiPlus } from "react-icons/bi";
 import Loader from "../../components/loader.jsx";
+import { FiTrash2 } from "react-icons/fi";
 
 const samplePlaces = [];
 
@@ -137,8 +138,15 @@ export default function PlacesAdminPage() {
     const fetchPlaces = async () => {
       try {
         setIsLoading(true);
+        const token = localStorage.getItem("token");
         console.log("Fetching places from:", `${import.meta.env.VITE_BACKEND_URL}/places`);
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/places`);
+        
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/places`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
         console.log("Places response:", response.data);
         setPlaces(response.data.places || response.data);
         toast.success("Places fetched successfully.");
@@ -386,18 +394,20 @@ export default function PlacesAdminPage() {
                             )}
                           </td>
                           <td className="py-2 px-3 border border-gray-300 whitespace-nowrap">
-                            <div className="flex space-x-1">
-                              <button 
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md transition-colors duration-200 flex items-center"
-                                title="View Details"
-                              >
-                                <IoEyeOutline className="w-4 h-4" />
-                              </button>
-                              <button 
+                            <div className="flex space-x-1 justify-center">
+                             
+                              <Link
+                                to={`/admin/update-places/${place._id}`}
                                 className="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded-md transition-colors duration-200 flex items-center"
                                 title="Edit Place"
                               >
                                 <FiEdit3 className="w-4 h-4" />
+                              </Link>
+                              <button 
+                                className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md transition-colors duration-200 flex items-center"
+                                title="Delete Place"
+                              >
+                                <FiTrash2 className="w-4 h-4" />
                               </button>
                              
                             </div>
@@ -440,7 +450,7 @@ export default function PlacesAdminPage() {
         {/* Add Places Floating Action Button */}
         <Link 
           to="/admin/add-places" 
-          className="fixed bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-blue-700 cursor-pointer z-50"
+          className="fixed bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-blue-700 cursor-pointer z-10"
         >
           <BiPlus size={20} /> Add New Place
         </Link>
