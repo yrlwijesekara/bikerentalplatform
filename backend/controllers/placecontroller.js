@@ -95,3 +95,115 @@ export async function updatePlace(req, res) {
         });
     }
 }
+
+// Admin-specific functions for Places Admin Page
+export async function updatePlaceStatus(req, res) {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        
+        // Validate status
+        if (!['active', 'inactive'].includes(status)) {
+            return res.status(400).json({
+                message: "Invalid status. Must be 'active' or 'inactive'"
+            });
+        }
+        
+        const place = await Place.findByIdAndUpdate(
+            id, 
+            { status }, 
+            { new: true }
+        );
+        
+        if (!place) {
+            return res.status(404).json({
+                message: "Place not found"
+            });
+        }
+        
+        res.status(200).json({
+            message: "Place status updated successfully",
+            place
+        });
+    } catch (error) {
+        console.error("Error updating place status:", error);
+        res.status(500).json({
+            message: "Error updating place status",
+            error: "Internal server error"
+        });
+    }
+}
+
+export async function updatePlaceFeatured(req, res) {
+    try {
+        const { id } = req.params;
+        const { isFeatured } = req.body;
+        
+        // Validate isFeatured
+        if (typeof isFeatured !== 'boolean') {
+            return res.status(400).json({
+                message: "Invalid featured status. Must be true or false"
+            });
+        }
+        
+        const place = await Place.findByIdAndUpdate(
+            id, 
+            { isFeatured }, 
+            { new: true }
+        );
+        
+        if (!place) {
+            return res.status(404).json({
+                message: "Place not found"
+            });
+        }
+        
+        res.status(200).json({
+            message: "Place featured status updated successfully",
+            place
+        });
+    } catch (error) {
+        console.error("Error updating place featured status:", error);
+        res.status(500).json({
+            message: "Error updating place featured status",
+            error: "Internal server error"
+        });
+    }
+}
+
+export async function updatePlaceNote(req, res) {
+    try {
+        const { id } = req.params;
+        const { note } = req.body;
+        
+        // Validate note length
+        if (note && note.length > 50) {
+            return res.status(400).json({
+                message: "Note must be 50 characters or less"
+            });
+        }
+        
+        const place = await Place.findByIdAndUpdate(
+            id, 
+            { note: note || "" }, 
+            { new: true }
+        );
+        
+        if (!place) {
+            return res.status(404).json({
+                message: "Place not found"
+            });
+        }
+        
+        res.status(200).json({
+            message: "Place note updated successfully",
+            place
+        });
+    } catch (error) {
+        console.error("Error updating place note:", error);
+        res.status(500).json({
+            message: "Error updating place note",
+            error: "Internal server error"
+        });
+    }
+}

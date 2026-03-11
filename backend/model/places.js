@@ -55,6 +55,12 @@ const placeSchema = new mongoose.Schema({
         type: String,
         enum: ["active", "inactive"],
         default: "active"
+    },
+
+    note: {
+        type: String,
+        maxlength: 50,
+        default: ""
     }
 
 }, { timestamps: true });

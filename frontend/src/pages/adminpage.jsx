@@ -8,9 +8,11 @@ import { VscCodeReview } from "react-icons/vsc";
 import { FiLogOut, FiSettings } from "react-icons/fi";
 import { HiMenu, HiX, HiBell } from "react-icons/hi";
 import ProductAdminPage from "./admin/productAdmin.jsx";
+import PlacesAdminPage from "./admin/places.jsx";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../components/loader";
+import AddPlacesPage from "./admin/addplaces.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -123,9 +125,9 @@ export default function Adminpage() {
             label: "Vendors"
         },
         {
-            path: "/admin/bookings",
+            path: "/admin/places",
             icon: FaBookmark,
-            label: "Bookings"
+            label: "Places"
         },
         {
             path: "/admin/reviews",
@@ -216,7 +218,7 @@ export default function Adminpage() {
             {/* Mobile Backdrop */}
             {isSidebarOpen && (
                 <div 
-                    className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity"
+                    className="lg:hidden fixed inset-0 z-40 backdrop-blur-sm transition-opacity"
                     onClick={closeSidebar}
                 ></div>
             )}
@@ -315,10 +317,12 @@ export default function Adminpage() {
                     <Routes>
                         <Route path="/" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Dashboard - To be implemented</h1></div>} />
                         <Route path="products" element={<ProductAdminPage />} />
+                        <Route path="places" element={<PlacesAdminPage />} />
                         <Route path="users" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Users - To be implemented</h1></div>} />
                         <Route path="vendors" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Vendors - To be implemented</h1></div>} />
                         <Route path="bookings" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Bookings - To be implemented</h1></div>} />
                         <Route path="reviews" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Reviews - To be implemented</h1></div>} />
+                        <Route path="add-places" element={<AddPlacesPage />} />
                     </Routes>
                 </div>
             </div>
