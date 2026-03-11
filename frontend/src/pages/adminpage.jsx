@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import Loader from "../components/loader";
 import AddPlacesPage from "./admin/addplaces.jsx";
 import UpdatePlacesPage from "./admin/updateplaces.jsx";
+import ViewProduct from "./admin/viewproduct.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -360,6 +361,7 @@ export default function Adminpage() {
                     <Routes>
                         <Route path="/" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Dashboard - To be implemented</h1></div>} />
                         <Route path="products" element={<ProductAdminPage />} />
+                        <Route path="view-product/:id" element={<ViewProduct />} />
                         <Route path="places" element={<PlacesAdminPage />} />
                         <Route path="users" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Users - To be implemented</h1></div>} />
                         <Route path="vendors" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Vendors - To be implemented</h1></div>} />

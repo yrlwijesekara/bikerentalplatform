@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { IoEyeOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 import Loader from "../../components/loader.jsx";
 const sampleProducts = [];
 
 export default function ProductAdminPage() {
+  const navigate = useNavigate();
   const [product, setProduct] = useState(sampleProducts);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("");
@@ -435,7 +437,11 @@ export default function ProductAdminPage() {
                       </td>
                       <td className="py-3 px-4 border border-gray-300 whitespace-nowrap ">
                         <div className="flex space-x-2">
-                          <button className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md transition-colors duration-200 flex justify-center">
+                          <button 
+                            onClick={() => navigate(`/admin/view-product/${products._id}`)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md transition-colors duration-200 flex justify-center"
+                            title="View Product Details"
+                          >
                             <IoEyeOutline className="w-4 h-4" />
                           </button>
                         </div>
