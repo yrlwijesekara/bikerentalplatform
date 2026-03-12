@@ -4,6 +4,8 @@ import { FaMapMarkerAlt, FaMotorcycle, FaCameraRetro, FaMountain, FaUmbrellaBeac
 import { MdExplore, MdDirectionsBike } from "react-icons/md";
 import Header from "../components/header";
 import Footer from "../components/footer";
+import ProductCard from "../components/productcard";
+import axios from "axios";
 
 export default function Homepage() {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ export default function Homepage() {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [randomBikes, setRandomBikes] = useState([]);
+  const [bikesLoading, setBikesLoading] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in and redirect based on role
@@ -83,6 +87,100 @@ export default function Homepage() {
 
     return () => clearInterval(interval);
   }, [heroImages.length, imagesLoaded]);
+
+  // Function to fetch bikes from the API
+  const fetchBikes = async () => {
+    try {
+      setBikesLoading(true);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/products/available`);
+      
+      // With axios, the data is automatically parsed and available in response.data
+      return response.data.products || [];
+    } catch (error) {
+      console.error("Error fetching bikes:", error);
+      return [];
+    } finally {
+      setBikesLoading(false);
+    }
+  };
+
+  // Function to select 3 random bikes
+  const getRandomBikes = (bikes) => {
+    if (bikes.length <= 3) {
+      return bikes;
+    }
+    
+    const shuffled = [...bikes].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 3);
+  };
+
+  // Function to fetch and set random bikes with localStorage persistence
+  const fetchAndSetRandomBikes = async () => {
+    const bikes = await fetchBikes();
+    const randomSelection = getRandomBikes(bikes);
+    const timestamp = Date.now();
+    
+    // Store in localStorage with timestamp
+    localStorage.setItem('homepageBikes', JSON.stringify({
+      bikes: randomSelection,
+      timestamp: timestamp
+    }));
+    
+    setRandomBikes(randomSelection);
+  };
+
+  // Function to check if we need to refresh bikes (2 minutes = 120000ms)
+  const shouldRefreshBikes = () => {
+    const cached = localStorage.getItem('homepageBikes');
+    if (!cached) return true;
+    
+    try {
+      const { timestamp } = JSON.parse(cached);
+      const now = Date.now();
+      const twoMinutes = 120000; // 2 minutes in milliseconds
+      
+      return (now - timestamp) >= twoMinutes;
+    } catch (error) {
+      console.error('Error parsing cached bikes:', error);
+      return true;
+    }
+  };
+
+  // Function to load bikes from cache or fetch new ones
+  const loadBikes = async () => {
+    const cached = localStorage.getItem('homepageBikes');
+    
+    if (cached && !shouldRefreshBikes()) {
+      // Load from cache
+      try {
+        const { bikes } = JSON.parse(cached);
+        setRandomBikes(bikes);
+        return;
+      } catch (error) {
+        console.error('Error loading cached bikes:', error);
+      }
+    }
+    
+    // Fetch new bikes if cache is empty, invalid, or expired
+    await fetchAndSetRandomBikes();
+  };
+
+  // Setup bikes loading and interval timer
+  useEffect(() => {
+    loadBikes();
+
+    // Function to check and refresh bikes
+    const checkAndRefresh = () => {
+      if (shouldRefreshBikes()) {
+        fetchAndSetRandomBikes();
+      }
+    };
+
+    // Check every 10 seconds if we need to refresh (more responsive than waiting full 2 minutes)
+    const interval = setInterval(checkAndRefresh, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col">
@@ -150,7 +248,7 @@ export default function Homepage() {
                     Find Bikes Near You
                   </Link>
                   <Link 
-                    to="/places"
+                    to="/destinations"
                     className="inline-flex items-center gap-2 px-8 py-3 font-semibold rounded-lg transition-colors duration-200"
                     style={{
                       backgroundColor: 'var(--card-background)',
@@ -199,6 +297,49 @@ export default function Homepage() {
                   kingdoms, colorful festivals, and world-famous Sri Lankan hospitality.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Featured Bikes Section */}
+        <div className="max-w-7xl mx-auto mb-8 px-6">
+          <div 
+            className="rounded-lg "
+            
+          >
+            <div className="p-6 border-b" style={{ borderColor: 'var(--section-divider)' }}>
+              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                Featured Bikes for Rent
+              </h2>
+              <p className="text-center text-gray-600">
+                Discover these amazing bikes available for rent. Perfect for exploring Sri Lanka at your own pace.
+              </p>
+            </div>
+            
+            <div className="p-6">
+              {bikesLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600">Loading bikes...</span>
+                </div>
+              ) : randomBikes.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {randomBikes.map((bike) => (
+                    <ProductCard key={bike._id} bike={bike} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <FaMotorcycle size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No bikes available at the moment. Check back soon!</p>
+                  <Link 
+                    to="/find-bikes"
+                    className="inline-block mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                  >
+                    Browse All Bikes
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -352,7 +493,7 @@ export default function Homepage() {
                 <p className="text-white/80">National Parks</p>
               </div>
               <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                <h3 className="text-3xl font-bold mb-1">1300km</h3>
+                <h3 className="text-3xl font-bold mb-1">1300km+</h3>
                 <p className="text-white/80">Coastline</p>
               </div>
             </div>
@@ -427,14 +568,14 @@ export default function Homepage() {
                   backgroundColor: 'var(--brand-secondary)',
                   color: 'var(--navbar-text)'
                 }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--navbar-active)'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--brand-secondary)'}
+                 onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--navbar-hover)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--brand-secondary)'}
               >
                 <FaMotorcycle size={20} />
                 Find a Bike
               </Link>
               <Link 
-                to="/places"
+                to="/destinations"
                 className="inline-flex items-center gap-2 px-8 py-3 font-semibold rounded-lg transition-colors duration-200"
                 style={{
                   backgroundColor: 'var(--card-background)',
