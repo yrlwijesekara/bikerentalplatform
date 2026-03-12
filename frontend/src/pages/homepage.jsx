@@ -5,6 +5,7 @@ import { MdExplore, MdDirectionsBike } from "react-icons/md";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import ProductCard from "../components/productcard";
+import PlaceCard from "../components/placecard";
 import axios from "axios";
 
 export default function Homepage() {
@@ -24,6 +25,8 @@ export default function Homepage() {
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [randomBikes, setRandomBikes] = useState([]);
   const [bikesLoading, setBikesLoading] = useState(false);
+  const [featuredPlaces, setFeaturedPlaces] = useState([]);
+  const [placesLoading, setPlacesLoading] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in and redirect based on role
@@ -180,6 +183,39 @@ export default function Homepage() {
     const interval = setInterval(checkAndRefresh, 10000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Function to fetch places from the API
+  const fetchPlaces = async () => {
+    try {
+      setPlacesLoading(true);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/places`);
+      
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      return [];
+    } finally {
+      setPlacesLoading(false);
+    }
+  };
+
+  // Function to get 3 featured places
+  const getFeaturedPlaces = (places) => {
+    const featured = places.filter(place => place.isFeatured === true);
+    return featured.slice(0, 3);
+  };
+
+  // Function to fetch and set featured places
+  const fetchAndSetFeaturedPlaces = async () => {
+    const places = await fetchPlaces();
+    const featuredSelection = getFeaturedPlaces(places);
+    setFeaturedPlaces(featuredSelection);
+  };
+
+  // Fetch featured places on component mount
+  useEffect(() => {
+    fetchAndSetFeaturedPlaces();
   }, []);
 
   return (
@@ -344,99 +380,45 @@ export default function Homepage() {
           </div>
         </div>
 
-        {/* Top Destinations Section */}
+        {/* Featured Destinations Section */}
         <div className="max-w-7xl mx-auto mb-8 px-6">
           <div 
-            className="rounded-lg shadow-md border transition-shadow duration-300"
-            style={{
-              backgroundColor: 'var(--card-background)',
-              borderColor: 'var(--section-divider)',
-              boxShadow: 'var(--shadow-color) 0px 4px 6px -1px'
-            }}
+            className="rounded-lg "
+           
           >
             <div className="p-6 border-b" style={{ borderColor: 'var(--section-divider)' }}>
               <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                Top Destinations
+                Featured Destinations
               </h2>
               <p className="text-center text-gray-600">
-                Explore the most popular destinations loved by travelers around the world.
+                Discover our handpicked featured destinations across Sri Lanka.
               </p>
             </div>
             
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Ella Card */}
-                <div 
-                  className="rounded-lg border hover:shadow-lg transition-shadow duration-300"
-                  style={{
-                    backgroundColor: 'var(--main-background)',
-                    borderColor: 'var(--section-divider)'
-                  }}
-                >
-                  <img
-                    src="https://images.unsplash.com/photo-1549887534-3ec93abae28b"
-                    alt="Ella"
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FaMountain style={{ color: 'var(--brand-success)' }} size={16} />
-                      <h3 className="text-lg font-semibold text-gray-900">Ella</h3>
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      Famous for mountains, waterfalls, and the Nine Arches Bridge.
-                    </p>
-                  </div>
+              {placesLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600">Loading destinations...</span>
                 </div>
-
-                {/* Colombo Card */}
-                <div 
-                  className="rounded-lg border hover:shadow-lg transition-shadow duration-300"
-                  style={{
-                    backgroundColor: 'var(--main-background)',
-                    borderColor: 'var(--section-divider)'
-                  }}
-                >
-                  <img
-                    src="https://images.unsplash.com/photo-1578662996442-48f60103fc96"
-                    alt="Colombo"
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <MdExplore style={{ color: 'var(--brand-primary)' }} size={16} />
-                      <h3 className="text-lg font-semibold text-gray-900">Colombo</h3>
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      Sri Lanka's bustling capital with modern attractions and rich history.
-                    </p>
-                  </div>
+              ) : featuredPlaces.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {featuredPlaces.map((place) => (
+                    <PlaceCard key={place._id} place={place} />
+                  ))}
                 </div>
-
-                {/* Galle Card */}
-                <div 
-                  className="rounded-lg border hover:shadow-lg transition-shadow duration-300"
-                  style={{
-                    backgroundColor: 'var(--main-background)',
-                    borderColor: 'var(--section-divider)'
-                  }}
-                >
-                  <img
-                    src="https://images.unsplash.com/photo-1566073771259-6a8506099945"
-                    alt="Galle"
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FaUmbrellaBeach style={{ color: 'var(--brand-secondary)' }} size={16} />
-                      <h3 className="text-lg font-semibold text-gray-900">Galle</h3>
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      Historic coastal city with Dutch colonial architecture and beautiful beaches.
-                    </p>
-                  </div>
+              ) : (
+                <div className="text-center py-12">
+                  <FaMapMarkerAlt size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No featured destinations available at the moment.</p>
+                  <Link 
+                    to="/destinations"
+                    className="inline-block mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                  >
+                    Browse All Destinations
+                  </Link>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
