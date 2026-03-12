@@ -16,7 +16,7 @@ import VendorBooking from "./vendor/vendorbooking.jsx";
 import EarningsPage from "./vendor/earning.jsx";
 import Dashboard from "./vendor/dashboard.jsx";
 import Profile from "./user/profile.jsx";
-
+import PlaceOverview from "./user/placeoverview.jsx";
 import Destinations from "./user/destinations.jsx";
 
 export default function Clientpage() {
@@ -92,6 +92,7 @@ export default function Clientpage() {
            
             <Route path="/*" element={<Notfoundpage />} />
             <Route path="/bikeoverview/:bikeid" element={<BikeOverview />} />
+            <Route path="/placeoverview/:placeid" element={<PlaceOverview />} />
         </Routes>
        
     </div>

@@ -47,7 +47,7 @@ export default function PlaceCard(props) {
           className="w-full h-full object-cover rounded-lg cursor-pointer"
           onClick={() => {
             if (place._id) {
-              navigate(`/place-details/${place._id}`);
+              navigate(`/placeoverview/${place._id}`);
             }
           }}
         />
@@ -111,7 +111,7 @@ export default function PlaceCard(props) {
             }}
             onClick={() => {
               if (place._id) {
-                navigate(`/place-details/${place._id}`);
+                navigate(`/placeoverview/${place._id}`);
               }
             }}
           >
