@@ -20,7 +20,7 @@ export default function PaymentDetails({
     useEffect(() => {
         if (!initialized.current) {
             if (setPaymentMethod && !paymentMethod) {
-                setPaymentMethod('card');
+                setPaymentMethod('paypal');
             }
             initialized.current = true;
         }
@@ -31,17 +31,10 @@ export default function PaymentDetails({
             return;
         }
 
-        if (paymentMethod === 'paypal') {
-            onPaymentDataChange({
-                paymentMethod: 'paypal',
-                isCompleted: false
-            });
-            return;
-        }
-
+        // PayPal is the only method — reset to incomplete until capture succeeds
         onPaymentDataChange({
-            paymentMethod: 'card',
-            isCompleted: true
+            paymentMethod: 'paypal',
+            isCompleted: false
         });
     }, [paymentMethod, onPaymentDataChange]);
 
@@ -194,30 +187,17 @@ export default function PaymentDetails({
                     Payment Method *
                 </label>
                 <select
-                    value={paymentMethod || 'card'}
+                    value={paymentMethod || 'paypal'}
                     onChange={(e) => setPaymentMethod?.(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none"
                     style={{ borderColor: 'var(--section-divider)' }}
                 >
-                    <option value="card">Credit/Debit Card</option>
                     <option value="paypal">PayPal</option>
                 </select>
                 <p className="text-sm text-gray-500 mt-1">
-                    Choose card for direct checkout or PayPal for wallet payment.
+                    Pay securely via PayPal.
                 </p>
             </div>
-
-            {paymentMethod === 'card' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                        <FaCheckCircle className="h-5 w-5 text-blue-500" />
-                        <span className="text-blue-700 font-medium">Card Payment Selected</span>
-                    </div>
-                    <p className="text-sm text-blue-600 mt-1">
-                        Your payment of <strong>Rs. {totalAmount.toFixed(2)}</strong> will be processed securely when you place the order.
-                    </p>
-                </div>
-            )}
 
             {paymentMethod === 'paypal' && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">

@@ -403,11 +403,14 @@ export async function createOrder(req, res) {
             const paidCurrency = capture?.amount?.currency_code;
             const expectedPaidAmount = convertFromLkr(finalTotal, expectedCurrency, lkrPerUsd);
 
+            console.log("PayPal verification:", { paidAmount, paidCurrency, expectedPaidAmount, expectedCurrency, status: paypalOrder.status });
+
             if (paypalOrder.status !== "COMPLETED" || !capture) {
                 return res.status(400).json({ message: "PayPal payment verification failed" });
             }
 
-            if (paidCurrency !== expectedCurrency || Math.abs(paidAmount - expectedPaidAmount) > 0.01) {
+            // Allow up to 1 USD tolerance to handle conversion rounding differences
+            if (paidCurrency !== expectedCurrency || Math.abs(paidAmount - expectedPaidAmount) > 1.00) {
                 return res.status(400).json({
                     message: "Paid amount does not match order total",
                     details: {
