@@ -1,7 +1,36 @@
 import Order from "../model/order.js";
 import Product from "../model/product.js"; // Import as Product, not Bike
 import User from "../model/user.js";
-import NotificationService from "../services/notificationService.js";
+
+
+// Read PayPal config lazily so dotenv has time to populate process.env
+function paypalConfig() {
+    const lkrPerUsd = Number(process.env.PAYPAL_LKR_PER_USD || 300);
+    return {
+        baseUrl: process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com",
+        clientId: process.env.PAYPAL_CLIENT_ID,
+        clientSecret: process.env.PAYPAL_CLIENT_SECRET,
+        currency: process.env.PAYPAL_CURRENCY || "USD",
+        baseCurrency: "LKR",
+        lkrPerUsd: Number.isFinite(lkrPerUsd) && lkrPerUsd > 0 ? lkrPerUsd : 300
+    };
+}
+
+function convertFromLkr(amountLkr, targetCurrency, lkrPerUsd) {
+    if (!Number.isFinite(amountLkr) || amountLkr <= 0) {
+        throw new Error("Invalid amount in LKR");
+    }
+
+    if (targetCurrency === "LKR") {
+        return Number(amountLkr.toFixed(2));
+    }
+
+    if (targetCurrency === "USD") {
+        return Number((amountLkr / lkrPerUsd).toFixed(2));
+    }
+
+    throw new Error(`Unsupported PayPal currency conversion target: ${targetCurrency}`);
+}
 
 // Status transition validation function
 function validateStatusTransition(currentStatus, newStatus) {
@@ -64,6 +93,177 @@ function validateStatusTransition(currentStatus, newStatus) {
     }
 
     return { valid: true };
+}
+
+async function getPayPalAccessToken() {
+    const { baseUrl, clientId, clientSecret } = paypalConfig();
+    if (!clientId || !clientSecret) {
+        throw new Error("PayPal is not configured on the server");
+    }
+
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+
+    const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Basic ${auth}`,
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "grant_type=client_credentials"
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Failed to get PayPal access token: ${errText}`);
+    }
+
+    const tokenData = await response.json();
+    return tokenData.access_token;
+}
+
+async function getPayPalOrderDetails(paypalOrderId) {
+    const { baseUrl } = paypalConfig();
+    const accessToken = await getPayPalAccessToken();
+    const response = await fetch(`${baseUrl}/v2/checkout/orders/${paypalOrderId}`, {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        }
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Failed to fetch PayPal order details: ${errText}`);
+    }
+
+    return response.json();
+}
+
+export async function getPayPalClientId(req, res) {
+    const { clientId, currency, baseCurrency, lkrPerUsd } = paypalConfig();
+    if (!clientId) {
+        return res.status(500).json({ message: "PayPal is not configured" });
+    }
+
+    return res.status(200).json({ clientId, currency, baseCurrency, lkrPerUsd });
+}
+
+export async function createPayPalOrder(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        const amountValue = Number(req.body.amount); // Amount received from app in LKR
+        if (!Number.isFinite(amountValue) || amountValue <= 0) {
+            return res.status(400).json({ message: "Invalid amount for PayPal order" });
+        }
+
+        const { baseUrl, currency, lkrPerUsd } = paypalConfig();
+        const chargedAmount = convertFromLkr(amountValue, currency, lkrPerUsd);
+        const accessToken = await getPayPalAccessToken();
+        const payload = {
+            intent: "CAPTURE",
+            purchase_units: [
+                {
+                    amount: {
+                        currency_code: currency,
+                        value: chargedAmount.toFixed(2)
+                    }
+                }
+            ]
+        };
+
+        const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            const issue = data?.details?.[0]?.issue;
+            const description = data?.details?.[0]?.description;
+
+            if (issue === "CURRENCY_NOT_SUPPORTED") {
+                return res.status(response.status).json({
+                    message: `PayPal account does not support currency ${currency}.`,
+                    issue,
+                    description,
+                    details: data
+                });
+            }
+
+            return res.status(response.status).json({
+                message: description || "Failed to create PayPal order",
+                issue,
+                details: data
+            });
+        }
+
+        return res.status(200).json({
+            paypalOrderId: data.id,
+            status: data.status,
+            currency,
+            chargedAmount,
+            sourceAmountLkr: Number(amountValue.toFixed(2))
+        });
+    } catch (error) {
+        console.error("Error creating PayPal order:", error);
+        return res.status(500).json({ message: "Error creating PayPal order", error: error.message });
+    }
+}
+
+export async function capturePayPalOrder(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        const { paypalOrderId } = req.body;
+        if (!paypalOrderId) {
+            return res.status(400).json({ message: "paypalOrderId is required" });
+        }
+
+        const { baseUrl } = paypalConfig();
+        const accessToken = await getPayPalAccessToken();
+        const response = await fetch(`${baseUrl}/v2/checkout/orders/${paypalOrderId}/capture`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            const issue = data?.details?.[0]?.issue;
+            const description = data?.details?.[0]?.description;
+
+            return res.status(response.status).json({
+                message: description || "Failed to capture PayPal order",
+                issue,
+                details: data
+            });
+        }
+
+        const captureId = data.purchase_units?.[0]?.payments?.captures?.[0]?.id || null;
+        const payerEmail = data.payer?.email_address || null;
+
+        return res.status(200).json({
+            paypalOrderId,
+            paypalCaptureId: captureId,
+            payerEmail,
+            status: data.status
+        });
+    } catch (error) {
+        console.error("Error capturing PayPal order:", error);
+        return res.status(500).json({ message: "Error capturing PayPal order", error: error.message });
+    }
 }
 
 export async function createOrder(req, res) {
@@ -175,10 +375,57 @@ export async function createOrder(req, res) {
         const serviceFee = totalAmount * 0.10;
         const finalTotal = totalAmount + serviceFee;
 
+        const paymentMethod = req.body.paymentMethod;
+        if (!["card", "paypal"].includes(paymentMethod)) {
+            return res.status(400).json({ message: "Invalid payment method" });
+        }
+
+        let paymentStatus = "pending";
+        let paypalOrderId = null;
+        let paypalCaptureId = null;
+
+        if (paymentMethod === "card") {
+            paymentStatus = "paid";
+        }
+
+        if (paymentMethod === "paypal") {
+            paypalOrderId = req.body.paypalOrderId;
+            paypalCaptureId = req.body.paypalCaptureId;
+
+            if (!paypalOrderId || !paypalCaptureId) {
+                return res.status(400).json({ message: "PayPal order and capture IDs are required" });
+            }
+
+            const { currency: expectedCurrency, lkrPerUsd } = paypalConfig();
+            const paypalOrder = await getPayPalOrderDetails(paypalOrderId);
+            const capture = paypalOrder.purchase_units?.[0]?.payments?.captures?.find((cap) => cap.id === paypalCaptureId);
+            const paidAmount = Number(capture?.amount?.value || 0);
+            const paidCurrency = capture?.amount?.currency_code;
+            const expectedPaidAmount = convertFromLkr(finalTotal, expectedCurrency, lkrPerUsd);
+
+            if (paypalOrder.status !== "COMPLETED" || !capture) {
+                return res.status(400).json({ message: "PayPal payment verification failed" });
+            }
+
+            if (paidCurrency !== expectedCurrency || Math.abs(paidAmount - expectedPaidAmount) > 0.01) {
+                return res.status(400).json({
+                    message: "Paid amount does not match order total",
+                    details: {
+                        paidAmount,
+                        paidCurrency,
+                        expectedAmount: expectedPaidAmount,
+                        expectedCurrency
+                    }
+                });
+            }
+
+            paymentStatus = "paid";
+        }
+
         // Create order object with all required fields
         const order = new Order({
             orderid: orderid,
-            user: req.user.id, 
+            user: req.user.id,
             vendors: Array.from(vendorSet), // Convert Set to Array
             bikes: bikeItems,
             startDate: minStartDate,
@@ -188,26 +435,24 @@ export async function createOrder(req, res) {
             serviceFee: serviceFee,
             finalTotal: finalTotal,
             totalBikes: totalBikes,
-            paymentMethod: req.body.paymentMethod,
-            paymentStatus: "pending", // default
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus,
+            paypalOrderId: paypalOrderId,
+            paypalCaptureId: paypalCaptureId,
             orderStatus: "pending" // default
         });
 
         // Save the order
         const savedOrder = await order.save();
 
-        // If payment method is card, automatically set payment as paid and update bikes availability
-        if (req.body.paymentMethod === "card") {
-            savedOrder.paymentStatus = "paid";
-            await savedOrder.save();
-            
-            // Update all bikes availability and approval status when payment is confirmed
+        // Mark bikes unavailable when payment is confirmed
+        if (savedOrder.paymentStatus === "paid") {
             for (const bikeItem of bikeItems) {
                 await Product.findByIdAndUpdate(bikeItem.bike, {
                     isAvailable: false,
                     isApproved: false
                 });
-                console.log(`Bike ${bikeItem.bike} set to unavailable and unapproved due to card payment`);
+                console.log(`Bike ${bikeItem.bike} set to unavailable and unapproved due to paid order`);
             }
         }
 

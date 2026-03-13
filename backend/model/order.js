@@ -112,7 +112,7 @@ const orderSchema = new mongoose.Schema(
     // 💳 Payment Information
     paymentMethod: {
       type: String,
-      enum: ["card"],
+      enum: ["card", "paypal"],
       required: true,
     },
 
@@ -120,6 +120,16 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
+    },
+
+    paypalOrderId: {
+      type: String,
+      default: null,
+    },
+
+    paypalCaptureId: {
+      type: String,
+      default: null,
     },
 
     // 📦 Order Status

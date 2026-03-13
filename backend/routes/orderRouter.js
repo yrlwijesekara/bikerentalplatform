@@ -1,6 +1,9 @@
 import express from "express";
 import {
   createOrder,
+  createPayPalOrder,
+  capturePayPalOrder,
+  getPayPalClientId,
   getUserOrders,
   getVendorOrders,
   updateOrderStatus,
@@ -10,6 +13,11 @@ import {
 } from "../controllers/ordercontroller.js";
 
 const router = express.Router();
+
+// PayPal helper routes
+router.get("/paypal/client-id", getPayPalClientId);
+router.post("/paypal/create-order", createPayPalOrder);
+router.post("/paypal/capture-order", capturePayPalOrder);
 
 // Create a new order
 router.post("/", createOrder);

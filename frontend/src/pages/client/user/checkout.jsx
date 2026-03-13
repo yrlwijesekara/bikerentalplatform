@@ -110,9 +110,9 @@ export default function Checkout() {
     // Handle payment data changes from PaymentDetails component
     const handlePaymentDataChange = useCallback((data) => {
         setPaymentData(data);
-        
-        // Check if payment details are complete (only card payment supported)
-        setIsPaymentComplete(data.paymentMethod === 'card' && data.isCompleted);
+
+        // For card, details are instantly complete. For PayPal, completion is set after capture.
+        setIsPaymentComplete(Boolean(data?.isCompleted));
     }, []);
 
     // Create order function
@@ -124,9 +124,13 @@ export default function Checkout() {
                 return;
             }
 
-            // Only card payment is supported now
-            if (paymentData.paymentMethod !== 'card') {
-                toast.error('Only card payment is supported');
+            if (!paymentData?.paymentMethod) {
+                toast.error('Please select a payment method');
+                return;
+            }
+
+            if (paymentData.paymentMethod === 'paypal' && !paymentData?.paypalOrderId) {
+                toast.error('Complete PayPal payment before placing the order');
                 return;
             }
 
@@ -155,7 +159,9 @@ export default function Checkout() {
             const orderData = {
                 bikes,
                 startDate: startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
-                paymentMethod: paymentData.paymentMethod
+                paymentMethod: paymentData.paymentMethod,
+                paypalOrderId: paymentData.paypalOrderId || null,
+                paypalCaptureId: paymentData.paypalCaptureId || null
             };
 
             // Call order API
