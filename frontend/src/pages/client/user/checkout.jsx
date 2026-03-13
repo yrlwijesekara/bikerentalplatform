@@ -200,19 +200,9 @@ export default function Checkout() {
                 const paymentStatus = order.paymentStatus;
                 setOrderPaymentStatus(paymentStatus);
 
-                if (paymentStatus === 'paid') {
-                    toast.success('Order created successfully! Your rental has started.');
-                } else if (paymentStatus === 'pending') {
-                    toast.success('Order created successfully! Rental will start after payment verification.');
-                } else {
-                    toast.success('Order created successfully!');
-                }
-
-                setTimeout(() => {
-                    localStorage.setItem('cart', '[]');
-                    window.dispatchEvent(new Event('cartUpdated'));
-                    navigate('/client-page');
-                }, 3000);
+                localStorage.setItem('cart', '[]');
+                window.dispatchEvent(new Event('cartUpdated'));
+                navigate('/order-success', { state: { order } });
             } else {
                 toast.error(result.message || 'Failed to create order');
             }

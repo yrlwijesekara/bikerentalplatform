@@ -18,7 +18,7 @@ import Dashboard from "./vendor/dashboard.jsx";
 import Profile from "./user/profile.jsx";
 import PlaceOverview from "./user/placeoverview.jsx";
 import Destinations from "./user/destinations.jsx";
-
+import OrderSuccess from './user/ordersuccess.jsx';
 export default function Clientpage() {
   return (
     <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col overflow-hidden">
@@ -89,6 +89,11 @@ export default function Clientpage() {
               </ProtectedRoute>
             } />
             <Route path="/destinations" element={<Destinations/>} />
+            <Route path="/order-success" element={
+              <ProtectedRoute requiredRole="user">
+                <OrderSuccess />
+              </ProtectedRoute>
+            } />
            
             <Route path="/*" element={<Notfoundpage />} />
             <Route path="/bikeoverview/:bikeid" element={<BikeOverview />} />
