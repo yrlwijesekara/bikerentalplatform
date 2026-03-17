@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import toast from 'react-hot-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -18,13 +18,15 @@ export default function Checkout() {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState(location.state.items || []);
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState('card');
+    const [paymentMethod, setPaymentMethod] = useState('paypal');
     const [paymentData, setPaymentData] = useState({
-        paymentMethod: 'card'
+        paymentMethod: 'paypal'
     });
     const [isPaymentComplete, setIsPaymentComplete] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [orderPaymentStatus, setOrderPaymentStatus] = useState(null);
+    // Holds latest PayPal capture data so useEffect can trigger order placement
+    const pendingPayPalData = useRef(null);
     if(location.state.items == null) {
         toast.error('please add items to cart before checkout');
         navigate('/find-bikes');
@@ -110,29 +112,46 @@ export default function Checkout() {
     // Handle payment data changes from PaymentDetails component
     const handlePaymentDataChange = useCallback((data) => {
         setPaymentData(data);
-        
-        // Check if payment details are complete (only card payment supported)
-        setIsPaymentComplete(data.paymentMethod === 'card' && data.isCompleted);
+
+        // For card, details are instantly complete. For PayPal, completion is set after capture.
+        setIsPaymentComplete(Boolean(data?.isCompleted));
+
+        // When PayPal capture succeeds, store data and auto-trigger order placement
+        if (data?.paymentMethod === 'paypal' && data?.isCompleted && data?.paypalOrderId) {
+            pendingPayPalData.current = data;
+        }
     }, []);
 
-    // Create order function
-    const handlePlaceOrder = async () => {
+    // Auto-place order immediately after PayPal capture succeeds
+    useEffect(() => {
+        if (pendingPayPalData.current && !orderSuccess && !loading) {
+            const data = pendingPayPalData.current;
+            pendingPayPalData.current = null;
+            placeOrderWithData(data);
+        }
+    }, [isPaymentComplete]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Core order placement logic (accepts paypal data directly to avoid stale state)
+    const placeOrderWithData = async (overridePaymentData) => {
+        const activePaymentData = overridePaymentData || paymentData;
         try {
-            // Validate inputs
             if (cartItems.length === 0) {
                 toast.error('Your cart is empty');
                 return;
             }
 
-            // Only card payment is supported now
-            if (paymentData.paymentMethod !== 'card') {
-                toast.error('Only card payment is supported');
+            if (!activePaymentData?.paymentMethod) {
+                toast.error('Please select a payment method');
+                return;
+            }
+
+            if (activePaymentData.paymentMethod === 'paypal' && !activePaymentData?.paypalOrderId) {
+                toast.error('Complete PayPal payment before placing the order');
                 return;
             }
 
             setLoading(true);
 
-            // Get token for authentication
             const token = localStorage.getItem('token');
             if (!token) {
                 toast.error('Please login to place order');
@@ -140,86 +159,70 @@ export default function Checkout() {
                 return;
             }
 
-            // Format cart items for API
             const bikes = cartItems.map(item => ({
                 bikeId: item.productId,
-                quantity: 1, // For bike rentals, quantity is always 1
+                quantity: 1,
                 pricePerDay: item.price,
                 rentalDays: item.rentalDays || 1
             }));
 
-            // Calculate dates from rental days
             const startDate = new Date();
-            
-            // Create order data
             const orderData = {
                 bikes,
-                startDate: startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
-                paymentMethod: paymentData.paymentMethod
+                startDate: startDate.toISOString().split('T')[0],
+                paymentMethod: activePaymentData.paymentMethod,
+                paypalOrderId: activePaymentData.paypalOrderId || null,
+                paypalCaptureId: activePaymentData.paypalCaptureId || null
             };
 
-            // Call order API
-            const response = await fetch( 
-                (import.meta.env.VITE_BACKEND_URL) + "/orders/",
+            const response = await fetch(
+                (import.meta.env.VITE_BACKEND_URL) + '/orders/',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                body: JSON.stringify(orderData)
-            });
+                    body: JSON.stringify(orderData)
+                }
+            );
 
             let result;
             try {
                 result = await response.json();
             } catch (jsonError) {
-                console.error('Failed to parse JSON response:', jsonError);
                 throw new Error('Server error - invalid response format');
             }
 
             if (response.ok) {
                 setOrderSuccess(true);
-                
-                // Handle different payment statuses
                 const order = result.order;
                 const paymentStatus = order.paymentStatus;
                 setOrderPaymentStatus(paymentStatus);
-                
-                if (paymentStatus === "paid") {
-                    toast.success('Order created successfully! Your rental has started.');
-                } else if (paymentStatus === "pending") {
-                    toast.success('Order created successfully! Rental will start after payment verification.');
-                } else {
-                    toast.success('Order created successfully!');
-                }
-                
-                // Show success message for a moment before navigating
-                setTimeout(() => {
-                    // Clear cart after successful order
-                    localStorage.setItem('cart', '[]');
-                    window.dispatchEvent(new Event('cartUpdated'));
-                    
-                    // Navigate to order confirmation or orders page
-                    navigate('/client-page');
-                }, 3000); // Extended timeout for users to read payment status
+
+                localStorage.setItem('cart', '[]');
+                window.dispatchEvent(new Event('cartUpdated'));
+                navigate('/order-success', { state: { order } });
             } else {
                 toast.error(result.message || 'Failed to create order');
             }
-
         } catch (error) {
             console.error('Error placing order:', error);
-            
             if (error.message === 'Server error - invalid response format') {
-                toast.error('Backend server is not running or wrong port. Check if backend is running on port 5000.');
+                toast.error('Backend server error. Check if backend is running on port 5000.');
             } else if (error.message.includes('fetch')) {
-                toast.error('Cannot connect to server. Make sure the backend is running on port 5000.');
+                toast.error('Cannot connect to server.');
             } else {
-                toast.error('Failed to place order. Please try again.');
+                toast.error(error.message || 'Failed to place order. Please try again.');
             }
         } finally {
             setLoading(false);
         }
+    };
+
+    // Create order function
+    const handlePlaceOrder = async () => {
+        await placeOrderWithData(null);
     };
 
  

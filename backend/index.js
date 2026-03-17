@@ -12,6 +12,7 @@ import orderRouter from './routes/orderRouter.js';
 import { initializeNotificationRoutes } from './routes/notificationRouter.js';
 import cors from 'cors';
 import NotificationService from './services/notificationService.js';
+import reviewRouter from './routes/reviewRouter.js';
 
 dotenv.config();
 
@@ -141,6 +142,7 @@ app.use('/api/users', userRouter);
 app.use('/api/products', productRouter);
 app.use('/api/places', placeRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/reviews', reviewRouter);
 app.use('/api/notifications', initializeNotificationRoutes(notificationService));
 
 const connectionString = process.env.MONGODB_URI;

@@ -15,7 +15,7 @@ export default function AddPlaces() {
         city: "",
         district: "Southern Province",
         category: "",
-        image: "",
+        image: [],
         mapUrl: "",
         openingHours: "",
         entranceFee: "",
@@ -55,8 +55,8 @@ export default function AddPlaces() {
             toast.error("Category is required");
             return;
         }
-        if (images.length === 0 && !formData.image.trim()) {
-            toast.error("Please upload at least one image or provide an image URL");
+        if (images.length === 0 && formData.image.length === 0) {
+            toast.error("Please upload at least one image");
             return;
         }
         if (formData.note.length > 50) {
@@ -68,7 +68,7 @@ export default function AddPlaces() {
 
         try {
             // Handle image upload to Supabase if files are selected
-            let finalImageUrl = formData.image; // Use URL if provided
+            let finalImages = [...formData.image]; // Use existing images if any
             
             if (images && images.length > 0) {
                 try {
@@ -79,7 +79,7 @@ export default function AddPlaces() {
                     const imageUrls = await Promise.all(uploadPromises);
                     toast.dismiss();
                     toast.success(`${imageUrls.length} image(s) uploaded successfully!`);
-                    finalImageUrl = imageUrls[0]; // Use first uploaded image as main image
+                    finalImages = [...finalImages, ...imageUrls]; // Add new images to existing ones
                     console.log("Uploaded image URLs:", imageUrls);
                 } catch (error) {
                     toast.dismiss();
@@ -91,8 +91,12 @@ export default function AddPlaces() {
 
             const placeData = {
                 ...formData,
-                image: finalImageUrl
+                image: finalImages
             };
+
+            // Debug logging
+            console.log("Final images array:", finalImages);
+            console.log("Place data being sent:", placeData);
 
             const token = localStorage.getItem("token");
             const response = await axios.post(
@@ -241,16 +245,16 @@ export default function AddPlaces() {
                             </select>
                         </div>
 
-                        {/* Image Upload & URL */}
+                        {/* Image Upload */}
                         <div className="md:col-span-2">
                             <label className="block text-gray-700 font-semibold mb-2">
-                                Place Images
+                                Place Images <span className="text-red-500">*</span>
                             </label>
                             
                             {/* File Upload */}
                             <div className="mb-4">
                                 <label className="block text-sm text-gray-600 mb-2">
-                                    Upload Images (Recommended)
+                                    Upload Multiple Images
                                 </label>
                                 <input
                                     type="file"
@@ -265,10 +269,6 @@ export default function AddPlaces() {
                                     </p>
                                 )}
                             </div>
-
-                          
-
-                         
                         </div>
 
                         {/* Map URL */}

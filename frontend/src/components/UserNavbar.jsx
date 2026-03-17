@@ -60,6 +60,9 @@ const UserNavbar = () => {
         <Link to="/routes" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Routes & Safety
         </Link>
+        <Link to="/destinations" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
+         Destinations
+        </Link>
         
         <Link to="/profile" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Profile
@@ -67,6 +70,7 @@ const UserNavbar = () => {
         <Link to="/user/review/:orderId" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium hidden">
           Review
         </Link>
+        
         
         {/* Notification Bell */}
         <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
@@ -90,20 +94,20 @@ const UserNavbar = () => {
       </nav>
 
       {/* Mobile Navigation */}
-      <div className="lg:hidden flex items-center gap-2">
+      <div className="lg:hidden flex items-center gap-3">
         {/* Notification Bell for mobile */}
         <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
         
         {/* Hamburger Button */}
         <button
           onClick={toggleMenu}
-          className="p-2 rounded-md hover:bg-[var(--navbar-hover)] transition-colors duration-200"
+          className="p-2  rounded-md hover:bg-[var(--navbar-hover)] transition-colors duration-200"
           aria-label="Toggle menu"
         >
           {isMenuOpen ? (
             <HiX className="h-6 w-6 text-[var(--navbar-text)]" />
           ) : (
-            <HiMenu className="h-6 w-6 text-[var(--navbar-text)]" />
+            <HiMenu className="h-8 w-7 text-[var(--navbar-text)]" />
           )}
         </button>
 
@@ -149,6 +153,13 @@ const UserNavbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Routes & Safety
+              </Link>
+              <Link 
+                to="/destinations" 
+                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Destinations
               </Link>
               
               <Link 

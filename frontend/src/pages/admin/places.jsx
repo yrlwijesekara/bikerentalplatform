@@ -471,9 +471,9 @@ export default function PlacesAdminPage() {
                             )}
                           </td>
                           <td className="py-2 px-2 border border-gray-300">
-                            {place.image ? (
+                            {place.image && (Array.isArray(place.image) ? place.image.length > 0 : true) ? (
                               <img
-                                src={place.image}
+                                src={Array.isArray(place.image) ? place.image[0] : place.image}
                                 alt={place.name}
                                 className="w-12 h-12 object-cover rounded-md border border-gray-200"
                               />

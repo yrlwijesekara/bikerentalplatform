@@ -5,16 +5,18 @@ import Loginpage from "./pages/loginpage.jsx";
 import Registrationpage from "./pages/registrationpage.jsx";
 import Adminpage from "./pages/adminpage.jsx";
 import Homepage from "./pages/homepage.jsx";
-
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "react-hot-toast";
 import Clientpage from "./pages/client/clientpage.jsx";
 import { NotificationProvider } from "./contexts/NotificationContext.jsx";
 import NotificationCenter from "./components/NotificationCenter.jsx";
+import ForgottenPasswordPage from "./pages/forgottenpassword.jsx";
 
 
 function App() {
   return (
     <BrowserRouter>
+    <GoogleOAuthProvider clientId= {import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <NotificationProvider>
         <div className="w-full h-screen">
           <Toaster 
@@ -55,12 +57,14 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route path="/login" element={<Loginpage />} />
             <Route path="/register" element={<Registrationpage />} />
+            <Route path="/forgotten-password" element={<ForgottenPasswordPage />} />
             <Route path="/admin/*" element={<Adminpage />} />
             <Route path="/*" element={<Clientpage />} />
           </Routes>
         
         </div>
       </NotificationProvider>
+      </GoogleOAuthProvider>
     </BrowserRouter>
   );
 }

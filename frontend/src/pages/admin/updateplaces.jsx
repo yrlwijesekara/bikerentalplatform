@@ -18,7 +18,7 @@ export default function UpdatePlaces() {
         city: "",
         district: "Southern Province",
         category: "",
-        image: "",
+        image: [],
         mapUrl: "",
         openingHours: "",
         entranceFee: "",
@@ -27,7 +27,7 @@ export default function UpdatePlaces() {
         note: ""
     });
     const [images, setImages] = useState([]);
-    const [currentImage, setCurrentImage] = useState("");
+    const [currentImages, setCurrentImages] = useState([]);
 
     const categories = ["Beach", "Mountain", "Historical", "Waterfall", "Wildlife", "Religious", "Scenic"];
 
@@ -53,7 +53,7 @@ export default function UpdatePlaces() {
                     city: placeData.city || "",
                     district: placeData.district || "Southern Province",
                     category: placeData.category || "",
-                    image: placeData.image || "",
+                    image: Array.isArray(placeData.image) ? placeData.image : (placeData.image ? [placeData.image] : []),
                     mapUrl: placeData.mapUrl || "",
                     openingHours: placeData.openingHours || "",
                     entranceFee: placeData.entranceFee || "",
@@ -61,7 +61,7 @@ export default function UpdatePlaces() {
                     status: placeData.status || "active",
                     note: placeData.note || ""
                 });
-                setCurrentImage(placeData.image || "");
+                setCurrentImages(Array.isArray(placeData.image) ? placeData.image : (placeData.image ? [placeData.image] : []));
                 toast.success("Place data loaded successfully");
             } catch (error) {
                 console.error("Error fetching place data:", error);
@@ -114,7 +114,7 @@ export default function UpdatePlaces() {
 
         try {
             // Handle new image upload to Supabase if files are selected
-            let finalImageUrl = formData.image; // Use existing image URL
+            let finalImages = [...formData.image]; // Use existing images
             
             if (images && images.length > 0) {
                 try {
@@ -125,7 +125,7 @@ export default function UpdatePlaces() {
                     const imageUrls = await Promise.all(uploadPromises);
                     toast.dismiss();
                     toast.success(`${imageUrls.length} new image(s) uploaded successfully!`);
-                    finalImageUrl = imageUrls[0]; // Use first uploaded image as main image
+                    finalImages = [...finalImages, ...imageUrls]; // Add new images to existing ones
                     console.log("Uploaded new image URLs:", imageUrls);
                 } catch (error) {
                     toast.dismiss();
@@ -137,8 +137,11 @@ export default function UpdatePlaces() {
 
             const placeData = {
                 ...formData,
-                image: finalImageUrl
+                image: finalImages
             };
+
+            console.log("Final images array:", finalImages);
+            console.log("Update place data being sent:", placeData);
 
             const token = localStorage.getItem("token");
             const response = await axios.put(
@@ -297,30 +300,47 @@ export default function UpdatePlaces() {
                             </select>
                         </div>
 
-                        {/* Current Image & Upload New */}
+                        {/* Current Images & Upload New */}
                         <div className="md:col-span-2">
                             <label className="block text-gray-700 font-semibold mb-2">
                                 Place Images
                             </label>
                             
-                            {/* Current Image Display */}
-                            {currentImage && (
+                            {/* Current Images Display */}
+                            {currentImages.length > 0 && (
                                 <div className="mb-4">
                                     <label className="block text-sm text-gray-600 mb-2">
-                                        Current Image
+                                        Current Images
                                     </label>
-                                    <img 
-                                        src={currentImage} 
-                                        alt="Current place" 
-                                        className="w-32 h-32 object-cover rounded-md border border-gray-200"
-                                    />
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {currentImages.map((imageUrl, index) => (
+                                            <div key={index} className="relative">
+                                                <img 
+                                                    src={imageUrl} 
+                                                    alt={`Place ${index + 1}`} 
+                                                    className="w-full h-24 object-cover rounded-md border border-gray-200"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newImages = currentImages.filter((_, i) => i !== index);
+                                                        setCurrentImages(newImages);
+                                                        setFormData(prev => ({ ...prev, image: newImages }));
+                                                    }}
+                                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                             
                             {/* File Upload for New Images */}
                             <div className="mb-4">
                                 <label className="block text-sm text-gray-600 mb-2">
-                                    Upload New Images (Optional - will replace current image)
+                                    Upload Additional Images (Optional)
                                 </label>
                                 <input
                                     type="file"
