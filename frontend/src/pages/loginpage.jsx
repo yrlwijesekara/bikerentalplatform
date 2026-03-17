@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useGoogleLogin } from "@react-oauth/google";
 
 
 export default function Loginpage() {
@@ -16,7 +17,40 @@ export default function Loginpage() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
+  const googlelogin = useGoogleLogin({
+    scope: "openid email profile",
+    onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
+
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/users/google-login`,
+          { accessToken: tokenResponse.access_token }
+        );
+
+        toast.success(`Login successful! Welcome back, ${response.data.user.firstname}`);
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("role", response.data.user.role);
+
+        if (response.data.user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      } catch (error) {
+        const errorMessage = error.response?.data?.error || "Google login failed. Please try again.";
+        toast.error(errorMessage);
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      setGoogleLoading(false);
+      toast.error("Google login failed. Please try again.");
+    }
+  });
 
   // Preload images to ensure they're cached
   useEffect(() => {
@@ -149,6 +183,15 @@ export default function Loginpage() {
             onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = 'var(--button-primary-bg)')}
           >
             {loading ? "Logging in..." : "Login"}
+          </button>
+          <button 
+           type="button"
+           onClick={() => googlelogin()}
+           disabled={googleLoading}
+           className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md border border-gray-300 bg-white text-gray-900 font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+          >
+            <img src="/image.png" alt="Google Icon" className="h-5 w-5" />
+            {googleLoading ? "Connecting to Google..." : "Continue with Google"}
           </button>
 
           <p className="text-white text-sm sm:text-base text-center">

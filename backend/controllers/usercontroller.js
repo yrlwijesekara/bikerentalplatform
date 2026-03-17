@@ -2,6 +2,42 @@ import User from "../model/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+function buildUserPayload(user) {
+    return {
+        id: user._id,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        city: user.city,
+        location: user.location,
+        image: user.image,
+        role: user.role,
+        isemailverified: user.isemailverified,
+        isblocked: user.isblocked,
+        vendorDetails: user.vendorDetails,
+        preferences: user.preferences
+    };
+}
+
+function signUserToken(user) {
+    return jwt.sign(buildUserPayload(user), process.env.JWT_SECRET, { expiresIn: '1h' });
+}
+
+function splitGoogleName(name = '') {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+        return { firstname: 'Google', lastname: 'User' };
+    }
+
+    const parts = trimmedName.split(/\s+/);
+    return {
+        firstname: parts[0],
+        lastname: parts.slice(1).join(' ') || 'User'
+    };
+}
+
 export function createUser(req, res) {
     // Check if trying to create admin and ensure only admin can do it
     if (req.body.role === 'admin') {
@@ -68,45 +104,83 @@ export function loginUser(req, res) {
                 return res.status(401).send({ error: "Invalid password" });
             }
 
-            const token = jwt.sign({ 
-                id: user._id,
-                firstname: user.firstname,
-                lastname: user.lastname,
-                email: user.email,
-                phone: user.phone,
-                address: user.address,
-                city: user.city,
-                location: user.location,
-                image: user.image,
-                role: user.role,
-                isemailverified: user.isemailverified,
-                isblocked: user.isblocked,
-                vendorDetails: user.vendorDetails,
-                preferences: user.preferences
-            }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = signUserToken(user);
 
             res.status(200).send({
                 message: "Login successful",
                 token: token,
-                user: {
-                    id: user._id,
-                    firstname: user.firstname,
-                    lastname: user.lastname,
-                    email: user.email,
-                    phone: user.phone,
-                    address: user.address,
-                    city: user.city,
-                    location: user.location,
-                    image: user.image,
-                    role: user.role,
-                    isemailverified: user.isemailverified,
-                    isblocked: user.isblocked,
-                    vendorDetails: user.vendorDetails,
-                    preferences: user.preferences
-                }
+                user: buildUserPayload(user)
             });
         })
         .catch((error) => res.status(500).send({ error: error.message }));
+}
+
+export async function googleLoginUser(req, res) {
+    try {
+        const { accessToken } = req.body;
+
+        if (!accessToken) {
+            return res.status(400).json({ error: "Google access token is required" });
+        }
+
+        const googleResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        });
+
+        if (!googleResponse.ok) {
+            return res.status(401).json({ error: "Invalid Google token" });
+        }
+
+        const googleUser = await googleResponse.json();
+
+        if (!googleUser.email || !googleUser.email_verified) {
+            return res.status(400).json({ error: "Google account email is not verified" });
+        }
+
+        let user = await User.findOne({ email: googleUser.email });
+
+        if (!user) {
+            const { firstname, lastname } = splitGoogleName(googleUser.name);
+            const passwordHash = bcrypt.hashSync(`google-${googleUser.sub}-${Date.now()}`, 10);
+
+            user = await User.create({
+                firstname,
+                lastname,
+                email: googleUser.email,
+                password: passwordHash,
+                phone: 'Not provided',
+                address: 'Not provided',
+                city: 'Not provided',
+                image: googleUser.picture || '',
+                role: 'user',
+                isemailverified: true,
+                location: {},
+                preferences: {}
+            });
+        } else if (!user.image && googleUser.picture) {
+            user.image = googleUser.picture;
+            if (!user.isemailverified) {
+                user.isemailverified = true;
+            }
+            await user.save();
+        }
+
+        if (user.isblocked) {
+            return res.status(403).json({ error: "Account is blocked" });
+        }
+
+        const token = signUserToken(user);
+
+        return res.status(200).json({
+            message: "Google login successful",
+            token,
+            user: buildUserPayload(user)
+        });
+    } catch (error) {
+        return res.status(500).json({ error: error.message || "Google login failed" });
+    }
 }
 
 export function getuser(req, res) {

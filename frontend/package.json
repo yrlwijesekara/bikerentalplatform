@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-icons/all-files": "^4.1.0",
+    "@react-oauth/google": "^0.13.4",
     "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.2",

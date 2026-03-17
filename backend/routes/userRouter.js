@@ -1,6 +1,7 @@
 import express from "express";
 import { createUser } from "../controllers/usercontroller.js";
 import { loginUser } from "../controllers/usercontroller.js";
+import { googleLoginUser } from "../controllers/usercontroller.js";
 import { getuser } from "../controllers/usercontroller.js";
 import { getUserProfile, updateUserProfile } from "../controllers/usercontroller.js";
 import jwt from "jsonwebtoken";
@@ -27,6 +28,7 @@ function authenticateToken(req, res, next) {
 
 router.post("/", createUser);
 router.post("/login", loginUser);
+router.post("/google-login", googleLoginUser);
 router.get("/", getuser);
 router.get("/profile", authenticateToken, getUserProfile);
 router.put("/profile", authenticateToken, updateUserProfile);

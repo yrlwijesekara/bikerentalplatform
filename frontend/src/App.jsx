@@ -5,7 +5,7 @@ import Loginpage from "./pages/loginpage.jsx";
 import Registrationpage from "./pages/registrationpage.jsx";
 import Adminpage from "./pages/adminpage.jsx";
 import Homepage from "./pages/homepage.jsx";
-
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "react-hot-toast";
 import Clientpage from "./pages/client/clientpage.jsx";
 import { NotificationProvider } from "./contexts/NotificationContext.jsx";
@@ -15,6 +15,7 @@ import NotificationCenter from "./components/NotificationCenter.jsx";
 function App() {
   return (
     <BrowserRouter>
+    <GoogleOAuthProvider clientId= {import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <NotificationProvider>
         <div className="w-full h-screen">
           <Toaster 
@@ -61,6 +62,7 @@ function App() {
         
         </div>
       </NotificationProvider>
+      </GoogleOAuthProvider>;
     </BrowserRouter>
   );
 }
