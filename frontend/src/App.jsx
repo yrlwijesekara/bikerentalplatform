@@ -10,6 +10,7 @@ import { Toaster } from "react-hot-toast";
 import Clientpage from "./pages/client/clientpage.jsx";
 import { NotificationProvider } from "./contexts/NotificationContext.jsx";
 import NotificationCenter from "./components/NotificationCenter.jsx";
+import ForgottenPasswordPage from "./pages/forgottenpassword.jsx";
 
 
 function App() {
@@ -56,13 +57,14 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route path="/login" element={<Loginpage />} />
             <Route path="/register" element={<Registrationpage />} />
+            <Route path="/forgotten-password" element={<ForgottenPasswordPage />} />
             <Route path="/admin/*" element={<Adminpage />} />
             <Route path="/*" element={<Clientpage />} />
           </Routes>
         
         </div>
       </NotificationProvider>
-      </GoogleOAuthProvider>;
+      </GoogleOAuthProvider>
     </BrowserRouter>
   );
 }

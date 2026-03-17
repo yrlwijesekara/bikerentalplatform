@@ -9,7 +9,7 @@ export default function Loginpage() {
   const backgroundImages = [
     "/loginbg3.jpg",
     "/loginbg4.jpg", 
-    "/loginbg2.jpg",
+    "/loginbg2.jpg"
   ];
 
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
@@ -203,6 +203,12 @@ export default function Loginpage() {
               Sign Up
             </Link>
           </p>
+          <p className="text-sm">
+          
+          <Link to="/forgotten-password" className="text-[var(--brand-primary)] hover:underline hover:text-[var(--brand-secondary)] font-medium">
+            Forgot password
+          </Link>
+        </p>
         </form>
       </div>
     </div>

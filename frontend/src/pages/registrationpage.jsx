@@ -270,7 +270,7 @@ export default function Registrationpage() {
             onChange={handleInputChange}
             value={formData.role}
             required
-            className="w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px] h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] text-sm sm:text-base"
+            className="w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[450px] h-[45px] sm:h-[48px] lg:h-[50px] rounded-md p-3 sm:p-4 text-gray-800 bg-[var(--card-background)]  outline-none transition-all duration-300 hover:border-[var(--brand-primary)] hover:scale-[1.02] focus:border-[var(--brand-primary)] focus:shadow-lg focus:shadow-[var(--shadow-color)] text-sm sm:text-base"
           >
             <option value="user" className="bg-[var(--card-background)] text-gray-800">Customer</option>
             <option value="vendor" className="bg-[var(--card-background)] text-gray-800">Bike Owner</option>
