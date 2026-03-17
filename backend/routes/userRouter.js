@@ -4,6 +4,7 @@ import { loginUser } from "../controllers/usercontroller.js";
 import { googleLoginUser } from "../controllers/usercontroller.js";
 import { getuser } from "../controllers/usercontroller.js";
 import { getUserProfile, updateUserProfile } from "../controllers/usercontroller.js";
+import { sendResetPasswordOTP, verifyOTP, resetPassword } from "../controllers/usercontroller.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
@@ -32,5 +33,8 @@ router.post("/google-login", googleLoginUser);
 router.get("/", getuser);
 router.get("/profile", authenticateToken, getUserProfile);
 router.put("/profile", authenticateToken, updateUserProfile);
+router.post("/send-reset-password-otp", sendResetPasswordOTP);
+router.post("/verify-otp", verifyOTP);
+router.post("/reset-password", resetPassword);
 
 export default router;

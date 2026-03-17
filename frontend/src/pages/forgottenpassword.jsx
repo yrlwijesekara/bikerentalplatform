@@ -57,7 +57,7 @@ export default function ForgotPassword() {
         setLoading(true);
         try {
             await axios.post(
-                import.meta.env.VITE_BACKEND_URL + "/api/users/send-reset-password-otp",
+                import.meta.env.VITE_BACKEND_URL + "/users/send-reset-password-otp",
                 { email }
             );
             toast.success("OTP sent to your email!");
@@ -95,7 +95,7 @@ export default function ForgotPassword() {
         setLoading(true);
         try {
             await axios.post(
-                import.meta.env.VITE_BACKEND_URL + "/api/users/reset-password",
+                import.meta.env.VITE_BACKEND_URL + "/users/reset-password",
                 { email, otp, newPassword }
             );
             toast.success("Password reset successful!");
