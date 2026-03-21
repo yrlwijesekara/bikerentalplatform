@@ -10,6 +10,7 @@ export default function Review() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [reviewData, setReviewData] = useState({});
+  const [reviewedProductIds, setReviewedProductIds] = useState([]);
 
   const token = useMemo(() => localStorage.getItem("token"), []);
 
@@ -29,17 +30,28 @@ export default function Review() {
 
       try {
         setLoading(true);
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/orders/${orderId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
+        const [orderResponse, reviewedResponse] = await Promise.all([
+          axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/orders/${orderId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             },
-          },
-        );
+          ),
+          axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/reviews/my-order/${orderId}/reviewed-products`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          ),
+        ]);
 
-        const fetchedOrder = response.data?.order;
+        const fetchedOrder = orderResponse.data?.order;
         setOrder(fetchedOrder);
+        setReviewedProductIds(reviewedResponse.data?.reviewedProductIds || []);
 
         const initialReviewState = {};
         (fetchedOrder?.bikes || []).forEach((bikeItem) => {
@@ -87,10 +99,11 @@ export default function Review() {
     try {
       setSubmitting(true);
 
+      const reviewedSet = new Set(reviewedProductIds);
       const submitPromises = order.bikes
         .map((bikeItem) => {
           const productId = bikeItem?.bike?._id;
-          if (!productId) {
+          if (!productId || reviewedSet.has(productId)) {
             return null;
           }
 
@@ -125,6 +138,12 @@ export default function Review() {
 
       if (successCount > 0) {
         toast.success(`Submitted ${successCount} review${successCount > 1 ? "s" : ""} successfully`);
+
+        const justSubmittedProductIds = order.bikes
+          .map((bikeItem) => bikeItem?.bike?._id)
+          .filter((productId) => Boolean(productId) && !reviewedSet.has(productId));
+
+        setReviewedProductIds((prev) => [...new Set([...prev, ...justSubmittedProductIds])]);
       }
 
       if (failed.length > 0) {
@@ -163,6 +182,11 @@ export default function Review() {
   }
 
   const canReview = (order.orderStatus || "").toLowerCase() === "completed";
+  const reviewedSet = new Set(reviewedProductIds);
+  const pendingBikes = (order.bikes || []).filter((bikeItem) => {
+    const bikeId = bikeItem?.bike?._id;
+    return bikeId && !reviewedSet.has(bikeId);
+  });
 
   return (
     <div className="w-full min-h-[calc(100vh-80px)] bg-[var(--main-background)] py-8 px-4">
@@ -172,6 +196,9 @@ export default function Review() {
           <p className="text-gray-600 mt-1">
             Order #{order.orderid} | {order.bikes?.length || 0} bike{(order.bikes?.length || 0) > 1 ? "s" : ""}
           </p>
+          <p className="text-sm text-gray-600 mt-1">
+            Pending reviews: {pendingBikes.length} | Already reviewed: {(order.bikes?.length || 0) - pendingBikes.length}
+          </p>
           {!canReview && (
             <p className="mt-2 text-sm text-red-600">
               Reviews are available only when order status is completed.
@@ -180,7 +207,7 @@ export default function Review() {
         </div>
 
         <div className="space-y-5">
-          {(order.bikes || []).map((bikeItem, index) => {
+          {pendingBikes.map((bikeItem, index) => {
             const bikeId = bikeItem?.bike?._id;
             const bikeName = bikeItem?.bike?.bikeName || `Bike ${index + 1}`;
             const currentReview = reviewData[bikeId] || { rating: 5, comment: "" };
@@ -231,13 +258,19 @@ export default function Review() {
               </div>
             );
           })}
+
+          {pendingBikes.length === 0 && (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800 text-sm">
+              All bikes in this order are already reviewed.
+            </div>
+          )}
         </div>
 
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
           <button
             type="button"
             onClick={submitReviews}
-            disabled={!canReview || submitting}
+            disabled={!canReview || submitting || pendingBikes.length === 0}
             className="px-6 py-2 rounded-lg bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? "Submitting..." : "Submit All Reviews"}

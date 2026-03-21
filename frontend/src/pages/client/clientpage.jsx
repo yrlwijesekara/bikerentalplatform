@@ -85,7 +85,7 @@ export default function Clientpage() {
                 <Cart />
               </ProtectedRoute>
             } />
-            <Route path="/user/review/:orderId" element={
+            <Route path="/review/:orderId" element={
               <ProtectedRoute requiredRole="user">
                 <Review />
               </ProtectedRoute>

@@ -203,7 +203,7 @@ export default function Mybooking() {
 
               {isCompletedOrder(booking.orderStatus) && (
                 <Link
-                  to={`/user/review/${booking._id}`}
+                  to={`/review/${booking._id}`}
                   className="inline-flex items-center justify-center px-4 py-1 text-sm font-medium rounded-full bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] transition-colors duration-200"
                 >
                   Write Review

@@ -271,3 +271,40 @@ export async function getProductReviews(req, res) {
         });
     }
 }
+
+/**
+ * GET current user's reviewed product IDs for a specific order
+ */
+export async function getMyOrderReviewedProducts(req, res) {
+    try {
+        const userId = req.user?.id;
+        const { orderId } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({
+                error: "User must be authenticated"
+            });
+        }
+
+        if (!orderId) {
+            return res.status(400).json({
+                error: "Order ID is required"
+            });
+        }
+
+        const reviews = await Review.find({ user: userId, order: orderId }).select('product');
+        const reviewedProductIds = [...new Set(reviews.map((review) => review.product?.toString()).filter(Boolean))];
+
+        return res.status(200).json({
+            orderId,
+            reviewedProductIds,
+            reviewedCount: reviewedProductIds.length
+        });
+    } catch (error) {
+        console.error('Error fetching reviewed products for order:', error);
+        return res.status(500).json({
+            error: "Failed to fetch reviewed products",
+            details: process.env.NODE_ENV === 'development' ? error.message : "Internal server error"
+        });
+    }
+}

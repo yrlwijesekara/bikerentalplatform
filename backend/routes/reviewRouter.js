@@ -1,10 +1,13 @@
 import express from 'express';
-import { createReview, getAllReviews, getVendorReviews, getProductReviews } from '../controllers/reviewController.js';
+import { createReview, getAllReviews, getVendorReviews, getProductReviews, getMyOrderReviewedProducts } from '../controllers/reviewController.js';
 
 const router = express.Router();
 
 // Create a new review (authenticated users)
 router.post('/', createReview);
+
+// Current user: get reviewed bikes for a specific order
+router.get('/my-order/:orderId/reviewed-products', getMyOrderReviewedProducts);
 
 // Admin: get all reviews with full details
 router.get('/admin/all', getAllReviews);
