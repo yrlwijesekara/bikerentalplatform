@@ -147,6 +147,10 @@ export default function Mybooking() {
     }
   };
 
+  const isCompletedOrder = (status) => {
+    return (status || '').toLowerCase() === 'completed';
+  };
+
   const BookingCard = ({ booking }) => (
     <div className="w-full bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 hover:scale-[1.02]">
       <div className="flex flex-col lg:flex-row gap-4">
@@ -179,6 +183,7 @@ export default function Mybooking() {
                 
                 {/* Desktop Hover Tooltip - Only visible on medium screens and above */}
                 <div className="invisible group-hover:visible absolute top-full left-0 mt-2 bg-black text-white text-xs rounded p-2 whitespace-nowrap z-10 shadow-lg hidden sm:block">
+                  
                   <div className="font-semibold mb-1">Individual Bike Statuses:</div>
                   {booking.bikes && booking.bikes.map((bikeItem, idx) => (
                     <div key={idx} className="flex items-center gap-1 py-0.5">
@@ -195,6 +200,15 @@ export default function Mybooking() {
                 {getPaymentStatusIcon(booking.paymentStatus)}
                 {booking.paymentStatus}
               </div>
+
+              {isCompletedOrder(booking.orderStatus) && (
+                <Link
+                  to={`/user/review/${booking._id}`}
+                  className="inline-flex items-center justify-center px-4 py-1 text-sm font-medium rounded-full bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] transition-colors duration-200"
+                >
+                  Write Review
+                </Link>
+              )}
             </div>
             
             {/* Mobile Expandable Section - Only visible on small screens */}

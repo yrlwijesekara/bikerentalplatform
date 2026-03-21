@@ -145,7 +145,7 @@ export default function Loginpage() {
         backgroundRepeat: 'no-repeat'
       }}
     >
-      <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center p-6 sm:p-8 lg:p-10 min-h-[500px] sm:min-h-[600px]">
+      <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl backdrop-blur-xl bg-black/30 shadow-2xl rounded-2xl border border-white/30 flex flex-col justify-center items-center p-6 sm:p-8 lg:p-10 min-h-[500px] sm:min-h-[600px]">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 lg:mb-10 text-[var(--brand-primary)]">
           Login Page
         </h1>
@@ -191,7 +191,7 @@ export default function Loginpage() {
            className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md border border-gray-300 bg-white text-gray-900 font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             <img src="/image.png" alt="Google Icon" className="h-5 w-5" />
-            {googleLoading ? "Connecting to Google..." : "Continue with Google"}
+            {googleLoading ? "Connecting to Google..." : "Continue with Google only customers"}
           </button>
 
           <p className="text-white text-sm sm:text-base text-center">

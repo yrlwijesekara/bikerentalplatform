@@ -129,7 +129,7 @@ export default function ForgotPassword() {
                 backgroundRepeat: 'no-repeat'
             }}
         >
-            <div className="w-full max-w-sm sm:max-w-md backdrop-blur-xl bg-white/20 shadow-2xl rounded-2xl border border-white/30 flex flex-col items-center gap-6 text-white py-8 px-6 sm:px-8 overflow-y-auto">
+            <div className="w-full max-w-sm sm:max-w-md backdrop-blur-xl bg-black/30 shadow-2xl rounded-2xl border border-white/30 flex flex-col items-center gap-6 text-white py-8 px-6 sm:px-8 overflow-y-auto">
                 {/* Back to Login Link */}
                 <Link 
                     to="/login" 
