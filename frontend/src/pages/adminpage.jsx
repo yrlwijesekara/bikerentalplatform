@@ -15,6 +15,7 @@ import Loader from "../components/loader";
 import AddPlacesPage from "./admin/addplaces.jsx";
 import UpdatePlacesPage from "./admin/updateplaces.jsx";
 import ViewProduct from "./admin/viewproduct.jsx";
+import Users from "./admin/getusers.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -363,7 +364,7 @@ export default function Adminpage() {
                         <Route path="products" element={<ProductAdminPage />} />
                         <Route path="view-product/:id" element={<ViewProduct />} />
                         <Route path="places" element={<PlacesAdminPage />} />
-                        <Route path="users" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Users - To be implemented</h1></div>} />
+                        <Route path="users" element={<Users />} />
                         <Route path="vendors" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Vendors - To be implemented</h1></div>} />
                         <Route path="bookings" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Bookings - To be implemented</h1></div>} />
                         <Route path="reviews" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Reviews - To be implemented</h1></div>} />
