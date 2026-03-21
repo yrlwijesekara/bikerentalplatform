@@ -294,6 +294,37 @@ export function updateUserProfile(req, res) {
             res.status(400).json({ error: error.message });
         });
 }
+
+// Get all users (admin only)
+export async function getAllUsers(req, res) {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Admin access required" });
+        }
+
+        const users = await User.find({})
+            .select('firstname lastname email phone role address city')
+            .sort({ createdAt: -1 });
+
+        const formattedUsers = users.map((user) => ({
+            id: user._id,
+            name: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+            email: user.email,
+            phone: user.phone,
+            address: user.address,
+            city: user.city,
+            role: user.role
+        }));
+
+        return res.status(200).json({
+            total: formattedUsers.length,
+            users: formattedUsers
+        });
+    } catch (error) {
+        return res.status(500).json({ error: error.message || 'Failed to fetch users' });
+    }
+}
+
 export async function verifyOTP(req, res) {
   const { email, otp } = req.body;
 
