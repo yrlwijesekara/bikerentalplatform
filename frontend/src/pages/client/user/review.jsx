@@ -14,6 +14,18 @@ export default function Review() {
 
   const token = useMemo(() => localStorage.getItem("token"), []);
 
+  const getProductId = (bikeItem) => {
+    const rawBike = bikeItem?.bike;
+    if (!rawBike) return null;
+    if (typeof rawBike === "string") return rawBike;
+    if (typeof rawBike === "object") {
+      if (typeof rawBike._id === "string") return rawBike._id;
+      if (rawBike._id && typeof rawBike._id.toString === "function") return rawBike._id.toString();
+      if (typeof rawBike.id === "string") return rawBike.id;
+    }
+    return null;
+  };
+
   useEffect(() => {
     const fetchOrder = async () => {
       if (!orderId) {
@@ -55,7 +67,7 @@ export default function Review() {
 
         const initialReviewState = {};
         (fetchedOrder?.bikes || []).forEach((bikeItem) => {
-          const bikeId = bikeItem?.bike?._id;
+          const bikeId = getProductId(bikeItem);
           if (bikeId) {
             initialReviewState[bikeId] = {
               rating: 5,
@@ -96,63 +108,117 @@ export default function Review() {
       return;
     }
 
+    const reviewedSet = new Set(reviewedProductIds);
+    const pendingReviews = order.bikes
+      .map((bikeItem) => {
+        const productId = getProductId(bikeItem);
+        if (!productId || reviewedSet.has(productId)) {
+          return null;
+        }
+
+        const bikeReview = reviewData[productId] || { rating: 5, comment: "" };
+        return {
+          productId,
+          rating: Number(bikeReview.rating),
+          comment: bikeReview.comment?.trim() || "",
+        };
+      })
+      .filter(Boolean);
+
+    if (pendingReviews.length === 0) {
+      toast.error("No valid bikes found to review");
+      return;
+    }
+
     try {
       setSubmitting(true);
 
-      const reviewedSet = new Set(reviewedProductIds);
-      const submitPromises = order.bikes
-        .map((bikeItem) => {
-          const productId = bikeItem?.bike?._id;
-          if (!productId || reviewedSet.has(productId)) {
-            return null;
-          }
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/reviews/submit-multiple`,
+        {
+          orderId: order._id,
+          reviews: pendingReviews,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
-          const bikeReview = reviewData[productId] || { rating: 5, comment: "" };
-          const payload = {
-            productId,
-            orderId: order._id,
-            rating: Number(bikeReview.rating),
-            comment: bikeReview.comment?.trim() || "",
-          };
+      const createdCount = response.data?.createdCount || 0;
+      const skippedCount = response.data?.skippedCount || 0;
+      const createdProductIds = response.data?.createdProductIds || [];
+      const skippedProductIds = response.data?.skippedProductIds || [];
+      const processedProductIds = [...new Set([...createdProductIds, ...skippedProductIds])];
 
-          return axios.post(
-            `${import.meta.env.VITE_BACKEND_URL}/reviews`,
-            payload,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            },
-          );
-        })
-        .filter(Boolean);
+      if (createdCount > 0) {
+        toast.success(`Submitted ${createdCount} review${createdCount > 1 ? "s" : ""} successfully`);
+      }
 
-      if (submitPromises.length === 0) {
-        toast.error("No valid bikes found to review");
+      if (createdCount === 0 && skippedCount > 0) {
+        toast("All selected bikes are already reviewed");
+      }
+
+      if (processedProductIds.length > 0) {
+        setReviewedProductIds((prev) => [...new Set([...prev, ...processedProductIds])]);
+      }
+
+      if ((response.data?.invalidCount || 0) > 0) {
+        toast.error("Some review items were invalid and were not saved");
+      }
+    } catch (error) {
+      const message = error.response?.data?.details || error.response?.data?.error || "Failed to submit reviews";
+      const status = error.response?.status;
+      const invalidItems = error.response?.data?.invalidItems;
+
+      if (status && status < 500) {
+        if (Array.isArray(invalidItems) && invalidItems.length > 0) {
+          const firstInvalid = invalidItems[0];
+          toast.error(firstInvalid?.reason || message);
+        } else {
+          toast.error(message);
+        }
         return;
       }
 
-      const results = await Promise.allSettled(submitPromises);
-      const successCount = results.filter((r) => r.status === "fulfilled").length;
-      const failed = results.filter((r) => r.status === "rejected");
+      try {
+        const fallbackResults = await Promise.allSettled(
+          pendingReviews.map((item) =>
+            axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/reviews`,
+              {
+                productId: item.productId,
+                orderId: order._id,
+                rating: item.rating,
+                comment: item.comment,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            ),
+          ),
+        );
 
-      if (successCount > 0) {
-        toast.success(`Submitted ${successCount} review${successCount > 1 ? "s" : ""} successfully`);
+        const fallbackSuccess = fallbackResults.filter((r) => r.status === "fulfilled").length;
+        const fallbackFailed = fallbackResults.length - fallbackSuccess;
 
-        const justSubmittedProductIds = order.bikes
-          .map((bikeItem) => bikeItem?.bike?._id)
-          .filter((productId) => Boolean(productId) && !reviewedSet.has(productId));
+        if (fallbackSuccess > 0) {
+          toast.success(`Submitted ${fallbackSuccess} review${fallbackSuccess > 1 ? "s" : ""} successfully`);
+          const submittedProductIds = fallbackResults
+            .map((result, index) => (result.status === "fulfilled" ? pendingReviews[index]?.productId : null))
+            .filter(Boolean);
+          setReviewedProductIds((prev) => [...new Set([...prev, ...submittedProductIds])]);
+        }
 
-        setReviewedProductIds((prev) => [...new Set([...prev, ...justSubmittedProductIds])]);
+        if (fallbackFailed > 0) {
+          toast.error(message);
+        }
+      } catch {
+        toast.error(message);
       }
-
-      if (failed.length > 0) {
-        const firstError = failed[0].reason?.response?.data?.error || "Some reviews failed to submit";
-        toast.error(firstError);
-      }
-    } catch (error) {
-      const message = error.response?.data?.error || "Failed to submit reviews";
-      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -184,7 +250,7 @@ export default function Review() {
   const canReview = (order.orderStatus || "").toLowerCase() === "completed";
   const reviewedSet = new Set(reviewedProductIds);
   const pendingBikes = (order.bikes || []).filter((bikeItem) => {
-    const bikeId = bikeItem?.bike?._id;
+    const bikeId = getProductId(bikeItem);
     return bikeId && !reviewedSet.has(bikeId);
   });
 
@@ -208,7 +274,7 @@ export default function Review() {
 
         <div className="space-y-5">
           {pendingBikes.map((bikeItem, index) => {
-            const bikeId = bikeItem?.bike?._id;
+            const bikeId = getProductId(bikeItem);
             const bikeName = bikeItem?.bike?.bikeName || `Bike ${index + 1}`;
             const currentReview = reviewData[bikeId] || { rating: 5, comment: "" };
 

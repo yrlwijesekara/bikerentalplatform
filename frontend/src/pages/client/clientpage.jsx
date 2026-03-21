@@ -20,6 +20,7 @@ import PlaceOverview from "./user/placeoverview.jsx";
 import Destinations from "./user/destinations.jsx";
 import OrderSuccess from './user/ordersuccess.jsx';
 import Review from "./user/review.jsx";
+import Reviewvendor from "./vendor/reviewvendor.jsx";
 
 export default function Clientpage() {
   return (
@@ -72,7 +73,7 @@ export default function Clientpage() {
             } />
             <Route path="/vendor/reviews" element={
               <ProtectedRoute requiredRole="vendor">
-                <h1 className="text-black">Vendor Reviews Page</h1>
+                <Reviewvendor />
               </ProtectedRoute>
             } />
             <Route path="/vendor/update-bike" element={
