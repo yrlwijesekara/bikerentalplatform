@@ -8,6 +8,7 @@ import Loader from "../../../components/loader";
 import Footer from "../../../components/footer";
 
 export default function VendorBooking() {
+  const BOOKINGS_PER_PAGE = 5;
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +17,7 @@ export default function VendorBooking() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedPaymentDate, setSelectedPaymentDate] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Available order statuses for vendors to set
   const orderStatuses = [
@@ -94,6 +96,13 @@ export default function VendorBooking() {
     setFilteredBookings(filtered);
   }, [bookings, searchTerm, selectedStatus, selectedPaymentDate]);
 
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(filteredBookings.length / BOOKINGS_PER_PAGE));
+    if (currentPage > pages) {
+      setCurrentPage(pages);
+    }
+  }, [filteredBookings, currentPage]);
+
   // Get unique statuses for filter dropdowns
   const getOrderStatuses = () => {
     const statuses = bookings.map(booking => booking.orderStatus).filter(Boolean);
@@ -109,6 +118,30 @@ export default function VendorBooking() {
     setSearchTerm('');
     setSelectedStatus('');
     setSelectedPaymentDate('');
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / BOOKINGS_PER_PAGE));
+  const startIndex = (currentPage - 1) * BOOKINGS_PER_PAGE;
+  const paginatedBookings = filteredBookings.slice(startIndex, startIndex + BOOKINGS_PER_PAGE);
+
+  const getPaginationItems = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) pages.push('left-ellipsis');
+    for (let p = start; p <= end; p += 1) {
+      pages.push(p);
+    }
+    if (end < totalPages - 1) pages.push('right-ellipsis');
+
+    pages.push(totalPages);
+    return pages;
   };
 
   const fetchBookings = async () => {
@@ -630,9 +663,61 @@ export default function VendorBooking() {
             </div>
           ) : (
             <div className="space-y-6 pb-24">
-              {filteredBookings.map((booking) => (
+              {paginatedBookings.map((booking) => (
                 <BookingCard key={booking._id} booking={booking} />
               ))}
+
+              {filteredBookings.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-2">
+                  <div className="text-sm text-gray-500">
+                    Showing {startIndex + 1}-{Math.min(startIndex + BOOKINGS_PER_PAGE, filteredBookings.length)} of {filteredBookings.length} bookings
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Prev
+                      </button>
+
+                      {getPaginationItems().map((item, idx) => {
+                        if (typeof item === 'string') {
+                          return <span key={`${item}-${idx}`} className="px-2 text-gray-500">...</span>;
+                        }
+
+                        const isActive = item === currentPage;
+                        return (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => setCurrentPage(item)}
+                            className={`px-3 py-1 rounded-md border transition-colors duration-200 ${
+                              isActive
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ import Loader from "../../../components/loader";
 import Footer from "../../../components/footer";
 
 export default function VendorEarning() {
+  const ORDERS_PER_PAGE = 5;
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,7 @@ export default function VendorEarning() {
   const [dateFilter, setDateFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch completed orders from database
   useEffect(() => {
@@ -49,6 +51,13 @@ export default function VendorEarning() {
 
     setFilteredOrders(filtered);
   }, [orders, dateFilter, monthFilter, yearFilter]);
+
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+    if (currentPage > pages) {
+      setCurrentPage(pages);
+    }
+  }, [filteredOrders, currentPage]);
 
   const fetchCompletedOrders = async () => {
     try {
@@ -90,6 +99,7 @@ export default function VendorEarning() {
     setDateFilter('');
     setMonthFilter('');
     setYearFilter(new Date().getFullYear().toString());
+    setCurrentPage(1);
   };
 
   // Calculate earnings statistics
@@ -134,6 +144,29 @@ export default function VendorEarning() {
   const monthlyEarnings = getMonthlyEarnings();
 
   const formatCurrency = (amount) => `Rs. ${amount.toFixed(2)}`;
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+  const startIndex = (currentPage - 1) * ORDERS_PER_PAGE;
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + ORDERS_PER_PAGE);
+
+  const getPaginationItems = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) pages.push('left-ellipsis');
+    for (let p = start; p <= end; p += 1) {
+      pages.push(p);
+    }
+    if (end < totalPages - 1) pages.push('right-ellipsis');
+
+    pages.push(totalPages);
+    return pages;
+  };
 
   // Simple bar chart component (since we can't install external libraries easily)
   const SimpleBarChart = ({ data }) => {
@@ -384,7 +417,7 @@ export default function VendorEarning() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredOrders.slice(0, 10).map((order) => (
+                    {paginatedOrders.map((order) => (
                       <tr key={order._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           #{order.orderid}
@@ -406,9 +439,55 @@ export default function VendorEarning() {
                   </tbody>
                 </table>
                 
-                {filteredOrders.length > 10 && (
-                  <div className="text-center py-4 text-sm text-gray-500">
-                    Showing 10 of {filteredOrders.length} completed orders
+                {filteredOrders.length > 0 && (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
+                    <div className="text-sm text-gray-500">
+                      Showing {startIndex + 1}-{Math.min(startIndex + ORDERS_PER_PAGE, filteredOrders.length)} of {filteredOrders.length} completed orders
+                    </div>
+
+                    {totalPages > 1 && (
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Prev
+                        </button>
+
+                        {getPaginationItems().map((item, idx) => {
+                          if (typeof item === 'string') {
+                            return <span key={`${item}-${idx}`} className="px-2 text-gray-500">...</span>;
+                          }
+
+                          const isActive = item === currentPage;
+                          return (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={() => setCurrentPage(item)}
+                              className={`px-3 py-1 rounded-md border transition-colors duration-200 ${
+                                isActive
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                              }`}
+                            >
+                              {item}
+                            </button>
+                          );
+                        })}
+
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
