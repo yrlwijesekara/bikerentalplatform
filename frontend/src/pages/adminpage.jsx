@@ -122,11 +122,7 @@ export default function Adminpage() {
             icon: FaUserAlt,
             label: "Users"
         },
-        {
-            path: "/admin/vendors",
-            icon: TiVendorAndroid,
-            label: "Vendors"
-        },
+        
         {
             path: "/admin/places",
             icon: FaBookmark,
@@ -365,8 +361,7 @@ export default function Adminpage() {
                         <Route path="view-product/:id" element={<ViewProduct />} />
                         <Route path="places" element={<PlacesAdminPage />} />
                         <Route path="users" element={<Users />} />
-                        <Route path="vendors" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Vendors - To be implemented</h1></div>} />
-                        <Route path="bookings" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Bookings - To be implemented</h1></div>} />
+                      
                         <Route path="reviews" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Reviews - To be implemented</h1></div>} />
                         <Route path="add-places" element={<AddPlacesPage />} />
                         <Route path="update-places/:id" element={<UpdatePlacesPage />} />

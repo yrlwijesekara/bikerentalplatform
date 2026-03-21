@@ -4,9 +4,61 @@ import toast from "react-hot-toast";
 import Loader from "../../components/loader.jsx";
 
 export default function Users() {
+    const USERS_PER_PAGE = 15;
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedRole, setSelectedRole] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const filteredUsers = users.filter((user) => {
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch =
+            (user.name || "").toLowerCase().includes(searchLower) ||
+            (user.email || "").toLowerCase().includes(searchLower) ||
+            (user.phone || "").toLowerCase().includes(searchLower);
+
+        const matchesRole = !selectedRole || user.role === selectedRole;
+
+        return matchesSearch && matchesRole;
+    });
+
+    useEffect(() => {
+        const pages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
+        if (currentPage > pages) {
+            setCurrentPage(pages);
+        }
+    }, [filteredUsers, currentPage]);
+
+    const clearFilters = () => {
+        setSearchTerm("");
+        setSelectedRole("");
+        setCurrentPage(1);
+    };
+
+    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
+    const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+    const paginatedUsers = filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
+
+    const getPaginationItems = () => {
+        if (totalPages <= 7) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+
+        const pages = [1];
+        const start = Math.max(2, currentPage - 1);
+        const end = Math.min(totalPages - 1, currentPage + 1);
+
+        if (start > 2) pages.push("left-ellipsis");
+        for (let p = start; p <= end; p += 1) {
+            pages.push(p);
+        }
+        if (end < totalPages - 1) pages.push("right-ellipsis");
+
+        pages.push(totalPages);
+        return pages;
+    };
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -56,8 +108,58 @@ export default function Users() {
             <div className="w-full max-w-[98vw] xl:max-w-[1600px] mx-auto">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Users</h1>
 
-                <div className="mb-4 text-center text-sm text-gray-600">
-                    Total Users: {users.length}
+                <div className="mb-6 text-center text-sm text-gray-600">
+                    Total: {users.length} user{users.length !== 1 ? "s" : ""} |
+                    Showing: {filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""}
+                </div>
+
+                <div className="mb-8">
+                    <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">Search User</label>
+                                <input
+                                    type="text"
+                                    placeholder="Search by name, email, phone..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">Filter by Role</label>
+                                <select
+                                    value={selectedRole}
+                                    onChange={(e) => setSelectedRole(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                >
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="vendor">Vendor</option>
+                                    <option value="user">User</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 invisible">Clear</label>
+                                <button
+                                    onClick={clearFilters}
+                                    className="w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 font-medium text-sm"
+                                >
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+
+                        {(searchTerm || selectedRole) && (
+                            <div className="mt-4 text-center">
+                                <p className="text-sm text-gray-600">
+                                    Found {filteredUsers.length} user(s) matching your criteria
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -65,6 +167,8 @@ export default function Users() {
                         <div className="p-6 text-center text-red-600">{error}</div>
                     ) : users.length === 0 ? (
                         <div className="p-6 text-center text-gray-600">No users found.</div>
+                    ) : filteredUsers.length === 0 ? (
+                        <div className="p-6 text-center text-gray-600">No users match your filters.</div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full border-collapse min-w-[700px]">
@@ -73,17 +177,15 @@ export default function Users() {
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Name</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Email</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Phone</th>
-                                        <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Address</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Role</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {users.map((user) => (
+                                    {paginatedUsers.map((user) => (
                                         <tr key={user.id} className="hover:bg-gray-50">
                                             <td className="py-3 px-4 border border-gray-300">{user.name || "N/A"}</td>
                                             <td className="py-3 px-4 border border-gray-300">{user.email || "N/A"}</td>
                                             <td className="py-3 px-4 border border-gray-300">{user.phone || "N/A"}</td>
-                                            <td className="py-3 px-4 border border-gray-300">{user.address || "N/A"}</td>
                                             <td className="py-3 px-4 border border-gray-300">
 
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -100,6 +202,56 @@ export default function Users() {
                                     ))}
                                 </tbody>
                             </table>
+
+                            <div className="px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div className="text-sm text-gray-500">
+                                    Showing {startIndex + 1}-{Math.min(startIndex + USERS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length} users
+                                </div>
+
+                                {totalPages > 1 && (
+                                    <div className="flex flex-wrap items-center justify-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                                            disabled={currentPage === 1}
+                                            className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Prev
+                                        </button>
+
+                                        {getPaginationItems().map((item, idx) => {
+                                            if (typeof item === "string") {
+                                                return <span key={`${item}-${idx}`} className="px-2 text-gray-500">...</span>;
+                                            }
+
+                                            const isActive = item === currentPage;
+                                            return (
+                                                <button
+                                                    key={item}
+                                                    type="button"
+                                                    onClick={() => setCurrentPage(item)}
+                                                    className={`px-3 py-1 rounded-md border transition-colors duration-200 ${
+                                                        isActive
+                                                            ? "bg-blue-600 text-white border-blue-600"
+                                                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                                                    }`}
+                                                >
+                                                    {item}
+                                                </button>
+                                            );
+                                        })}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
