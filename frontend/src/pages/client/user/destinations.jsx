@@ -5,6 +5,7 @@ import PlaceCard from '../../../components/placecard';
 import Footer from '../../../components/footer';
 
 export default function Destinations() {
+  const PLACES_PER_PAGE = 12;
 
   const [places, setPlaces] = useState([]);
   const [filteredPlaces, setFilteredPlaces] = useState([]);
@@ -13,6 +14,7 @@ export default function Destinations() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (loading) {
@@ -62,6 +64,13 @@ export default function Destinations() {
     setFilteredPlaces(filtered);
   }, [places, searchTerm, selectedCategory, selectedCity, featuredOnly]);
 
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(filteredPlaces.length / PLACES_PER_PAGE));
+    if (currentPage > pages) {
+      setCurrentPage(pages);
+    }
+  }, [filteredPlaces, currentPage]);
+
   // Get unique categories and cities for filter dropdowns
   const getCategories = () => {
     const categories = places.map(place => place.category).filter(Boolean);
@@ -78,6 +87,30 @@ export default function Destinations() {
     setSelectedCategory('');
     setSelectedCity('');
     setFeaturedOnly(false);
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filteredPlaces.length / PLACES_PER_PAGE));
+  const startIndex = (currentPage - 1) * PLACES_PER_PAGE;
+  const paginatedPlaces = filteredPlaces.slice(startIndex, startIndex + PLACES_PER_PAGE);
+
+  const getPaginationItems = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) pages.push('left-ellipsis');
+    for (let p = start; p <= end; p += 1) {
+      pages.push(p);
+    }
+    if (end < totalPages - 1) pages.push('right-ellipsis');
+
+    pages.push(totalPages);
+    return pages;
   };
 
   return (
@@ -192,7 +225,7 @@ export default function Destinations() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
               {
                 filteredPlaces.length > 0 ? (
-                  filteredPlaces.map((place) => (
+                  paginatedPlaces.map((place) => (
                     <div key={place._id} className="w-full max-w-sm">
                       <PlaceCard place={place} />
                     </div>
@@ -216,6 +249,58 @@ export default function Destinations() {
                 )
               }
             </div>
+
+            {filteredPlaces.length > 0 && (
+              <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="text-sm text-gray-500">
+                  Showing {startIndex + 1}-{Math.min(startIndex + PLACES_PER_PAGE, filteredPlaces.length)} of {filteredPlaces.length} destinations
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Prev
+                    </button>
+
+                    {getPaginationItems().map((item, idx) => {
+                      if (typeof item === 'string') {
+                        return <span key={`${item}-${idx}`} className="px-2 text-gray-500">...</span>;
+                      }
+
+                      const isActive = item === currentPage;
+                      return (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => setCurrentPage(item)}
+                          className={`px-3 py-1 rounded-md border transition-colors duration-200 ${
+                            isActive
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )
       }
