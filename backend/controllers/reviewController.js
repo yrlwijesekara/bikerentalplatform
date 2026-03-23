@@ -595,15 +595,18 @@ export async function updateReviewFeaturedStatus(req, res) {
 export async function getFeaturedReviews(req, res) {
     try {
         const limitValue = parseInt(req.query.limit, 10);
-        const limit = Number.isFinite(limitValue) && limitValue > 0
-            ? Math.min(limitValue, 20)
-            : 3;
+        const shouldLimit = Number.isFinite(limitValue) && limitValue > 0;
 
-        const reviews = await Review.find({ isfeatured: true })
+        const query = Review.find({ isfeatured: true })
             .populate('user', 'firstname lastname')
             .populate('product', 'bikeName bikeType city')
-            .sort({ createdAt: -1 })
-            .limit(limit);
+            .sort({ createdAt: -1 });
+
+        if (shouldLimit) {
+            query.limit(Math.min(limitValue, 100));
+        }
+
+        const reviews = await query;
 
         return res.status(200).json({
             total: reviews.length,

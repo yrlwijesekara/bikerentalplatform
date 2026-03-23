@@ -29,6 +29,7 @@ export default function Homepage() {
   const [placesLoading, setPlacesLoading] = useState(false);
   const [featuredReviews, setFeaturedReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [currentReviewSlide, setCurrentReviewSlide] = useState(0);
 
   useEffect(() => {
     // Check if user is already logged in and redirect based on role
@@ -224,7 +225,7 @@ export default function Homepage() {
   const fetchFeaturedReviews = async () => {
     try {
       setReviewsLoading(true);
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/reviews/featured?limit=3`);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/reviews/featured`);
       setFeaturedReviews(response.data?.reviews || []);
     } catch (error) {
       console.error("Error fetching featured reviews:", error);
@@ -237,6 +238,26 @@ export default function Homepage() {
   useEffect(() => {
     fetchFeaturedReviews();
   }, []);
+
+  useEffect(() => {
+    if (featuredReviews.length <= 1) return;
+
+    const reviewSliderInterval = setInterval(() => {
+      setCurrentReviewSlide((prev) => (prev + 1) % featuredReviews.length);
+    }, 4500);
+
+    return () => clearInterval(reviewSliderInterval);
+  }, [featuredReviews]);
+
+  const goToNextReview = () => {
+    if (featuredReviews.length <= 1) return;
+    setCurrentReviewSlide((prev) => (prev + 1) % featuredReviews.length);
+  };
+
+  const goToPreviousReview = () => {
+    if (featuredReviews.length <= 1) return;
+    setCurrentReviewSlide((prev) => (prev - 1 + featuredReviews.length) % featuredReviews.length);
+  };
 
   return (
     <div className="w-full min-h-screen bg-(--main-background) flex flex-col">
@@ -443,57 +464,7 @@ export default function Homepage() {
           </div>
         </div>
 
-        {/* Featured Reviews Section */}
-        <div className="max-w-7xl mx-auto mb-8 px-6">
-          <div className="rounded-lg">
-            <div className="p-6 border-b" style={{ borderColor: 'var(--section-divider)' }}>
-              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                What Riders Say
-              </h2>
-              <p className="text-center text-gray-600">
-                Handpicked customer reviews selected by our admin team.
-              </p>
-            </div>
-
-            <div className="p-6">
-              {reviewsLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                  <span className="ml-3 text-gray-600">Loading featured reviews...</span>
-                </div>
-              ) : featuredReviews.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredReviews.map((review) => (
-                    <div key={review.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-semibold text-gray-800">
-                          {review.user?.name || "Anonymous User"}
-                        </span>
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          {"★".repeat(Math.max(1, Math.min(5, Math.round(Number(review.rating) || 0))))} {review.rating}/5
-                        </span>
-                      </div>
-
-                      <p className="text-gray-700 text-sm leading-relaxed mb-3 min-h-18">
-                        {review.comment?.trim() || "Great bike and smooth experience."}
-                      </p>
-
-                      <div className="text-xs text-gray-500 border-t pt-3">
-                        <p className="font-medium text-gray-700">{review.product?.bikeName || "Bike"}</p>
-                        <p>{review.product?.bikeType || "N/A"} {review.product?.city ? `| ${review.product.city}` : ""}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <FaCameraRetro size={42} className="mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">No featured reviews available right now.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        
 
         {/* Culture & Heritage Section */}
         <div className="max-w-7xl mx-auto mb-8 px-6">
@@ -597,6 +568,103 @@ export default function Homepage() {
             </div>
           </div>
         </div>
+        {/* Featured Reviews Section */}
+        <div className="max-w-7xl mx-auto mb-8 px-6 ">
+          <div className="rounded-lg">
+            <div className="p-6 border-b" style={{ borderColor: 'var(--section-divider)' }}>
+              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                What Riders Say
+              </h2>
+              <p className="text-center text-gray-600">
+                Handpicked customer reviews selected by our admin team.
+              </p>
+            </div>
+
+            <div className="p-6">
+              {reviewsLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600">Loading featured reviews...</span>
+                </div>
+              ) : featuredReviews.length > 0 ? (
+                <div className="w-full max-w-4xl mx-auto">
+                  <div className="relative overflow-hidden rounded-2xl">
+                    <div
+                      className="flex transition-transform duration-700 ease-in-out"
+                      style={{ transform: `translateX(-${currentReviewSlide * 100}%)` }}
+                    >
+                      {featuredReviews.map((review) => (
+                        <div key={review.id} className="w-full shrink-0 px-1">
+                          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm min-h-56">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-sm font-semibold text-gray-800">
+                                {review.user?.name || "Anonymous User"}
+                              </span>
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                {"★".repeat(Math.max(1, Math.min(5, Math.round(Number(review.rating) || 0))))} {review.rating}/5
+                              </span>
+                            </div>
+
+                            <p className="text-gray-700 text-sm leading-relaxed mb-3 min-h-18">
+                              {review.comment?.trim() || "Great bike and smooth experience."}
+                            </p>
+
+                            <div className="text-xs text-gray-500 border-t pt-3">
+                              <p className="font-medium text-gray-700">{review.product?.bikeName || "Bike"}</p>
+                              <p>{review.product?.bikeType || "N/A"} {review.product?.city ? `| ${review.product.city}` : ""}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {featuredReviews.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={goToPreviousReview}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800  rounded-full w-9 h-9 flex items-center justify-center  transition-colors duration-200"
+                          aria-label="Previous review"
+                        >
+                          ‹
+                        </button>
+                        <button
+                          type="button"
+                          onClick={goToNextReview}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-800 border border-none rounded-full w-9 h-9 flex items-center justify-center  transition-colors duration-200"
+                          aria-label="Next review"
+                        >
+                          ›
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {featuredReviews.length > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-4">
+                      {featuredReviews.map((review, index) => (
+                        <button
+                          key={`${review.id}-${index}`}
+                          type="button"
+                          onClick={() => setCurrentReviewSlide(index)}
+                          className={`h-2.5 rounded-full transition-all duration-300 ${
+                            currentReviewSlide === index ? "w-8 bg-blue-600" : "w-2.5 bg-gray-300 hover:bg-gray-400"
+                          }`}
+                          aria-label={`Go to featured review ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <FaCameraRetro size={42} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No featured reviews available right now.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Call to Action Section */}
         <div className=" ">
@@ -651,6 +719,7 @@ export default function Homepage() {
             </div>
           </div>
         </div>
+        
       </main>
       
       <Footer />
