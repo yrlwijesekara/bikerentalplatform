@@ -237,6 +237,3 @@ npm run dev
 - Notification setup and email workflow are documented in `NOTIFICATION_SETUP.md`.
 - Some older route names are kept for backward compatibility (example: `/products/vender`).
 
-## License
-
-ISC
