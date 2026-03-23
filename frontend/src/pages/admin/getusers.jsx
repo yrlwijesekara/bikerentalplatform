@@ -79,8 +79,10 @@ export default function Users() {
                             Authorization: `Bearer ${token}`,
                         },
                     }
+                    
                 );
 
+                toast.success("Users fetched successfully");
                 setUsers(response.data?.users || []);
             } catch (err) {
                 const message = err.response?.data?.error || "Failed to fetch users";
