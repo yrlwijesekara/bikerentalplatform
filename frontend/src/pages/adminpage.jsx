@@ -20,6 +20,7 @@ import Users from "./admin/getusers.jsx";
 import ReviewManagement from "./admin/reviewmanagment.jsx";
 import OrderManagement from "./admin/ordermanagment.jsx";
 import ViewOrder from "./admin/vieworder.jsx";
+import Dashboard from "./admin/dashboard.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -365,7 +366,7 @@ export default function Adminpage() {
                 {/* Page Content */}
                 <div className="flex-1 overflow-y-auto scrollbar-hide">
                     <Routes>
-                        <Route path="/" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Dashboard - To be implemented</h1></div>} />
+                        <Route path="/" element={<Dashboard />} />
                         <Route path="products" element={<ProductAdminPage />} />
                         <Route path="view-product/:id" element={<ViewProduct />} />
                         <Route path="places" element={<PlacesAdminPage />} />
