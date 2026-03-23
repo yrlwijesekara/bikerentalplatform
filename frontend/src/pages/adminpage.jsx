@@ -17,6 +17,7 @@ import UpdatePlacesPage from "./admin/updateplaces.jsx";
 import ViewProduct from "./admin/viewproduct.jsx";
 import Users from "./admin/getusers.jsx";
 import ReviewManagement from "./admin/reviewmanagment.jsx";
+import OrderManagement from "./admin/ordermanagment.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -128,6 +129,11 @@ export default function Adminpage() {
             path: "/admin/places",
             icon: FaBookmark,
             label: "Places"
+        },
+         {
+            path: "/admin/orders",
+            icon: FaBookmark,
+            label: "Orders"
         },
         {
             path: "/admin/reviews",
@@ -362,7 +368,7 @@ export default function Adminpage() {
                         <Route path="view-product/:id" element={<ViewProduct />} />
                         <Route path="places" element={<PlacesAdminPage />} />
                         <Route path="users" element={<Users />} />
-                      
+                        <Route path="orders" element={<OrderManagement />} />
                         <Route path="reviews" element={<ReviewManagement />} />
                         <Route path="add-places" element={<AddPlacesPage />} />
                         <Route path="update-places/:id" element={<UpdatePlacesPage />} />
