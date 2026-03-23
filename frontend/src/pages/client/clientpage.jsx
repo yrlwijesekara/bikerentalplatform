@@ -19,6 +19,9 @@ import Profile from "./user/profile.jsx";
 import PlaceOverview from "./user/placeoverview.jsx";
 import Destinations from "./user/destinations.jsx";
 import OrderSuccess from './user/ordersuccess.jsx';
+import Review from "./user/review.jsx";
+import Reviewvendor from "./vendor/reviewvendor.jsx";
+
 export default function Clientpage() {
   return (
     <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col overflow-hidden">
@@ -70,7 +73,7 @@ export default function Clientpage() {
             } />
             <Route path="/vendor/reviews" element={
               <ProtectedRoute requiredRole="vendor">
-                <h1 className="text-black">Vendor Reviews Page</h1>
+                <Reviewvendor />
               </ProtectedRoute>
             } />
             <Route path="/vendor/update-bike" element={
@@ -81,6 +84,11 @@ export default function Clientpage() {
             <Route path="/cart" element={
               <ProtectedRoute requiredRole="user">
                 <Cart />
+              </ProtectedRoute>
+            } />
+            <Route path="/review/:orderId" element={
+              <ProtectedRoute requiredRole="user">
+                <Review />
               </ProtectedRoute>
             } />
              <Route path="/checkout" element={

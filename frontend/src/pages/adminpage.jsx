@@ -7,6 +7,7 @@ import { FaBookmark } from "react-icons/fa6";
 import { VscCodeReview } from "react-icons/vsc";
 import { FiLogOut, FiSettings } from "react-icons/fi";
 import { HiMenu, HiX, HiBell } from "react-icons/hi";
+import { MdOutlinePlace } from "react-icons/md";
 import ProductAdminPage from "./admin/productAdmin.jsx";
 import PlacesAdminPage from "./admin/places.jsx";
 import axios from "axios";
@@ -15,6 +16,11 @@ import Loader from "../components/loader";
 import AddPlacesPage from "./admin/addplaces.jsx";
 import UpdatePlacesPage from "./admin/updateplaces.jsx";
 import ViewProduct from "./admin/viewproduct.jsx";
+import Users from "./admin/getusers.jsx";
+import ReviewManagement from "./admin/reviewmanagment.jsx";
+import OrderManagement from "./admin/ordermanagment.jsx";
+import ViewOrder from "./admin/vieworder.jsx";
+import Dashboard from "./admin/admindashboard.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -121,15 +127,16 @@ export default function Adminpage() {
             icon: FaUserAlt,
             label: "Users"
         },
-        {
-            path: "/admin/vendors",
-            icon: TiVendorAndroid,
-            label: "Vendors"
-        },
+        
         {
             path: "/admin/places",
-            icon: FaBookmark,
+            icon: MdOutlinePlace,
             label: "Places"
+        },
+         {
+            path: "/admin/orders",
+            icon: FaBookmark,
+            label: "Orders"
         },
         {
             path: "/admin/reviews",
@@ -245,7 +252,7 @@ export default function Adminpage() {
             {/* Sidebar */}
             <div className={`
                 fixed lg:sticky inset-y-0 left-0 z-50 lg:top-0
-                w-[300px] lg:w-[280px] 
+                w-75 lg:w-70 
                 transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 flex flex-col shadow-xl
@@ -292,7 +299,7 @@ export default function Adminpage() {
                                 }}
                                 onClick={closeSidebar}
                             >
-                                <Icon className="text-xl mr-3 flex-shrink-0" />
+                                <Icon className="text-xl mr-3 shrink-0" />
                                 <span className="font-medium truncate">{item.label}</span>
                             </Links>
                         );
@@ -328,7 +335,7 @@ export default function Adminpage() {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col h-screen pt-16 lg:pt-0 overflow-hidden">
                 {/* Desktop Header */}
-                <div className="hidden lg:flex border-b px-6 py-4 justify-between items-center shadow-sm flex-shrink-0" 
+                <div className="hidden lg:flex border-b px-6 py-4 justify-between items-center shadow-sm shrink-0" 
                      style={{ backgroundColor: 'var(--card-background)', borderColor: 'var(--section-divider)' }}>
                     <div>
                         <h2 className="text-xl font-semibold" style={{ color: 'var(--brand-primary)' }}>
@@ -359,14 +366,14 @@ export default function Adminpage() {
                 {/* Page Content */}
                 <div className="flex-1 overflow-y-auto scrollbar-hide">
                     <Routes>
-                        <Route path="/" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Dashboard - To be implemented</h1></div>} />
+                        <Route path="/" element={<Dashboard />} />
                         <Route path="products" element={<ProductAdminPage />} />
                         <Route path="view-product/:id" element={<ViewProduct />} />
                         <Route path="places" element={<PlacesAdminPage />} />
-                        <Route path="users" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Users - To be implemented</h1></div>} />
-                        <Route path="vendors" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Vendors - To be implemented</h1></div>} />
-                        <Route path="bookings" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Bookings - To be implemented</h1></div>} />
-                        <Route path="reviews" element={<div className="p-8"><h1 className="text-2xl font-bold text-gray-800">Reviews - To be implemented</h1></div>} />
+                        <Route path="users" element={<Users />} />
+                        <Route path="orders" element={<OrderManagement />} />
+                        <Route path="view-order/:id" element={<ViewOrder />} />
+                        <Route path="reviews" element={<ReviewManagement />} />
                         <Route path="add-places" element={<AddPlacesPage />} />
                         <Route path="update-places/:id" element={<UpdatePlacesPage />} />
                     </Routes>

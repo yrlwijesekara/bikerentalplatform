@@ -51,3 +51,29 @@ body, html {
 body::-webkit-scrollbar, html::-webkit-scrollbar {
     display: none !important;
 }
+
+/* Scoped utilities: allow scrollbars where needed despite global hide rules */
+.show-scrollbar {
+    scrollbar-width: thin !important;
+    -ms-overflow-style: auto !important;
+}
+
+.show-scrollbar::-webkit-scrollbar {
+    display: block !important;
+    width: 10px !important;
+    height: 10px !important;
+}
+
+.show-scrollbar::-webkit-scrollbar-track {
+    background: #e5e7eb !important;
+    border-radius: 9999px !important;
+}
+
+.show-scrollbar::-webkit-scrollbar-thumb {
+    background: #9ca3af !important;
+    border-radius: 9999px !important;
+}
+
+.show-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6b7280 !important;
+}

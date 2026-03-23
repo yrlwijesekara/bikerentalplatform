@@ -7,6 +7,7 @@ import Loader from "../../components/loader.jsx";
 const sampleProducts = [];
 
 export default function ProductAdminPage() {
+  const PRODUCTS_PER_PAGE = 10;
   const navigate = useNavigate();
   const [product, setProduct] = useState(sampleProducts);
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,6 +19,7 @@ export default function ProductAdminPage() {
   const [editingNote, setEditingNote] = useState(null);
   const [tempNote, setTempNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Handle approval status change
   const handleApprovalChange = async (
@@ -116,6 +118,37 @@ export default function ProductAdminPage() {
     setMaxPrice('');
     setFilterApproval('');
     setFilterAvailability('');
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+    if (currentPage > pages) {
+      setCurrentPage(pages);
+    }
+  }, [filteredProducts, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
+
+  const getPaginationItems = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) pages.push("left-ellipsis");
+    for (let p = start; p <= end; p += 1) {
+      pages.push(p);
+    }
+    if (end < totalPages - 1) pages.push("right-ellipsis");
+
+    pages.push(totalPages);
+    return pages;
   };
   useEffect(() => {
     const fetchProducts = async () => {
@@ -144,7 +177,7 @@ export default function ProductAdminPage() {
 
   return (
     <div className="w-full p-4 md:p-6">
-      <div className="w-full max-w-[98vw] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto">
+      <div className="w-full max-w-[98vw] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto ">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
           Motor Bike Administration
         </h1>
@@ -272,18 +305,11 @@ export default function ProductAdminPage() {
                 )}
               </div>
             </div>
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="overflow-x-auto scrollbar-hide">
-            <style jsx>{`
-              .scrollbar-hide {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-              }
-              .scrollbar-hide::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
-            <table className="w-full border-collapse min-w-[1600px]">
+        <div className="bg-white  shadow-lg overflow-hidden ">
+          <div className="overflow-x-auto show-scrollbar">
+           
+            
+            <table className="w-full border-collapse min-w-[1500px] ">
               <thead className="bg-gray-100 ">
                 <tr>
                   <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">
@@ -320,7 +346,7 @@ export default function ProductAdminPage() {
               </thead>
               <tbody>
                 {filteredProducts && filteredProducts.length > 0 ? (
-                  filteredProducts.map((products, index) => (
+                  paginatedProducts.map((products, index) => (
                     <tr
                       key={products._id || index}
                       className="hover:bg-gray-50"
@@ -351,7 +377,7 @@ export default function ProductAdminPage() {
                           {products.isAvailable ? "Available" : "Not Available"}
                         </span>
                       </td>
-                      <td className="py-3 px-4 border border-gray-300 whitespace-nowrap">
+                      <td className="py-3 px-3 border border-gray-300 whitespace-nowrap">
                         <select
                           value={products.isApproved ? "approved" : "pending"}
                           onChange={(e) =>
@@ -422,7 +448,7 @@ export default function ProductAdminPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 border border-gray-300">
+                      <td className="py-3 px-3 border border-gray-300">
                         {products.images && products.images.length > 0 ? (
                           <img
                             src={products.images[0]}
@@ -435,7 +461,7 @@ export default function ProductAdminPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 border border-gray-300 whitespace-nowrap ">
+                      <td className="py-3 px-3 border border-gray-300 whitespace-nowrap ">
                         <div className="flex space-x-2">
                           <button 
                             onClick={() => navigate(`/admin/view-product/${products._id}`)}
@@ -488,6 +514,58 @@ export default function ProductAdminPage() {
               </tbody>
             </table>
           </div>
+
+          {filteredProducts.length > 0 && (
+            <div className="px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm text-gray-500">
+                Showing {startIndex + 1}-{Math.min(startIndex + PRODUCTS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} bikes
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Prev
+                  </button>
+
+                  {getPaginationItems().map((item, idx) => {
+                    if (typeof item === "string") {
+                      return <span key={`${item}-${idx}`} className="px-2 text-gray-500">...</span>;
+                    }
+
+                    const isActive = item === currentPage;
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setCurrentPage(item)}
+                        className={`px-3 py-1 rounded-md border transition-colors duration-200 ${
+                          isActive
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
           </>
         )}
