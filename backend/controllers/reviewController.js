@@ -173,6 +173,7 @@ export async function getAllReviews(req, res) {
                 order: r.order,
                 rating: r.rating,
                 comment: r.comment,
+                isfeatured: r.isfeatured,
                 createdAt: r.createdAt
             }))
         });
@@ -526,6 +527,108 @@ export async function createMultipleReviews(req, res) {
         return res.status(500).json({
             error: 'Failed to create multiple reviews',
             details: error.message
+        });
+    }
+}
+
+/**
+ * PATCH review featured status — Admin only
+ */
+export async function updateReviewFeaturedStatus(req, res) {
+    try {
+        if (!checkAdmin(req.user)) {
+            return res.status(403).json({ error: "Access denied. Admins only." });
+        }
+
+        const reviewId = normalizeId(req.params?.reviewId);
+        const { isfeatured } = req.body;
+
+        if (!reviewId || !mongoose.Types.ObjectId.isValid(reviewId)) {
+            return res.status(400).json({ error: "Invalid reviewId format" });
+        }
+
+        if (typeof isfeatured !== 'boolean') {
+            return res.status(400).json({ error: "isfeatured must be a boolean" });
+        }
+
+        const updatedReview = await Review.findByIdAndUpdate(
+            reviewId,
+            { isfeatured },
+            { new: true }
+        )
+            .populate('user', 'firstname lastname email')
+            .populate('product', 'bikeName bikeType city pricePerDay')
+            .populate('order', 'orderStatus createdAt');
+
+        if (!updatedReview) {
+            return res.status(404).json({ error: "Review not found" });
+        }
+
+        return res.status(200).json({
+            message: `Review ${isfeatured ? 'featured' : 'unfeatured'} successfully`,
+            review: {
+                id: updatedReview._id,
+                user: {
+                    name: `${updatedReview.user?.firstname || ''} ${updatedReview.user?.lastname || ''}`.trim() || 'Unknown User',
+                    email: updatedReview.user?.email || null
+                },
+                product: updatedReview.product,
+                order: updatedReview.order,
+                rating: updatedReview.rating,
+                comment: updatedReview.comment,
+                isfeatured: updatedReview.isfeatured,
+                createdAt: updatedReview.createdAt
+            }
+        });
+    } catch (error) {
+        console.error('Error updating review featured status:', error);
+        return res.status(500).json({
+            error: "Failed to update featured status",
+            details: process.env.NODE_ENV === 'development' ? error.message : "Internal server error"
+        });
+    }
+}
+
+/**
+ * GET featured reviews — Public
+ */
+export async function getFeaturedReviews(req, res) {
+    try {
+        const limitValue = parseInt(req.query.limit, 10);
+        const limit = Number.isFinite(limitValue) && limitValue > 0
+            ? Math.min(limitValue, 20)
+            : 3;
+
+        const reviews = await Review.find({ isfeatured: true })
+            .populate('user', 'firstname lastname')
+            .populate('product', 'bikeName bikeType city')
+            .sort({ createdAt: -1 })
+            .limit(limit);
+
+        return res.status(200).json({
+            total: reviews.length,
+            reviews: reviews.map((r) => ({
+                id: r._id,
+                user: {
+                    name: `${r.user?.firstname || ''} ${r.user?.lastname || ''}`.trim() || 'Anonymous User'
+                },
+                product: {
+                    id: r.product?._id || null,
+                    bikeName: r.product?.bikeName || 'Unknown Bike',
+                    bikeType: r.product?.bikeType || 'N/A',
+                    city: r.product?.city || 'N/A'
+                },
+                rating: r.rating,
+                comment: r.comment,
+                isfeatured: r.isfeatured,
+                createdAt: r.createdAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching featured reviews:', error);
+        return res.status(500).json({
+            error: "Failed to fetch featured reviews",
+            details: process.env.NODE_ENV === 'development' ? error.message : "Internal server error"
         });
     }
 }

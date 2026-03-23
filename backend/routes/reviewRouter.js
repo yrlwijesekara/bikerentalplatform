@@ -1,5 +1,14 @@
 import express from 'express';
-import { createReview, createMultipleReviews, getAllReviews, getVendorReviews, getProductReviews, getMyOrderReviewedProducts } from '../controllers/reviewController.js';
+import {
+	createReview,
+	createMultipleReviews,
+	getAllReviews,
+	getVendorReviews,
+	getProductReviews,
+	getMyOrderReviewedProducts,
+	updateReviewFeaturedStatus,
+	getFeaturedReviews
+} from '../controllers/reviewController.js';
 
 const router = express.Router();
 
@@ -15,10 +24,16 @@ router.get('/my-order/:orderId/reviewed-products', getMyOrderReviewedProducts);
 // Admin: get all reviews with full details
 router.get('/admin/all', getAllReviews);
 
+// Admin: set/unset featured review
+router.patch('/admin/:reviewId/featured', updateReviewFeaturedStatus);
+
 // Vendor: get reviews for their own products
 router.get('/vendor/my-products', getVendorReviews);
 
 // Public: get reviews for a specific product
 router.get('/product/:productId', getProductReviews);
+
+// Public: get featured reviews
+router.get('/featured', getFeaturedReviews);
 
 export default router;

@@ -3,7 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "../../components/loader.jsx";
 
-const REVIEWS_PER_PAGE = 12;
+const REVIEWS_PER_PAGE = 10;
 
 function renderStars(rating) {
     const value = Number(rating) || 0;
@@ -17,9 +17,41 @@ export default function ReviewManagement() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRating, setSelectedRating] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("");
+    const [selectedFeatured, setSelectedFeatured] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalReviews, setTotalReviews] = useState(0);
+
+    const handleFeaturedChange = async (reviewId, nextValue) => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                toast.error("Please login first");
+                return;
+            }
+
+            await axios.patch(
+                `${import.meta.env.VITE_BACKEND_URL}/reviews/admin/${reviewId}/featured`,
+                { isfeatured: nextValue },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                },
+            );
+
+            setReviews((prev) =>
+                prev.map((review) =>
+                    review.id === reviewId ? { ...review, isfeatured: nextValue } : review,
+                ),
+            );
+
+            toast.success(`Review ${nextValue ? "featured" : "unfeatured"} successfully`);
+        } catch (err) {
+            const message = err.response?.data?.error || "Failed to update featured status";
+            toast.error(message);
+        }
+    };
 
     useEffect(() => {
         const fetchAdminReviews = async () => {
@@ -79,10 +111,14 @@ export default function ReviewManagement() {
             const matchesRating = !selectedRating || String(review.rating) === selectedRating;
             const matchesStatus =
                 !selectedStatus || (review.order?.orderStatus || "").toLowerCase() === selectedStatus.toLowerCase();
+            const matchesFeatured =
+                !selectedFeatured ||
+                (selectedFeatured === "featured" && review.isfeatured === true) ||
+                (selectedFeatured === "not-featured" && review.isfeatured !== true);
 
-            return matchesSearch && matchesRating && matchesStatus;
+            return matchesSearch && matchesRating && matchesStatus && matchesFeatured;
         });
-    }, [reviews, searchTerm, selectedRating, selectedStatus]);
+    }, [reviews, searchTerm, selectedRating, selectedStatus, selectedFeatured]);
 
     const ratingOptions = useMemo(() => {
         const ratings = reviews.map((review) => String(review.rating)).filter(Boolean);
@@ -101,6 +137,7 @@ export default function ReviewManagement() {
         setSearchTerm("");
         setSelectedRating("");
         setSelectedStatus("");
+        setSelectedFeatured("");
     };
 
     const getPaginationItems = () => {
@@ -143,7 +180,7 @@ export default function ReviewManagement() {
 
                 <div className="mb-8">
                     <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700">Search Review</label>
                                 <input
@@ -184,6 +221,19 @@ export default function ReviewManagement() {
                             </div>
 
                             <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">Featured</label>
+                                <select
+                                    value={selectedFeatured}
+                                    onChange={(e) => setSelectedFeatured(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                >
+                                    <option value="">All Reviews</option>
+                                    <option value="featured">Featured</option>
+                                    <option value="not-featured">Not Featured</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700 invisible">Clear</label>
                                 <button
                                     onClick={clearFilters}
@@ -212,6 +262,7 @@ export default function ReviewManagement() {
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Bike</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Rating</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Comment</th>
+                                        <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Featured</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Order Status</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Reviewed On</th>
                                     </tr>
@@ -236,6 +287,19 @@ export default function ReviewManagement() {
                                             </td>
                                             <td className="py-3 px-4 border border-gray-300 text-gray-700 max-w-[320px]">
                                                 {review.comment?.trim() ? review.comment : "No comment provided."}
+                                            </td>
+                                            <td className="py-3 px-4 border border-gray-300">
+                                                <label className="inline-flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={review.isfeatured === true}
+                                                        onChange={(e) => handleFeaturedChange(review.id, e.target.checked)}
+                                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className={`text-xs font-semibold ${review.isfeatured ? "text-yellow-700" : "text-gray-500"}`}>
+                                                        {review.isfeatured ? "Featured" : "No"}
+                                                    </span>
+                                                </label>
                                             </td>
                                             <td className="py-3 px-4 border border-gray-300">
                                                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">

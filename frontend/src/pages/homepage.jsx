@@ -27,6 +27,8 @@ export default function Homepage() {
   const [bikesLoading, setBikesLoading] = useState(false);
   const [featuredPlaces, setFeaturedPlaces] = useState([]);
   const [placesLoading, setPlacesLoading] = useState(false);
+  const [featuredReviews, setFeaturedReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in and redirect based on role
@@ -218,8 +220,26 @@ export default function Homepage() {
     fetchAndSetFeaturedPlaces();
   }, []);
 
+  // Function to fetch featured reviews from API
+  const fetchFeaturedReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/reviews/featured?limit=3`);
+      setFeaturedReviews(response.data?.reviews || []);
+    } catch (error) {
+      console.error("Error fetching featured reviews:", error);
+      setFeaturedReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeaturedReviews();
+  }, []);
+
   return (
-    <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col">
+    <div className="w-full min-h-screen bg-(--main-background) flex flex-col">
       <Header />
       
       <main className="flex-1 overflow-y-auto scrollbar-hide">
@@ -417,6 +437,58 @@ export default function Homepage() {
                   >
                     Browse All Destinations
                   </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Featured Reviews Section */}
+        <div className="max-w-7xl mx-auto mb-8 px-6">
+          <div className="rounded-lg">
+            <div className="p-6 border-b" style={{ borderColor: 'var(--section-divider)' }}>
+              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                What Riders Say
+              </h2>
+              <p className="text-center text-gray-600">
+                Handpicked customer reviews selected by our admin team.
+              </p>
+            </div>
+
+            <div className="p-6">
+              {reviewsLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  <span className="ml-3 text-gray-600">Loading featured reviews...</span>
+                </div>
+              ) : featuredReviews.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {featuredReviews.map((review) => (
+                    <div key={review.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold text-gray-800">
+                          {review.user?.name || "Anonymous User"}
+                        </span>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          {"★".repeat(Math.max(1, Math.min(5, Math.round(Number(review.rating) || 0))))} {review.rating}/5
+                        </span>
+                      </div>
+
+                      <p className="text-gray-700 text-sm leading-relaxed mb-3 min-h-18">
+                        {review.comment?.trim() || "Great bike and smooth experience."}
+                      </p>
+
+                      <div className="text-xs text-gray-500 border-t pt-3">
+                        <p className="font-medium text-gray-700">{review.product?.bikeName || "Bike"}</p>
+                        <p>{review.product?.bikeType || "N/A"} {review.product?.city ? `| ${review.product.city}` : ""}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <FaCameraRetro size={42} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No featured reviews available right now.</p>
                 </div>
               )}
             </div>

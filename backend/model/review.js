@@ -21,6 +21,7 @@ const reviewSchema = new mongoose.Schema(
     },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String },
+    isfeatured: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
