@@ -237,3 +237,5 @@ npm run dev
 - Notification setup and email workflow are documented in `NOTIFICATION_SETUP.md`.
 - Some older route names are kept for backward compatibility (example: `/products/vender`).
 
+🏍️ **Built with passion for the bike rental community** ❤️  
+*Connecting bike owners with adventure seekers through technology*
