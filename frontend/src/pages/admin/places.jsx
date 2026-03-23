@@ -378,16 +378,8 @@ export default function PlacesAdminPage() {
                 ← Scroll horizontally to see all columns →
               </div>
               
-              <div className="overflow-x-auto scrollbar-hide">
-                <style jsx>{`
-                  .scrollbar-hide {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                  }
-                  .scrollbar-hide::-webkit-scrollbar {
-                    display: none;
-                  }
-                `}</style>
+              <div className="overflow-x-auto show-scrollbar">
+               
                 <table className="w-full border-collapse min-w-[800px] lg:min-w-[1000px] xl:min-w-[1200px]">
                   <thead className="bg-gray-100">
                     <tr>

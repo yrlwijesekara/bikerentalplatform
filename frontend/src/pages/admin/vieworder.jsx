@@ -137,7 +137,7 @@ export default function ViewOrder() {
 
                     <div>
                         <h2 className="text-lg font-semibold text-gray-800 mb-3">Bikes in this Order</h2>
-                        <div className="overflow-x-auto rounded-lg border">
+                        <div className="overflow-x-auto overflow-y-auto max-h-96 rounded-lg border show-scrollbar">
                             <table className="w-full border-collapse min-w-300">
                                 <thead className="bg-gray-100">
                                     <tr>

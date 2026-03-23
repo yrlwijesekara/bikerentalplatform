@@ -261,24 +261,34 @@ export async function getProductReviews(req, res) {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const [reviews, total] = await Promise.all([
+        const [reviews, total, ratingStats] = await Promise.all([
             Review.find({ product: productId })
                 .populate('user', 'firstname lastname')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
-            Review.countDocuments({ product: productId })
+            Review.countDocuments({ product: productId }),
+            Review.aggregate([
+                { $match: { product: new mongoose.Types.ObjectId(productId) } },
+                {
+                    $group: {
+                        _id: null,
+                        avgRating: { $avg: '$rating' },
+                        reviewCount: { $sum: 1 }
+                    }
+                }
+            ])
         ]);
 
-        const avgRating = total > 0
-            ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+        const avgRating = ratingStats.length > 0
+            ? Number(ratingStats[0].avgRating.toFixed(1))
             : null;
 
         return res.status(200).json({
             total,
             page,
             totalPages: Math.ceil(total / limit),
-            averageRating: avgRating ? parseFloat(avgRating) : null,
+            averageRating: avgRating,
             reviews: reviews.map(r => ({
                 id: r._id,
                 user: {

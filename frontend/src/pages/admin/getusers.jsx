@@ -172,7 +172,7 @@ export default function Users() {
                     ) : filteredUsers.length === 0 ? (
                         <div className="p-6 text-center text-gray-600">No users match your filters.</div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto show-scrollbar">
                             <table className="w-full border-collapse min-w-[700px]">
                                 <thead className="bg-gray-100">
                                     <tr>

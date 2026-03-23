@@ -17,6 +17,10 @@ export default function BikeOverview()   {
     const [rentalDays, setRentalDays] = useState(1);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [cartRentalDays, setCartRentalDays] = useState(null);
+    const [reviewStats, setReviewStats] = useState({
+        averageRating: null,
+        totalReviews: 0
+    });
 
     // Check if user is logged in
     useEffect(() => {
@@ -68,6 +72,28 @@ export default function BikeOverview()   {
         }
     }, [status, params.bikeid]);
 
+    useEffect(() => {
+        const fetchReviewStats = async () => {
+            try {
+                const response = await axios.get(
+                    `${import.meta.env.VITE_BACKEND_URL}/reviews/product/${params.bikeid}?page=1&limit=1`
+                );
+
+                setReviewStats({
+                    averageRating: response.data?.averageRating ?? null,
+                    totalReviews: response.data?.total || 0
+                });
+            } catch (error) {
+                console.error("Error fetching review stats:", error);
+                setReviewStats({ averageRating: null, totalReviews: 0 });
+            }
+        };
+
+        if (params.bikeid) {
+            fetchReviewStats();
+        }
+    }, [params.bikeid]);
+
     // Listen for cart updates to refresh isInCart status
     useEffect(() => {
         const handleCartUpdate = () => {
@@ -100,6 +126,11 @@ export default function BikeOverview()   {
                 <div className="max-w-7xl w-full h-full overflow-y-auto flex flex-col p-4 sm:p-6 md:p-8">
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center lg:hidden mb-4">
                         {bike.bikeName || bike.name}
+                        <span className="block text-sm text-yellow-600 mt-1">
+                            {reviewStats.totalReviews > 0
+                                ? `⭐ ${reviewStats.averageRating} / ${reviewStats.totalReviews} review${reviewStats.totalReviews > 1 ? 's' : ''}`
+                                : "⭐ No reviews yet"}
+                        </span>
                         <span className="block text-lg text-gray-600 mt-1">{bike.bikeType}</span>
                     </h1>
                     
@@ -110,6 +141,11 @@ export default function BikeOverview()   {
                         <div className="w-full lg:w-1/2 h-full flex flex-col justify-center gap-3 sm:gap-4 px-2 sm:px-4">
                         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold hidden md:block">
                             {bike.bikeName || bike.name}
+                            <span className="block text-base text-yellow-600 mt-1">
+                                {reviewStats.totalReviews > 0
+                                    ? `⭐ ${reviewStats.averageRating} / ${reviewStats.totalReviews} review${reviewStats.totalReviews > 1 ? 's' : ''}`
+                                    : "⭐ No reviews yet"}
+                            </span>
                             <span className="block text-lg text-gray-600 mt-1">{bike.bikeType}</span>
                         </h1>
 

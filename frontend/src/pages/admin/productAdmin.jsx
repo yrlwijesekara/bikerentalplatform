@@ -177,7 +177,7 @@ export default function ProductAdminPage() {
 
   return (
     <div className="w-full p-4 md:p-6">
-      <div className="w-full max-w-[98vw] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto">
+      <div className="w-full max-w-[98vw] xl:max-w-[1800px] 2xl:max-w-[2000px] mx-auto ">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
           Motor Bike Administration
         </h1>
@@ -305,11 +305,11 @@ export default function ProductAdminPage() {
                 )}
               </div>
             </div>
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="overflow-x-auto scrollbar-hide">
+        <div className="bg-white  shadow-lg overflow-hidden ">
+          <div className="overflow-x-auto show-scrollbar">
            
             
-            <table className="w-full border-collapse min-w-[1600px]">
+            <table className="w-full border-collapse min-w-[1500px] ">
               <thead className="bg-gray-100 ">
                 <tr>
                   <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">
@@ -377,7 +377,7 @@ export default function ProductAdminPage() {
                           {products.isAvailable ? "Available" : "Not Available"}
                         </span>
                       </td>
-                      <td className="py-3 px-4 border border-gray-300 whitespace-nowrap">
+                      <td className="py-3 px-3 border border-gray-300 whitespace-nowrap">
                         <select
                           value={products.isApproved ? "approved" : "pending"}
                           onChange={(e) =>
@@ -448,7 +448,7 @@ export default function ProductAdminPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 border border-gray-300">
+                      <td className="py-3 px-3 border border-gray-300">
                         {products.images && products.images.length > 0 ? (
                           <img
                             src={products.images[0]}
@@ -461,7 +461,7 @@ export default function ProductAdminPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 border border-gray-300 whitespace-nowrap ">
+                      <td className="py-3 px-3 border border-gray-300 whitespace-nowrap ">
                         <div className="flex space-x-2">
                           <button 
                             onClick={() => navigate(`/admin/view-product/${products._id}`)}

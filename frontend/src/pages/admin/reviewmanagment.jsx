@@ -254,7 +254,7 @@ export default function ReviewManagement() {
                     ) : filteredReviews.length === 0 ? (
                         <div className="p-6 text-center text-gray-600">No reviews match your filters for this page.</div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto show-scrollbar">
                             <table className="w-full border-collapse min-w-237.5">
                                 <thead className="bg-gray-100">
                                     <tr>
