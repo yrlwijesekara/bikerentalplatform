@@ -307,15 +307,8 @@ export default function ProductAdminPage() {
             </div>
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="overflow-x-auto scrollbar-hide">
-            <style jsx>{`
-              .scrollbar-hide {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-              }
-              .scrollbar-hide::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
+           
+            
             <table className="w-full border-collapse min-w-[1600px]">
               <thead className="bg-gray-100 ">
                 <tr>

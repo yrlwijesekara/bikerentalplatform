@@ -4,6 +4,7 @@ import {
   createPayPalOrder,
   capturePayPalOrder,
   getPayPalClientId,
+  getAllOrdersAdmin,
   getUserOrders,
   getVendorOrders,
   updateOrderStatus,
@@ -28,17 +29,20 @@ router.get("/my-orders", getUserOrders);
 // Get all orders for logged-in vendor
 router.get("/vendor-orders", getVendorOrders);
 
+// Get all orders for admin
+router.get("/admin/all", getAllOrdersAdmin);
+
+// Get vendor earnings for dashboard
+router.get("/vendor/earnings", getVendorEarnings);
+
+// Get vendor booking statistics for dashboard
+router.get("/vendor/stats", getVendorStats);
+
 // Update order status (for vendors/admins)
 router.put("/:orderId/status", updateOrderStatus);
 
 // Get order by ID (for both customers and vendors)
 router.get("/:orderId", getOrderById);
-
-// Get vendor earnings for dashboard
-router.get("/vendor/earnings", getVendorEarnings);
-
-// Get vendor booking statistics for dashboard  
-router.get("/vendor/stats", getVendorStats);
 
 export default router;
 

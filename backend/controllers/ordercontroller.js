@@ -2,6 +2,10 @@ import Order from "../model/order.js";
 import Product from "../model/product.js"; // Import as Product, not Bike
 import User from "../model/user.js";
 
+function isAdminUser(user) {
+    return user != null && (user.role === "admin" || user.type === "admin");
+}
+
 
 // Read PayPal config lazily so dotenv has time to populate process.env
 function paypalConfig() {
@@ -615,6 +619,37 @@ export async function getVendorOrders(req, res) {
     }
 }
 
+// Get all orders for admin
+export async function getAllOrdersAdmin(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        if (!isAdminUser(req.user)) {
+            return res.status(403).json({ message: "Access denied. Admin privileges required." });
+        }
+
+        const orders = await Order.find()
+            .populate('user', 'firstname lastname email phone')
+            .populate('vendors', 'firstname lastname email phone')
+            .populate('bikes.bike', 'bikeName bikeType images pricePerDay city mapUrl')
+            .populate('bikes.vendor', 'firstname lastname email phone')
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            message: "All orders retrieved successfully",
+            orders
+        });
+    } catch (error) {
+        console.error("Error fetching all admin orders:", error);
+        return res.status(500).json({
+            message: "Error fetching all orders",
+            error: error.message
+        });
+    }
+}
+
 // Update order status (for vendors/admins)
 export async function updateOrderStatus(req, res) {
     try {
@@ -650,7 +685,7 @@ export async function updateOrderStatus(req, res) {
 
         // Check if user is one of the vendors or admin
         const isVendor = order.vendors.some(vendor => vendor.toString() === req.user.id.toString());
-        const isAdmin = req.user.type === "admin";
+        const isAdmin = isAdminUser(req.user);
         
         console.log("Authorization check:", { isVendor, isAdmin, userId: req.user.id });
         
@@ -893,7 +928,7 @@ export async function getOrderById(req, res) {
         // Check if user has access to this order
         const isCustomer = order.user._id.toString() === req.user.id.toString();
         const isVendor = order.vendors.some(vendor => vendor._id.toString() === req.user.id.toString());
-        const isAdmin = req.user.type === "admin";
+        const isAdmin = isAdminUser(req.user);
 
         if (!isCustomer && !isVendor && !isAdmin) {
             return res.status(403).json({ message: "Not authorized to view this order" });

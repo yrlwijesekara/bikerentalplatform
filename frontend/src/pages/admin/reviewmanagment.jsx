@@ -73,7 +73,7 @@ export default function ReviewManagement() {
                         },
                     },
                 );
-
+                toast.success("Reviews fetched successfully");
                 setReviews(response.data?.reviews || []);
                 setTotalPages(Math.max(1, response.data?.totalPages || 1));
                 setTotalReviews(response.data?.total || 0);
