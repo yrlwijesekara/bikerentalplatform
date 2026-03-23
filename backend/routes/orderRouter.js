@@ -5,6 +5,7 @@ import {
   capturePayPalOrder,
   getPayPalClientId,
   getAllOrdersAdmin,
+  getAdminDashboardStats,
   getUserOrders,
   getVendorOrders,
   updateOrderStatus,
@@ -31,6 +32,9 @@ router.get("/vendor-orders", getVendorOrders);
 
 // Get all orders for admin
 router.get("/admin/all", getAllOrdersAdmin);
+
+// Get admin dashboard analytics
+router.get("/admin/dashboard-stats", getAdminDashboardStats);
 
 // Get vendor earnings for dashboard
 router.get("/vendor/earnings", getVendorEarnings);

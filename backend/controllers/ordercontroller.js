@@ -1,6 +1,7 @@
 import Order from "../model/order.js";
 import Product from "../model/product.js"; // Import as Product, not Bike
 import User from "../model/user.js";
+import Review from "../model/review.js";
 
 function isAdminUser(user) {
     return user != null && (user.role === "admin" || user.type === "admin");
@@ -646,6 +647,148 @@ export async function getAllOrdersAdmin(req, res) {
         return res.status(500).json({
             message: "Error fetching all orders",
             error: error.message
+        });
+    }
+}
+
+// Get admin dashboard analytics
+export async function getAdminDashboardStats(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        if (!isAdminUser(req.user)) {
+            return res.status(403).json({ message: "Access denied. Admin privileges required." });
+        }
+
+        const [
+            customerCount,
+            vendorCount,
+            adminCount,
+            totalProducts,
+            totalOrders,
+            totalReviews,
+            ordersByStatusRaw,
+            productsByAvailabilityRaw,
+            reviewsByRatingRaw,
+            monthlyOrdersRaw,
+            totalRevenueAgg,
+        ] = await Promise.all([
+            User.countDocuments({ role: "user" }),
+            User.countDocuments({ role: "vendor" }),
+            User.countDocuments({ role: "admin" }),
+            Product.countDocuments(),
+            Order.countDocuments(),
+            Review.countDocuments(),
+            Order.aggregate([
+                { $group: { _id: "$orderStatus", count: { $sum: 1 } } },
+            ]),
+            Product.aggregate([
+                { $group: { _id: "$isAvailable", count: { $sum: 1 } } },
+            ]),
+            Review.aggregate([
+                { $group: { _id: "$rating", count: { $sum: 1 } } },
+                { $sort: { _id: 1 } },
+            ]),
+            Order.aggregate([
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: "$createdAt" },
+                            month: { $month: "$createdAt" },
+                        },
+                        count: { $sum: 1 },
+                        revenue: { $sum: "$finalTotal" },
+                    },
+                },
+                { $sort: { "_id.year": 1, "_id.month": 1 } },
+            ]),
+            Order.aggregate([
+                { $group: { _id: null, totalRevenue: { $sum: "$finalTotal" } } },
+            ]),
+        ]);
+
+        const monthNames = [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ];
+
+        const now = new Date();
+        const last6Months = [];
+        for (let i = 5; i >= 0; i -= 1) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            last6Months.push({
+                year: d.getFullYear(),
+                month: d.getMonth() + 1,
+                label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`,
+            });
+        }
+
+        const monthlyMap = new Map(
+            monthlyOrdersRaw.map((item) => [
+                `${item._id.year}-${item._id.month}`,
+                { count: item.count, revenue: Math.round(item.revenue || 0) },
+            ])
+        );
+
+        const monthlyOrders = last6Months.map((m) => {
+            const key = `${m.year}-${m.month}`;
+            const existing = monthlyMap.get(key) || { count: 0, revenue: 0 };
+            return {
+                month: m.label,
+                orders: existing.count,
+                revenue: existing.revenue,
+            };
+        });
+
+        const orderStatusDistribution = ordersByStatusRaw.map((item) => ({
+            name: item._id || "unknown",
+            value: item.count,
+        }));
+
+        const availabilityDistribution = productsByAvailabilityRaw.map((item) => ({
+            name: item._id ? "available" : "unavailable",
+            value: item.count,
+        }));
+
+        const ratingsDistribution = [1, 2, 3, 4, 5].map((r) => {
+            const found = reviewsByRatingRaw.find((item) => Number(item._id) === r);
+            return {
+                rating: `${r}★`,
+                count: found ? found.count : 0,
+            };
+        });
+
+        return res.status(200).json({
+            message: "Admin dashboard stats fetched successfully",
+            overview: {
+                customerCount,
+                vendorCount,
+                adminCount,
+                totalUsers: customerCount + vendorCount + adminCount,
+                totalProducts,
+                totalOrders,
+                totalReviews,
+                totalRevenue: Math.round(totalRevenueAgg?.[0]?.totalRevenue || 0),
+            },
+            charts: {
+                monthlyOrders,
+                orderStatusDistribution,
+                availabilityDistribution,
+                ratingsDistribution,
+                userRoleDistribution: [
+                    { name: "customers", value: customerCount },
+                    { name: "vendors", value: vendorCount },
+                    { name: "admins", value: adminCount },
+                ],
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching admin dashboard stats:", error);
+        return res.status(500).json({
+            message: "Error fetching admin dashboard stats",
+            error: error.message,
         });
     }
 }

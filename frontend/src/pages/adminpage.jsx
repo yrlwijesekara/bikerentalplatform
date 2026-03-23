@@ -20,7 +20,7 @@ import Users from "./admin/getusers.jsx";
 import ReviewManagement from "./admin/reviewmanagment.jsx";
 import OrderManagement from "./admin/ordermanagment.jsx";
 import ViewOrder from "./admin/vieworder.jsx";
-import Dashboard from "./admin/dashboard.jsx";
+import Dashboard from "./admin/admindashboard.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
