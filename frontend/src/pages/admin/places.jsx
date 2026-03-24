@@ -572,7 +572,7 @@ export default function PlacesAdminPage() {
               </div>
 
               {filteredPlaces.length > 0 && (
-                <div className="px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mr-[180px]">
                   <div className="text-sm text-gray-500">
                     Showing {startIndex + 1}-{Math.min(startIndex + PLACES_PER_PAGE, filteredPlaces.length)} of {filteredPlaces.length} places
                   </div>
@@ -631,7 +631,7 @@ export default function PlacesAdminPage() {
         {/* Add Places Floating Action Button */}
         <Link 
           to="/admin/add-places" 
-          className="fixed bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-blue-700 cursor-pointer z-10"
+          className="fixed bottom-10 right-8 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-blue-700 cursor-pointer z-10"
         >
           <BiPlus size={20} /> Add New Place
         </Link>
