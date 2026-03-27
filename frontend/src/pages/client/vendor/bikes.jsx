@@ -253,21 +253,21 @@ export default function Bikes() {
         }
       `}</style>
       <div className="p-6">
-        {/* Add New Bike Button */}
-        <Link 
-          to="/vendor/add-bike" 
-          className="fixed bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-(--button-primary-bg) text-(--button-primary-text) font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-(--button-primary-hover) cursor-pointer z-50"
-        >
-          <BiPlus size={20} /> Add New Bike
-        </Link>
-
         {/* Page Header */}
         <div className="max-w-7xl mx-auto mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h1 className="text-3xl font-bold text-gray-900">My Rental Bikes</h1>
-            <div className="text-sm text-gray-600">
-              Total: {bikes.length} bike{bikes.length !== 1 ? 's' : ''} | 
-              Showing: {filteredBikes.length} bike{filteredBikes.length !== 1 ? 's' : ''}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="text-sm text-gray-600 text-right">
+                Total: {bikes.length} bike{bikes.length !== 1 ? 's' : ''} | 
+                Showing: {filteredBikes.length} bike{filteredBikes.length !== 1 ? 's' : ''}
+              </div>
+              <Link 
+                to="/vendor/add-bike" 
+                className="flex items-center gap-2 px-4 py-2 bg-(--button-primary-bg) text-(--button-primary-text) font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-(--button-primary-hover) cursor-pointer whitespace-nowrap"
+              >
+                <BiPlus size={20} /> Add New Bike
+              </Link>
             </div>
           </div>
         </div>

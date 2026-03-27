@@ -579,7 +579,7 @@ export default function PlacesAdminPage() {
               </div>
 
               {filteredPlaces.length > 0 && (
-                <div className="px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mr-[180px]">
                   <div className="text-sm text-gray-500">
                     Showing {startIndex + 1}-{Math.min(startIndex + PLACES_PER_PAGE, filteredPlaces.length)} of {filteredPlaces.length} places
                   </div>
@@ -635,6 +635,8 @@ export default function PlacesAdminPage() {
           </>
         )}
         
+        {/* Add Places Floating Action Button */}
+      
       </div>
     </div>
   );
