@@ -11,6 +11,7 @@ import Clientpage from "./pages/client/clientpage.jsx";
 import { NotificationProvider } from "./contexts/NotificationContext.jsx";
 import NotificationCenter from "./components/NotificationCenter.jsx";
 import ForgottenPasswordPage from "./pages/forgottenpassword.jsx";
+import ChatbotWidget from "./components/ChatbotWidget.jsx";
 
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
           
           {/* Global Notification Center */}
           <NotificationCenter />
+          <ChatbotWidget />
           
           <Routes>
             <Route path="/" element={<Homepage />} />
