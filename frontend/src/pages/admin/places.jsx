@@ -255,9 +255,23 @@ export default function PlacesAdminPage() {
   return (
     <div className="w-full p-2 md:p-4 lg:p-6">
       <div className="w-full max-w-full mx-auto">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-center">
-          Places Administration
-        </h1>
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h1 className="text-3xl font-bold text-gray-900 pl-3">Places Administration</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="text-sm text-gray-600 text-right flex justify-center gap-2">
+                Total: {places.length} place{places.length !== 1 ? 's' : ''} | 
+                Showing: {filteredPlaces.length} place{filteredPlaces.length !== 1 ? 's' : ''}
+              </div>
+              <Link 
+                to="/admin/add-places" 
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-(--button-primary-bg) text-(--button-primary-text) font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-(--button-primary-hover) cursor-pointer whitespace-nowrap"
+              >
+                <BiPlus size={20} /> Add New Place
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {/* Loading State */}
         {isLoading ? (
@@ -267,13 +281,6 @@ export default function PlacesAdminPage() {
           </div>
         ) : (
           <>
-            <div className="mb-6 text-center">
-              <div className="text-sm text-gray-600 mt-2">
-                Total: {places.length} place{places.length !== 1 ? 's' : ''} | 
-                Showing: {filteredPlaces.length} place{filteredPlaces.length !== 1 ? 's' : ''}
-              </div>
-            </div>
-
             {/* Search and Filter Section */}
             <div className="mb-8">
               <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
@@ -629,12 +636,7 @@ export default function PlacesAdminPage() {
         )}
         
         {/* Add Places Floating Action Button */}
-        <Link 
-          to="/admin/add-places" 
-          className="fixed bottom-10 right-8 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:bg-blue-700 cursor-pointer z-10"
-        >
-          <BiPlus size={20} /> Add New Place
-        </Link>
+      
       </div>
     </div>
   );
