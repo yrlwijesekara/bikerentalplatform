@@ -77,10 +77,10 @@ export default function PlaceOverview() {
 
                     {/* Description Section */}
                     {place.description && (
-                        <div className="mb-6 w-full">
+                        <div className="mb-2 w-full">
                             <div className="p-4 " >
                                 <h3 className="text-lg font-semibold mb-3 text-gray-800">About This Place</h3>
-                                <div className="max-h-32 overflow-y-auto">
+                                <div className=" overflow-y-auto text-justify">
                                     <p className="text-gray-700 leading-relaxed">{place.description}</p>
                                 </div>
                             </div>
