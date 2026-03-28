@@ -15,16 +15,21 @@ Customers can discover bikes, place bookings, and leave reviews. Vendors manage 
 ### Booking and Orders
 - Multi-bike order flow
 - Bike-level status tracking in orders
-- Order status transition validation
+- **Strict order status workflow**: Only valid status transitions allowed (pending → confirmed → ongoing → completed/cancelled)
+- Backend validation for status changes (prevents illogical transitions)
+- UI/UX guidance for vendors (only valid next statuses shown, clear error messages)
 - Payment support: card and PayPal
 - Vendor and customer order views
 
 ### Reviews
-- Create single or multiple reviews per completed order
-- Duplicate review prevention per user/order/product
-- Product review listing with average rating
-- Admin review management
+- **Comprehensive review system**: Multi-dimensional reviews for bikes and vendors (overall, bike experience, vendor service, detailed ratings)
+- Submit multiple reviews per completed order (one per bike)
+- Review eligibility checking (only for completed orders, no duplicates)
+- Product and vendor review listing with average ratings
+- Admin review management (approve, feature, remove)
 - Featured reviews support for homepage
+- Mark reviews as helpful, vendor response capability
+- **Completion emails**: Customers receive review links after order completion
 
 ### Admin Capabilities
 - Manage users
@@ -40,14 +45,16 @@ Customers can discover bikes, place bookings, and leave reviews. Vendors manage 
 - View earnings and booking stats dashboard with charts
 
 ### Homepage Enhancements
-- Rotating featured bikes
-- Featured destinations
+- Rotating featured bikes (randomized, smart caching every 2 minutes)
+- Featured destinations (places marked as featured)
 - Featured review slider
+- Responsive grid layouts, loading/empty states, improved UX
 
 ### Notifications
 - Real-time notifications with Socket.IO
-- Notification center UI
-- Email notifications for key events
+- Notification center UI (in-app notification bell and center)
+- Email notifications for key events (booking, completion, review reminders)
+- Review CTAs in completion emails (direct review links)
 
 ## Tech Stack
 
@@ -232,9 +239,13 @@ npm run dev
 - Monthly earnings bar chart
 - Booking status pie chart
 
+
 ## Notes
 
-- Notification setup and email workflow are documented in `NOTIFICATION_SETUP.md`.
+- **Order status workflow** and validation logic are implemented in both backend and frontend for robust booking management.
+- **Review system**: Only eligible users can review, with multi-dimensional feedback and admin/vendor integration.
+- **Homepage**: Dynamic content with random bikes, featured places, and reviews for better engagement.
+- **Notification setup and email workflow** are documented in `NOTIFICATION_SETUP.md`.
 - Some older route names are kept for backward compatibility (example: `/products/vender`).
 
 🏍️ **Built with passion for the bike rental community** ❤️  
