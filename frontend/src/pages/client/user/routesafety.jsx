@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Footer from "../../../components/footer";
 
-const apiBaseUrl = import.meta.env.VITE_ROUTE_SAFETY_API_URL || "http://127.0.0.1:5001";
+const apiBaseUrl = import.meta.env.VITE_ROUTE_SAFETY_API_URL ;
 
 export default function RouteSafety() {
     const [city, setCity] = useState("");
@@ -19,19 +19,12 @@ export default function RouteSafety() {
         "Ride defensively and keep a safe following distance.",
     ]), []);
 
-    const handleCheckRoute = async (event) => {
-        event.preventDefault();
-
-        if (!city.trim()) {
-            setError("Please enter a city in Sri Lanka.");
-            return;
-        }
-
+    const fetchRouteSafety = async (cityValue = "") => {
         try {
             setLoading(true);
             setError("");
             const response = await axios.post(`${apiBaseUrl}/api/route-safety/predict`, {
-                city: city.trim(),
+                city: cityValue.trim(),
             });
             setResult(response.data);
         } catch (err) {
@@ -43,12 +36,22 @@ export default function RouteSafety() {
         }
     };
 
+    useEffect(() => {
+        fetchRouteSafety("");
+    }, []);
+
+    const handleCheckRoute = async (event) => {
+        event.preventDefault();
+        await fetchRouteSafety(city);
+    };
+
     return (
-        <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col overflow-hidden">
+        <div className="w-full min-h-screen bg-(--main-background) flex flex-col overflow-hidden">
         <div className="p-4 md:p-8 max-w-5xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-bold mb-2 text-black">AI Route Safety</h1>
             <p className="text-gray-700 mb-6">
                 Enter a Sri Lankan city to get live weather-aware accident risk and riding guidance.
+                Leave the city empty to view Sri Lanka default details.
             </p>
 
             <form onSubmit={handleCheckRoute} className="bg-white border rounded-xl p-4 md:p-6 shadow-sm mb-6">
@@ -58,7 +61,7 @@ export default function RouteSafety() {
                         type="text"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        placeholder="e.g. Colombo, Kandy, Galle"
+                        placeholder="Optional: e.g. Colombo, Kandy, Galle"
                         className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <button
@@ -84,6 +87,34 @@ export default function RouteSafety() {
                         <p><strong>Humidity:</strong> {result.humidity_percent}%</p>
                         <p><strong>Rainfall:</strong> {result.rainfall_mm} mm</p>
                         <p><strong>Elevation:</strong> {result.elevation_m} m</p>
+                    </div>
+
+                    <div className="mt-4">
+                        <h3 className="font-semibold mb-2">Temperature (Next Hours)</h3>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full text-sm border rounded-lg overflow-hidden">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="text-left px-3 py-2 border-b">Time</th>
+                                        <th className="text-left px-3 py-2 border-b">Temperature</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {result.hourly_temperature_next_hours?.length ? (
+                                        result.hourly_temperature_next_hours.map((slot, index) => (
+                                            <tr key={`${slot.time}-${index}`} className="odd:bg-white even:bg-gray-50">
+                                                <td className="px-3 py-2 border-b">{slot.time}</td>
+                                                <td className="px-3 py-2 border-b">{slot.temperature_c} C</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td className="px-3 py-2" colSpan={2}>Hourly temperature data is unavailable.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <div className="mt-4">

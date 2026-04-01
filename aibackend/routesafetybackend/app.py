@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import datetime
 
 import joblib
 import pandas as pd
@@ -25,6 +26,12 @@ if hasattr(model, "feature_names_in_"):
     FEATURE_COLUMNS = list(model.feature_names_in_)
 else:
     FEATURE_COLUMNS = [c for c in df.columns if c not in IGNORED_COLUMNS]
+
+DEFAULT_SRI_LANKA_COORDS = {
+    "lat": 7.8731,
+    "lon": 80.7718,
+    "official_name": "Sri Lanka",
+}
 
 
 def get_city_coordinates(city_input: str):
@@ -58,6 +65,9 @@ def get_live_weather_and_elevation(lat: float, lon: float):
         "latitude": lat,
         "longitude": lon,
         "current": "temperature_2m,relative_humidity_2m,precipitation",
+        "hourly": "temperature_2m",
+        "forecast_days": 2,
+        "timezone": "auto",
     }
 
     response = requests.get(url, params=params, timeout=10)
@@ -65,11 +75,41 @@ def get_live_weather_and_elevation(lat: float, lon: float):
     payload = response.json()
 
     current = payload.get("current", {})
+    hourly = payload.get("hourly", {})
+    hourly_times = hourly.get("time", [])
+    hourly_temps = hourly.get("temperature_2m", [])
+
+    current_time_str = current.get("time")
+    try:
+        now_local = datetime.fromisoformat(current_time_str) if current_time_str else None
+    except ValueError:
+        now_local = None
+
+    next_hours = []
+
+    for time_str, temp in zip(hourly_times, hourly_temps):
+        try:
+            slot = datetime.fromisoformat(time_str)
+        except ValueError:
+            continue
+
+        if now_local is None or slot >= now_local:
+            next_hours.append(
+                {
+                    "time": slot.strftime("%Y-%m-%d %H:%M"),
+                    "temperature_c": round(float(temp), 1),
+                }
+            )
+
+        if len(next_hours) >= 8:
+            break
+
     return {
         "temperature": float(current.get("temperature_2m", 28.0)),
         "humidity": float(current.get("relative_humidity_2m", 70.0)),
         "rainfall": float(current.get("precipitation", 0.0)),
         "elevation": float(payload.get("elevation", 0.0)),
+        "hourly_temperature_next_hours": next_hours,
     }
 
 
@@ -157,18 +197,21 @@ def predict_route_safety():
     payload = request.get_json(silent=True) or {}
     city_input = (payload.get("city") or "").strip()
 
-    if not city_input:
-        return jsonify({"error": "City is required."}), 400
-
     try:
-        geo_data = get_city_coordinates(city_input)
-        if not geo_data:
-            return jsonify({"error": f"Could not locate '{city_input}' in Sri Lanka."}), 404
+        used_default_country = not city_input
+        if used_default_country:
+            geo_data = DEFAULT_SRI_LANKA_COORDS.copy()
+            feature_lookup_key = ""
+        else:
+            geo_data = get_city_coordinates(city_input)
+            if not geo_data:
+                return jsonify({"error": f"Could not locate '{city_input}' in Sri Lanka."}), 404
+            feature_lookup_key = city_input
 
         weather = get_live_weather_and_elevation(geo_data["lat"], geo_data["lon"])
         terrain_type = classify_terrain(weather["elevation"])
 
-        city_features = get_city_traffic_features(city_input)
+        city_features = get_city_traffic_features(feature_lookup_key)
         feature_df = pd.DataFrame([city_features], columns=FEATURE_COLUMNS)
 
         base_prediction = int(model.predict(feature_df)[0])
@@ -184,14 +227,15 @@ def predict_route_safety():
 
         return jsonify(
             {
-                "searched_input": city_input,
-                "official_location": f"{geo_data['official_name']}, Sri Lanka",
+                "searched_input": city_input if city_input else "Sri Lanka (default)",
+                "official_location": geo_data["official_name"] if used_default_country else f"{geo_data['official_name']}, Sri Lanka",
                 "coordinates": {
                     "lat": geo_data["lat"],
                     "lon": geo_data["lon"],
                 },
                 "elevation_m": round(weather["elevation"], 1),
                 "temperature_c": round(weather["temperature"], 1),
+                "hourly_temperature_next_hours": weather["hourly_temperature_next_hours"],
                 "humidity_percent": round(weather["humidity"], 1),
                 "rainfall_mm": round(weather["rainfall"], 2),
                 "base_historical_risk": base_risk_text,

@@ -50,4 +50,7 @@ Body:
 }
 ```
 
-Response includes location, weather, base risk, final risk, and safety tips.
+`city` is optional. If omitted or empty, the API uses Sri Lanka default coordinates.
+
+Response includes location, weather, hourly next-hours temperature forecast,
+base risk, final risk, and safety tips.
