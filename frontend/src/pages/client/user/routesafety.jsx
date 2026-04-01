@@ -48,7 +48,7 @@ export default function RouteSafety() {
     return (
         <div className="w-full min-h-screen bg-(--main-background) flex flex-col overflow-hidden">
         <div className="p-4 md:p-8 max-w-5xl mx-auto">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2 text-black">AI Route Safety</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2 text-black text-center">AI Route Safety</h1>
             <p className="text-gray-700 mb-6">
                 Enter a Sri Lankan city to get live weather-aware accident risk and riding guidance.
                 Leave the city empty to view Sri Lanka default details.

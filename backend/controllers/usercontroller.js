@@ -136,7 +136,9 @@ export function loginUser(req, res) {
 
 export async function googleLoginUser(req, res) {
     try {
-        const { accessToken } = req.body;
+        const { accessToken, role } = req.body;
+        const normalizedRole = typeof role === 'string' ? role.trim().toLowerCase() : '';
+        const requestedRole = normalizedRole === 'vendor' || normalizedRole === 'user' ? normalizedRole : null;
 
         if (!accessToken) {
             return res.status(400).json({ error: "Google access token is required" });
@@ -161,6 +163,13 @@ export async function googleLoginUser(req, res) {
         let user = await User.findOne({ email: googleUser.email });
 
         if (!user) {
+            if (!requestedRole) {
+                return res.status(400).json({
+                    error: "Select a role before using Google login for the first time",
+                    code: "ROLE_REQUIRED"
+                });
+            }
+
             const { firstname, lastname } = splitGoogleName(googleUser.name);
             const passwordHash = bcrypt.hashSync(`google-${googleUser.sub}-${Date.now()}`, 10);
 
@@ -173,10 +182,20 @@ export async function googleLoginUser(req, res) {
                 address: 'Not provided',
                 city: 'Not provided',
                 image: googleUser.picture || '',
-                role: 'user',
+                role: requestedRole,
                 isemailverified: true,
                 location: {},
-                preferences: {}
+                preferences: {},
+                vendorDetails: requestedRole === 'vendor'
+                    ? {
+                        shopName: '',
+                        shopLicenseNo: '',
+                        description: '',
+                        rating: 0,
+                        totalReviews: 0,
+                        isApproved: false
+                    }
+                    : undefined
             });
         } else if (!user.image && googleUser.picture) {
             user.image = googleUser.picture;
