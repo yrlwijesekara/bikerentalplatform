@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import axios from "axios";
+import Footer from "../../../components/footer";
 
 const apiBaseUrl = import.meta.env.VITE_ROUTE_SAFETY_API_URL || "http://127.0.0.1:5001";
 
@@ -43,6 +44,7 @@ export default function RouteSafety() {
     };
 
     return (
+        <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col overflow-hidden">
         <div className="p-4 md:p-8 max-w-5xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-bold mb-2 text-black">AI Route Safety</h1>
             <p className="text-gray-700 mb-6">
@@ -56,7 +58,7 @@ export default function RouteSafety() {
                         type="text"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        placeholder="e.g. Colombo, Kandy, Gampaha"
+                        placeholder="e.g. Colombo, Kandy, Galle"
                         className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <button
@@ -71,7 +73,7 @@ export default function RouteSafety() {
             </form>
 
             {result && (
-                <div className="bg-white border rounded-xl p-4 md:p-6 shadow-sm mb-6">
+                <div className="bg-white  rounded-xl p-4 md:p-6 shadow-2xl mb-6">
                     <h2 className="text-xl font-semibold text-black mb-4">Prediction Result</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm md:text-base">
                         <p><strong>Location:</strong> {result.official_location}</p>
@@ -95,7 +97,7 @@ export default function RouteSafety() {
                 </div>
             )}
 
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 md:p-6">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 md:p-6 shadow-2xl">
                 <h2 className="text-lg font-semibold mb-3 text-black">General Route Safety Tips</h2>
                 <ul className="list-disc pl-5 space-y-1 text-gray-800">
                     {staticTips.map((tip, index) => (
@@ -103,6 +105,9 @@ export default function RouteSafety() {
                     ))}
                 </ul>
             </div>
+            
+        </div>
+        <Footer />
         </div>
     );
 }
