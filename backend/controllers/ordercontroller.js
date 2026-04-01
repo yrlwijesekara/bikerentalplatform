@@ -2,9 +2,203 @@ import Order from "../model/order.js";
 import Product from "../model/product.js"; // Import as Product, not Bike
 import User from "../model/user.js";
 import Review from "../model/review.js";
+import PDFDocument from "pdfkit";
 
 function isAdminUser(user) {
     return user != null && (user.role === "admin" || user.type === "admin");
+}
+
+function parseExportDate(dateInput, endOfDay = false) {
+    if (!dateInput) return null;
+    const normalized = endOfDay ? `${dateInput}T23:59:59.999Z` : `${dateInput}T00:00:00.000Z`;
+    const date = new Date(normalized);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function buildExportFilter(startDateInput, endDateInput) {
+    const createdAt = {};
+    const startDate = parseExportDate(startDateInput, false);
+    const endDate = parseExportDate(endDateInput, true);
+
+    if (startDateInput && !startDate) {
+        throw new Error("Invalid startDate. Use YYYY-MM-DD format.");
+    }
+
+    if (endDateInput && !endDate) {
+        throw new Error("Invalid endDate. Use YYYY-MM-DD format.");
+    }
+
+    if (startDate) createdAt.$gte = startDate;
+    if (endDate) createdAt.$lte = endDate;
+
+    if (startDate && endDate && startDate > endDate) {
+        throw new Error("startDate cannot be later than endDate.");
+    }
+
+    return Object.keys(createdAt).length ? { createdAt } : {};
+}
+
+function toExportDateTime(dateInput) {
+    if (!dateInput) return "N/A";
+    const date = new Date(dateInput);
+    if (Number.isNaN(date.getTime())) return "N/A";
+    return date.toLocaleString("en-GB");
+}
+
+function buildExportRows(orders) {
+    return orders.map((order, index) => {
+        const customerName = order.user
+            ? `${order.user.firstname || ""} ${order.user.lastname || ""}`.trim() || "Unknown"
+            : "Unknown";
+
+        return {
+            no: index + 1,
+            orderId: order.orderid || order._id?.toString() || "N/A",
+            customer: customerName,
+            email: order.user?.email || "N/A",
+            total: Number(order.finalTotal || 0),
+            paymentMethod: order.paymentMethod || "N/A",
+            paymentStatus: order.paymentStatus || "N/A",
+            orderStatus: order.orderStatus || "N/A",
+            createdAt: toExportDateTime(order.createdAt)
+        };
+    });
+}
+
+function getExportFilename(prefix, format, startDate, endDate) {
+    const dateToken = `${startDate || "all"}_to_${endDate || "all"}`;
+    return `${prefix}_${dateToken}.${format}`;
+}
+
+function escapeHtml(text = "") {
+    return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function streamPdfExport(res, rows, { startDate, endDate }) {
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
+    const filename = getExportFilename("order_history", "pdf", startDate, endDate);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+
+    doc.pipe(res);
+
+    doc.fontSize(18).text("Order History Report", { align: "center" });
+    doc.moveDown(0.5);
+    doc
+        .fontSize(10)
+        .text(
+            `Date range: ${startDate || "All"} to ${endDate || "All"} | Generated: ${new Date().toLocaleString("en-GB")}`,
+            { align: "center" }
+        );
+    doc.moveDown(1);
+
+    const headers = ["#", "Order ID", "Customer", "Total", "Pay", "Status", "Created"];
+    const colWidths = [24, 80, 120, 58, 52, 60, 120];
+    const startX = 40;
+    let y = doc.y;
+
+    headers.forEach((header, idx) => {
+        const x = startX + colWidths.slice(0, idx).reduce((a, b) => a + b, 0);
+        doc.font("Helvetica-Bold").fontSize(9).text(header, x, y, { width: colWidths[idx] });
+    });
+
+    y += 18;
+    doc.moveTo(startX, y - 4).lineTo(startX + colWidths.reduce((a, b) => a + b, 0), y - 4).stroke();
+
+    rows.forEach((row) => {
+        if (y > 770) {
+            doc.addPage();
+            y = 50;
+        }
+
+        const values = [
+            String(row.no),
+            row.orderId,
+            row.customer,
+            `Rs. ${row.total.toLocaleString()}`,
+            `${row.paymentMethod}/${row.paymentStatus}`,
+            row.orderStatus,
+            row.createdAt
+        ];
+
+        values.forEach((value, idx) => {
+            const x = startX + colWidths.slice(0, idx).reduce((a, b) => a + b, 0);
+            doc.font("Helvetica").fontSize(8).text(value, x, y, {
+                width: colWidths[idx],
+                ellipsis: true
+            });
+        });
+
+        y += 16;
+    });
+
+    doc.end();
+}
+
+function streamDocExport(res, rows, { startDate, endDate }) {
+    const filename = getExportFilename("order_history", "doc", startDate, endDate);
+
+    const tableRows = rows
+        .map(
+            (row) => `
+                <tr>
+                    <td>${row.no}</td>
+                    <td>${escapeHtml(row.orderId)}</td>
+                    <td>${escapeHtml(row.customer)}</td>
+                    <td>${escapeHtml(row.email)}</td>
+                    <td>Rs. ${row.total.toLocaleString()}</td>
+                    <td>${escapeHtml(row.paymentMethod)} / ${escapeHtml(row.paymentStatus)}</td>
+                    <td>${escapeHtml(row.orderStatus)}</td>
+                    <td>${escapeHtml(row.createdAt)}</td>
+                </tr>`
+        )
+        .join("");
+
+    const html = `
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 24px; }
+                    h1 { margin-bottom: 4px; }
+                    .meta { color: #444; margin-bottom: 14px; font-size: 12px; }
+                    table { border-collapse: collapse; width: 100%; font-size: 12px; }
+                    th, td { border: 1px solid #888; padding: 6px; text-align: left; }
+                    th { background: #efefef; }
+                </style>
+            </head>
+            <body>
+                <h1>Order History Report</h1>
+                <div class="meta">Date range: ${escapeHtml(startDate || "All")} to ${escapeHtml(endDate || "All")} | Generated: ${escapeHtml(new Date().toLocaleString("en-GB"))}</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Email</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Order Status</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </body>
+        </html>`;
+
+    res.setHeader("Content-Type", "application/msword");
+    res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+    res.status(200).send(html);
 }
 
 
@@ -646,6 +840,51 @@ export async function getAllOrdersAdmin(req, res) {
         console.error("Error fetching all admin orders:", error);
         return res.status(500).json({
             message: "Error fetching all orders",
+            error: error.message
+        });
+    }
+}
+
+export async function exportAdminOrdersReport(req, res) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Please login first" });
+        }
+
+        if (!isAdminUser(req.user)) {
+            return res.status(403).json({ message: "Access denied. Admin privileges required." });
+        }
+
+        const format = (req.query.format || "pdf").toString().toLowerCase();
+        const startDate = req.query.startDate?.toString() || "";
+        const endDate = req.query.endDate?.toString() || "";
+
+        if (!["pdf", "doc"].includes(format)) {
+            return res.status(400).json({ message: "Invalid format. Use 'pdf' or 'doc'." });
+        }
+
+        const filter = buildExportFilter(startDate, endDate);
+
+        const orders = await Order.find(filter)
+            .populate("user", "firstname lastname email")
+            .sort({ createdAt: -1 });
+
+        const rows = buildExportRows(orders);
+
+        if (format === "doc") {
+            return streamDocExport(res, rows, { startDate, endDate });
+        }
+
+        return streamPdfExport(res, rows, { startDate, endDate });
+    } catch (error) {
+        console.error("Error exporting admin order report:", error);
+
+        if (error.message?.includes("startDate") || error.message?.includes("endDate")) {
+            return res.status(400).json({ message: error.message });
+        }
+
+        return res.status(500).json({
+            message: "Error exporting admin order report",
             error: error.message
         });
     }

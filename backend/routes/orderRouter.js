@@ -5,6 +5,7 @@ import {
   capturePayPalOrder,
   getPayPalClientId,
   getAllOrdersAdmin,
+  exportAdminOrdersReport,
   getAdminDashboardStats,
   getUserOrders,
   getVendorOrders,
@@ -32,6 +33,9 @@ router.get("/vendor-orders", getVendorOrders);
 
 // Get all orders for admin
 router.get("/admin/all", getAllOrdersAdmin);
+
+// Export admin order history (PDF/DOC) with optional date range
+router.get("/admin/export", exportAdminOrdersReport);
 
 // Get admin dashboard analytics
 router.get("/admin/dashboard-stats", getAdminDashboardStats);
