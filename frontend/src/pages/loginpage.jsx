@@ -42,6 +42,7 @@ export default function Loginpage() {
         toast.success(`Login successful! Welcome back, ${response.data.user.firstname}`);
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("role", response.data.user.role);
+        window.dispatchEvent(new Event('auth-token-changed'));
 
         if (response.data.user.role === "admin") {
           navigate("/admin");
@@ -114,6 +115,7 @@ export default function Loginpage() {
       // Store token and role in localStorage
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('role', response.data.user.role);
+      window.dispatchEvent(new Event('auth-token-changed'));
       
       if (response.data.user.role === "admin") {
         navigate("/admin");

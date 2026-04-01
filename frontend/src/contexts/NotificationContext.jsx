@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { MdCelebration, MdCheckCircle, MdCancel, MdMoney, MdRefresh, MdStar, MdNotifications } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
 
 const NotificationContext = createContext();
 
@@ -15,6 +16,7 @@ export const useNotifications = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
+  const location = useLocation();
   const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -67,6 +69,16 @@ export const NotificationProvider = ({ children }) => {
   const initializeSocket = () => {
     const token = getAuthToken();
     if (!token) return;
+
+    // Avoid creating duplicate sockets.
+    if (socketRef.current && socketRef.current.connected) {
+      return;
+    }
+
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
 
     try {
       const newSocket = io(API_BASE_URL, {
@@ -396,21 +408,43 @@ export const NotificationProvider = ({ children }) => {
 
   // Listen for auth changes
   useEffect(() => {
+    const handleAuthChange = () => {
+      const token = getAuthToken();
+      if (token) {
+        initializeSocket();
+      } else {
+        disconnectSocket();
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
     const handleStorageChange = (e) => {
       if (e.key === 'token') {
-        if (e.newValue) {
-          initializeSocket();
-        } else {
-          disconnectSocket();
-          setNotifications([]);
-          setUnreadCount(0);
-        }
+        handleAuthChange();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-token-changed', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-token-changed', handleAuthChange);
+    };
   }, []);
+
+  // Same-tab login/logout usually navigates route; sync connection on route change.
+  useEffect(() => {
+    const token = getAuthToken();
+    if (token) {
+      initializeSocket();
+    } else {
+      disconnectSocket();
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [location.pathname]);
 
   const value = {
     socket,
