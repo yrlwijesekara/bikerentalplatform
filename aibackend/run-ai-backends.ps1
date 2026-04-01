@@ -1,9 +1,8 @@
 $ErrorActionPreference = "Stop"
 
 $mainDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$chatbotDir = Join-Path $mainDir "chatbotbackend"
-$routeSafetyDir = Join-Path $mainDir "routesafetybackend"
 $sharedVenvPython = Join-Path $mainDir ".venv\Scripts\python.exe"
+$chatbotDir = Join-Path $mainDir "chatbotbackend"
 $chatbotVenvPython = Join-Path $chatbotDir ".venv\Scripts\python.exe"
 
 $pythonToUse = $sharedVenvPython
@@ -24,12 +23,6 @@ if (!(Test-Path $sharedVenvPython)) {
     }
 }
 
-$chatbotCmd = "Set-Location '$chatbotDir'; & '$pythonToUse' app.py"
-$routeCmd = "Set-Location '$routeSafetyDir'; & '$pythonToUse' app.py"
-
-Start-Process powershell -ArgumentList "-NoExit", "-Command", $chatbotCmd | Out-Null
-Start-Process powershell -ArgumentList "-NoExit", "-Command", $routeCmd | Out-Null
-
-Write-Host "Started AI chatbot backend on http://127.0.0.1:8000"
-Write-Host "Started route safety backend on http://127.0.0.1:5001"
-Write-Host "Both services are running in separate PowerShell windows"
+Set-Location $mainDir
+& $pythonToUse "app.py"
+Write-Host "Both services are running in the same PowerShell window"

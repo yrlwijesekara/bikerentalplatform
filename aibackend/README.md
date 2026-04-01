@@ -20,6 +20,8 @@ From the aibackend folder:
 - PowerShell: .\run-ai-backends.ps1
 - CMD: run-ai-backends.cmd
 
+All of the commands above run both backends in the same terminal session (no extra PowerShell windows).
+
 This starts:
 - Chatbot backend on http://127.0.0.1:8000
 - Route safety backend on http://127.0.0.1:5001
