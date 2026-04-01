@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import Footer from "../../../components/Footer";
 
 export default function Reviewvendor() {
     const PAGE_SIZE = 6;
@@ -113,6 +114,7 @@ export default function Reviewvendor() {
     }, [currentPage]);
 
     return (
+        <div className="flex flex-col min-h-screen">
         <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col overflow-y-auto p-4 sm:p-6">
             <h1 className="text-black text-3xl font-bold mt-4 mb-2 text-center"> Reviews</h1>
             <p className="text-gray-700 text-center mb-6">Only reviews for your bikes are shown here.</p>
@@ -290,6 +292,9 @@ export default function Reviewvendor() {
                     </div>
                 )}
             </div>
+           
         </div>
+         <Footer />
+         </div>
     );
 }

@@ -18,6 +18,7 @@ export default function Loginpage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleRole, setGoogleRole] = useState("");
   const navigate = useNavigate();
   const googlelogin = useGoogleLogin({
     scope: "openid email profile",
@@ -25,14 +26,23 @@ export default function Loginpage() {
       setGoogleLoading(true);
 
       try {
+        const requestBody = {
+          accessToken: tokenResponse.access_token,
+        };
+
+        if (googleRole) {
+          requestBody.role = googleRole;
+        }
+
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/users/google-login`,
-          { accessToken: tokenResponse.access_token }
+          requestBody
         );
 
         toast.success(`Login successful! Welcome back, ${response.data.user.firstname}`);
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("role", response.data.user.role);
+        window.dispatchEvent(new Event('auth-token-changed'));
 
         if (response.data.user.role === "admin") {
           navigate("/admin");
@@ -105,6 +115,7 @@ export default function Loginpage() {
       // Store token and role in localStorage
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('role', response.data.user.role);
+      window.dispatchEvent(new Event('auth-token-changed'));
       
       if (response.data.user.role === "admin") {
         navigate("/admin");
@@ -184,6 +195,21 @@ export default function Loginpage() {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
+          <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px]">
+            <label className="block text-white text-sm mb-1">
+              Select role for first-time Google signup
+            </label>
+            <select
+              value={googleRole}
+              onChange={(e) => setGoogleRole(e.target.value)}
+              className="w-full h-[45px] rounded-md p-2 text-gray-800 bg-[var(--card-background)] border-2 border-[var(--section-divider)] outline-none"
+            >
+              <option value="">Choose role (only needed first time)</option>
+              <option value="user">User</option>
+              <option value="vendor">Vendor</option>
+            </select>
+          </div>
+
           <button 
            type="button"
            onClick={() => googlelogin()}
@@ -191,7 +217,7 @@ export default function Loginpage() {
            className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[350px] h-[50px] sm:h-[55px] lg:h-[60px] rounded-md border border-gray-300 bg-white text-gray-900 font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             <img src="/image.png" alt="Google Icon" className="h-5 w-5" />
-            {googleLoading ? "Connecting to Google..." : "Continue with Google only customers"}
+            {googleLoading ? "Connecting to Google..." : "Continue with Google"}
           </button>
 
           <p className="text-white text-sm sm:text-base text-center">

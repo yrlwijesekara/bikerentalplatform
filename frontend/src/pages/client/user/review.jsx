@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import Footer from "../../../components/Footer";
 
 export default function Review() {
   const { orderId } = useParams();
@@ -255,6 +256,7 @@ export default function Review() {
   });
 
   return (
+    <div className="flex flex-col min-h-screen">
     <div className="w-full min-h-[calc(100vh-80px)] bg-[var(--main-background)] py-8 px-4">
       <div className="max-w-4xl mx-auto bg-white shadow-md rounded-xl border border-gray-200 p-6">
         <div className="mb-6">
@@ -350,6 +352,9 @@ export default function Review() {
           </Link>
         </div>
       </div>
+     
     </div>
+     <Footer />
+     </div>
   );
 }

@@ -48,7 +48,7 @@ export default function ImageSlider({ images }) {
     return (
         <div className="w-full h-full flex flex-col justify-center items-center gap-4 p-4">
             {/* Active Image Display */}
-            <div className="w-full max-w-lg h-[600px] flex justify-center items-center rounded-lg overflow-hidden" style={{ backgroundColor: '#F3F4F6', boxShadow: '0 4px 12px var(--shadow-color)' }}>
+            <div className="w-full max-w-lg h-[550px] flex justify-center items-center rounded-lg overflow-hidden" style={{ backgroundColor: '#F3F4F6', boxShadow: '0 4px 12px var(--shadow-color)' }}>
                 <img 
                     src={imageList[activeIndex]} 
                     className="w-full h-full object-cover object-center" 

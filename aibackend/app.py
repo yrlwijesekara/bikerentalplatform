@@ -1,0 +1,81 @@
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+
+def resolve_python(base_dir: Path) -> str:
+    shared_python = base_dir / ".venv" / "Scripts" / "python.exe"
+    chatbot_python = base_dir / "chatbotbackend" / ".venv" / "Scripts" / "python.exe"
+
+    if shared_python.exists():
+        return str(shared_python)
+    if chatbot_python.exists():
+        return str(chatbot_python)
+    return sys.executable
+
+
+def terminate_process(proc: subprocess.Popen) -> None:
+    if proc.poll() is not None:
+        return
+
+    try:
+        proc.terminate()
+        proc.wait(timeout=8)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+
+def main() -> int:
+    base_dir = Path(__file__).resolve().parent
+    chatbot_dir = base_dir / "chatbotbackend"
+    route_safety_dir = base_dir / "routesafetybackend"
+
+    python_exe = resolve_python(base_dir)
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+
+    chatbot_proc = subprocess.Popen(
+        [python_exe, "app.py"],
+        cwd=str(chatbot_dir),
+        env=env,
+    )
+    route_proc = subprocess.Popen(
+        [python_exe, "app.py"],
+        cwd=str(route_safety_dir),
+        env=env,
+    )
+
+    print("Started AI chatbot backend on http://127.0.0.1:8000")
+    print("Started route safety backend on http://127.0.0.1:5001")
+    print("Both services are running in this terminal")
+
+    try:
+        while True:
+            chatbot_code = chatbot_proc.poll()
+            route_code = route_proc.poll()
+
+            if chatbot_code is not None:
+                print(f"Chatbot backend exited with code {chatbot_code}")
+                terminate_process(route_proc)
+                return chatbot_code
+
+            if route_code is not None:
+                print(f"Route safety backend exited with code {route_code}")
+                terminate_process(chatbot_proc)
+                return route_code
+
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        print("Stopping both services...")
+        terminate_process(chatbot_proc)
+        terminate_process(route_proc)
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -21,6 +21,7 @@ import Destinations from "./user/destinations.jsx";
 import OrderSuccess from './user/ordersuccess.jsx';
 import Review from "./user/review.jsx";
 import Reviewvendor from "./vendor/reviewvendor.jsx";
+import RouteSafety from "./user/routesafety.jsx";
 
 export default function Clientpage() {
   return (
@@ -34,7 +35,7 @@ export default function Clientpage() {
                 <Mybooking />
               </ProtectedRoute>
             } />
-            <Route path="/routes" element={<h1 className="text-black">Routes & Safety Page</h1>} />
+            <Route path="/routes" element={<RouteSafety />} />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />

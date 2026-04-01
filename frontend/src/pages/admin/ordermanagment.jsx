@@ -16,6 +16,9 @@ export default function OrderManagement() {
     const [selectedPaymentStatus, setSelectedPaymentStatus] = useState("");
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [exportStartDate, setExportStartDate] = useState("");
+    const [exportEndDate, setExportEndDate] = useState("");
+    const [exportingFormat, setExportingFormat] = useState("");
 
     useEffect(() => {
         const fetchAllOrders = async () => {
@@ -107,6 +110,68 @@ export default function OrderManagement() {
         setSelectedPaymentStatus("");
         setSelectedPaymentMethod("");
         setCurrentPage(1);
+    };
+
+    const handleExport = async (format) => {
+        try {
+            if (!format) return;
+
+            if (exportStartDate && exportEndDate && exportStartDate > exportEndDate) {
+                toast.error("Start date cannot be later than end date.");
+                return;
+            }
+
+            const token = localStorage.getItem("token");
+            if (!token) {
+                toast.error("Please login first");
+                return;
+            }
+
+            setExportingFormat(format);
+
+            const response = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/orders/admin/export`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    params: {
+                        format,
+                        startDate: exportStartDate || undefined,
+                        endDate: exportEndDate || undefined,
+                    },
+                    responseType: "blob",
+                },
+            );
+
+            const blob = new Blob([response.data], {
+                type: response.headers["content-type"] || "application/octet-stream",
+            });
+
+            const disposition = response.headers["content-disposition"] || "";
+            const matchedFilename = disposition.match(/filename=([^;]+)/i);
+            const fallbackName = `order_history.${format}`;
+            const filename = matchedFilename
+                ? matchedFilename[1].replaceAll('"', "")
+                : fallbackName;
+
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = downloadUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(downloadUrl);
+
+            toast.success(`Order history exported as ${format.toUpperCase()}.`);
+        } catch (err) {
+            const fallback = `Failed to export ${format.toUpperCase()} report.`;
+            const apiMessage = err.response?.data?.message;
+            toast.error(apiMessage || fallback);
+        } finally {
+            setExportingFormat("");
+        }
     };
 
     const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
@@ -213,6 +278,55 @@ export default function OrderManagement() {
                                 >
                                     Clear Filters
                                 </button>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 pt-4 border-t border-gray-200">
+                            <h3 className="text-sm font-semibold text-gray-800 mb-3">Export Order History</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">From Date</label>
+                                    <input
+                                        type="date"
+                                        value={exportStartDate}
+                                        onChange={(e) => setExportStartDate(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">To Date</label>
+                                    <input
+                                        type="date"
+                                        value={exportEndDate}
+                                        onChange={(e) => setExportEndDate(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 invisible">Export PDF</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleExport("pdf")}
+                                        disabled={exportingFormat !== ""}
+                                        className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        {exportingFormat === "pdf" ? "Exporting PDF..." : "Export PDF"}
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 invisible">Export DOC</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleExport("doc")}
+                                        disabled={exportingFormat !== ""}
+                                        className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        {exportingFormat === "doc" ? "Exporting DOC..." : "Export DOC"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
