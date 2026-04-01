@@ -3,6 +3,63 @@ import Product from "../model/product.js"; // Import as Product, not Bike
 import User from "../model/user.js";
 import Review from "../model/review.js";
 import PDFDocument from "pdfkit";
+import nodemailer from "nodemailer";
+
+function getEmailTransporter() {
+    const emailUser = process.env.EMAIL_USER;
+    const emailPassword = process.env.EMAIL_PASSWORD;
+
+    if (!emailUser || !emailPassword) {
+        return null;
+    }
+
+    return nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: emailUser,
+            pass: emailPassword
+        }
+    });
+}
+
+async function sendCustomerOrderConfirmationEmail(customer, orderData) {
+    const transporter = getEmailTransporter();
+    if (!transporter || !customer?.email) return;
+
+    const bikesSummary = (orderData.bikes || [])
+        .map((item) => {
+            const bikeName = item.bike?.bikeName || "Bike";
+            return `${bikeName} (x${item.quantity || 1}, ${item.rentalDays || 1} day(s))`;
+        })
+        .join("<br/>");
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: customer.email,
+        subject: `Order Confirmed - ${orderData.orderid}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #111827;">
+                <h2 style="margin-bottom: 8px;">Thank you for your order, ${customer.firstname || "Customer"}!</h2>
+                <p style="margin-top: 0; color: #4B5563;">Your bike rental order has been created successfully.</p>
+                <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                    <p><strong>Order ID:</strong> ${orderData.orderid}</p>
+                    <p><strong>Order Status:</strong> ${orderData.orderStatus}</p>
+                    <p><strong>Payment:</strong> ${orderData.paymentMethod} / ${orderData.paymentStatus}</p>
+                    <p><strong>Rental Period:</strong> ${new Date(orderData.startDate).toLocaleDateString("en-GB")} - ${new Date(orderData.endDate).toLocaleDateString("en-GB")}</p>
+                    <p><strong>Total Bikes:</strong> ${orderData.totalBikes}</p>
+                    <p><strong>Final Total:</strong> Rs. ${Number(orderData.finalTotal || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+                <div style="margin: 16px 0;">
+                    <p><strong>Booked Bikes</strong></p>
+                    <p style="line-height: 1.6; color: #374151;">${bikesSummary || "N/A"}</p>
+                </div>
+                <p style="font-size: 12px; color: #6B7280; margin-top: 20px;">This is an automated email from RideLanka.</p>
+            </div>
+        `
+    };
+
+    await transporter.sendMail(mailOptions);
+}
 
 function isAdminUser(user) {
     return user != null && (user.role === "admin" || user.type === "admin");
@@ -698,6 +755,14 @@ export async function createOrder(req, res) {
             .populate('vendors', 'firstname lastname email')
             .populate('bikes.bike', 'bikeName bikeType images')
             .populate('bikes.vendor', 'firstname lastname email');
+
+        // Send customer email confirmation in a non-blocking way.
+        if (customer) {
+            sendCustomerOrderConfirmationEmail(customer, populatedOrder)
+                .catch((emailError) => {
+                    console.error("Error sending customer order confirmation email:", emailError);
+                });
+        }
 
         res.status(201).json({
             message: "Order created successfully",

@@ -4,6 +4,7 @@ import { FaCheckCircle, FaBicycle, FaCalendarAlt, FaReceipt, FaPaypal, FaShareAl
 import { FaXTwitter } from 'react-icons/fa6';
 import { MdEmail } from 'react-icons/md';
 import toast from 'react-hot-toast';
+import { jsPDF } from 'jspdf';
 
 export default function OrderSuccess() {
     const location = useLocation();
@@ -281,197 +282,36 @@ export default function OrderSuccess() {
     };
 
     const downloadAsPdf = () => {
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) {
-            toast.error('Popup blocked. Please allow popups to download PDF.');
-            return;
-        }
+        const doc = new jsPDF();
+        const startY = 18;
+        let y = startY;
 
-        printWindow.document.write(`
-           <!DOCTYPE html>
-<html>
-<head>
-    <title>Order ${order.orderid}</title>
-    <style>
-        /* Base Reset & Typography */
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f3f4f6;
-            margin: 0;
-            padding: 40px 20px;
-            color: #374151;
-            line-height: 1.6;
-        }
+        doc.setFontSize(18);
+        doc.text('RideLanka - Order Confirmation', 14, y);
+        y += 10;
 
-        /* Main Container */
-        .receipt-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
+        doc.setFontSize(11);
+        const lines = [
+            `Order ID: ${order.orderid || 'N/A'}`,
+            `Payment Status: ${order.paymentStatus || 'N/A'}`,
+            `Order Status: ${order.orderStatus || 'N/A'}`,
+            `Payment Method: ${order.paymentMethod || 'N/A'}`,
+            `Rental: ${formatDate(order.startDate)} - ${formatDate(order.endDate)}`,
+            `Total Days: ${order.totalDays || 0}`,
+            `Subtotal: ${formatCurrency(order.totalAmount)}`,
+            `Service Fee: ${formatCurrency(order.serviceFee)}`,
+            `Final Total: ${formatCurrency(order.finalTotal)}`,
+            '',
+            'Thank you for riding with us.'
+        ];
 
-        /* Header Segment */
-        .header {
-            background-color: #10b981; /* Vibrant eco-friendly green */
-            color: #ffffff;
-            padding: 30px 20px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        .header p {
-            margin: 5px 0 0;
-            color: #d1fae5;
-            font-size: 14px;
-        }
+        lines.forEach((line) => {
+            doc.text(line, 14, y);
+            y += 8;
+        });
 
-        /* Content Sections */
-        .content {
-            padding: 30px;
-        }
-        .section-title {
-            font-size: 12px;
-            text-transform: uppercase;
-            color: #6b7280;
-            font-weight: 700;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #f3f4f6;
-            padding-bottom: 5px;
-        }
-
-        /* Flexbox Data Rows */
-        .row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 15px;
-        }
-        .row .label {
-            color: #6b7280;
-        }
-        .row .value {
-            font-weight: 500;
-            color: #111827;
-            text-align: right;
-        }
-
-        /* Status Badges */
-        .badge {
-            background-color: #e0e7ff;
-            color: #3730a3;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
-        /* Financial Breakdown */
-        .summary-box {
-            background-color: #f9fafb;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 25px;
-        }
-        .summary-box .row.divider {
-            border-top: 1px solid #e5e7eb;
-            padding-top: 12px;
-            margin-top: 8px;
-        }
-        .summary-box .row.total {
-            font-size: 18px;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 0;
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #f9fafb;
-            color: #9ca3af;
-            font-size: 13px;
-            border-top: 1px solid #e5e7eb;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="receipt-container">
-        <div class="header">
-            <h1>RideLanka</h1>
-            <p>Order Confirmation</p>
-        </div>
-
-        <div class="content">
-            
-            <div class="section-title">Order Details</div>
-            <div class="row">
-                <span class="label">Order ID</span>
-                <span class="value">#${order.orderid}</span>
-            </div>
-            <div class="row">
-                <span class="label">Payment Status</span>
-                <span class="value"><span class="badge">${order.paymentStatus}</span></span>
-            </div>
-            <div class="row">
-                <span class="label">Order Status</span>
-                <span class="value">${order.orderStatus}</span>
-            </div>
-            <div class="row">
-                <span class="label">Payment Method</span>
-                <span class="value">${order.paymentMethod}</span>
-            </div>
-
-            <br>
-
-            <div class="section-title">Rental Information</div>
-            <div class="row">
-                <span class="label">Duration</span>
-                <span class="value">${formatDate(order.startDate)} — ${formatDate(order.endDate)}</span>
-            </div>
-            <div class="row">
-                <span class="label">Total Days</span>
-                <span class="value">${order.totalDays} Days</span>
-            </div>
-
-            <div class="summary-box">
-                <div class="row">
-                    <span class="label">Subtotal</span>
-                    <span class="value">${formatCurrency(order.totalAmount)}</span>
-                </div>
-                <div class="row">
-                    <span class="label">Service Fee</span>
-                    <span class="value">${formatCurrency(order.serviceFee)}</span>
-                </div>
-                <div class="row divider total">
-                    <span class="label" style="color: #111827;">Final Total</span>
-                    <span class="value">${formatCurrency(order.finalTotal)}</span>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="footer">
-            Thank you for riding with us! Have a safe and wonderful trip.
-        </div>
-    </div>
-
-</body>
-</html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
+        doc.save(`order-${order.orderid || 'receipt'}.pdf`);
+        toast.success('PDF downloaded successfully.');
     };
 
     return (
