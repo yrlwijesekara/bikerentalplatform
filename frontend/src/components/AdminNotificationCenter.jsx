@@ -3,8 +3,10 @@ import axios from 'axios';
 import { 
   FaBell, 
   FaTimes, 
-  FaCheckDouble, 
+  FaEye,
   FaTrash,
+  FaCheckDouble,
+  FaClock,
   FaExclamationTriangle 
 } from 'react-icons/fa';
 import { 
@@ -15,7 +17,6 @@ import {
   MdNotifications,
   MdNotes
 } from 'react-icons/md';
-import './AdminNotificationCenter.css';
 
 const AdminNotificationCenter = ({ showNotifications, setShowNotifications }) => {
   const [notifications, setNotifications] = useState([]);
@@ -146,31 +147,31 @@ const AdminNotificationCenter = ({ showNotifications, setShowNotifications }) =>
   useEffect(() => {
     if (showNotifications) {
       fetchAdminNotifications();
-      const interval = setInterval(fetchUnreadCount, 30000); // Refresh every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
       return () => clearInterval(interval);
     }
   }, [showNotifications, selectedTab]);
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'order_completed': return <MdCheckCircle className="text-green-500" />;
-      case 'order_cancelled': return <MdCancel className="text-red-500" />;
-      case 'product_added': return <MdNotes className="text-blue-500" />;
-      case 'product_approved': return <MdCelebration className="text-green-500" />;
-      case 'product_rejected': return <FaExclamationTriangle className="text-red-500" />;
-      case 'vendor_registered': return <MdCelebration className="text-purple-500" />;
-      case 'high_value_order': return <MdMoney className="text-yellow-500" />;
-      default: return <MdNotifications className="text-gray-500" />;
+      case 'order_completed': return <MdCheckCircle />;
+      case 'order_cancelled': return <MdCancel />;
+      case 'product_added': return <MdNotes />;
+      case 'product_approved': return <MdCelebration />;
+      case 'product_rejected': return <FaExclamationTriangle />;
+      case 'vendor_registered': return <MdCelebration />;
+      case 'high_value_order': return <MdMoney />;
+      default: return <MdNotifications />;
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 border-red-300 text-red-800';
-      case 'high': return 'bg-orange-100 border-orange-300 text-orange-800';
-      case 'normal': return 'bg-blue-100 border-blue-300 text-blue-800';
-      case 'low': return 'bg-green-100 border-green-300 text-green-800';
-      default: return 'bg-gray-100 border-gray-300 text-gray-800';
+      case 'urgent': return 'text-red-600 bg-red-50 border-red-200';
+      case 'high': return 'text-orange-600 bg-orange-50 border-orange-200';
+      case 'normal': return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'low': return 'text-green-600 bg-green-50 border-green-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
@@ -200,162 +201,172 @@ const AdminNotificationCenter = ({ showNotifications, setShowNotifications }) =>
   if (!showNotifications) return null;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2">
+    <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-2">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl h-5/6 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <FaBell className="text-blue-600 text-2xl" />
-            <h2 className="text-2xl font-bold text-gray-800">Admin Notifications</h2>
+            <FaBell className="text-blue-600 text-xl" />
+            <h2 className="text-xl font-semibold text-gray-800">Admin Notifications</h2>
             {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs px-3 py-1 rounded-full font-semibold">
-                {unreadCount} unread
+              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                {unreadCount}
               </span>
             )}
           </div>
-
-          <button
-            onClick={() => setShowNotifications(false)}
-            className="text-gray-500 hover:text-gray-700 text-2xl transition-colors"
-          >
-            <FaTimes />
-          </button>
+          
+          <div className="flex items-center gap-2">
+            {/* Mark all as read */}
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                disabled={loading}
+                className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200 transition-colors disabled:opacity-50"
+              >
+                <FaCheckDouble className="text-xs" />
+                Mark all read
+              </button>
+            )}
+            
+            {/* Close button */}
+            <button
+              onClick={() => setShowNotifications(false)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <FaTimes className="text-gray-500" />
+            </button>
+          </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200">
           <button
             onClick={() => setSelectedTab('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
               selectedTab === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
-            All Notifications
+            All ({notifications.length})
           </button>
           <button
             onClick={() => setSelectedTab('unread')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
               selectedTab === 'unread'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
             Unread ({unreadCount})
           </button>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              disabled={loading}
-              className="ml-auto px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              <FaCheckDouble className="text-sm" />
-              Mark all read
-            </button>
-          )}
         </div>
 
         {/* Notifications List */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {loading && (
-            <div className="flex items-center justify-center h-32">
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
-          )}
-
-          {!loading && filteredNotifications.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-32 text-gray-500">
-              <FaBell className="text-4xl mb-2 opacity-30" />
-              <p className="text-center">No {selectedTab === 'unread' ? 'unread' : ''} notifications</p>
+          ) : filteredNotifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <FaBell className="text-4xl mb-2 text-gray-300" />
+              <p className="text-lg font-medium">No notifications</p>
+              <p className="text-sm">
+                {selectedTab === 'unread' 
+                  ? "You're all caught up!" 
+                  : "New notifications will appear here"}
+              </p>
             </div>
-          )}
-
-          {filteredNotifications.map((notification) => (
-            <div
-              key={notification._id}
-              className={`mb-3 p-4 rounded-lg border-2 transition-all ${
-                notification.isRead
-                  ? 'bg-gray-50 border-gray-200'
-                  : getPriorityColor(notification.priority)
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                <div className="text-2xl flex-shrink-0 mt-1">
-                  {getNotificationIcon(notification.type)}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-800 text-base">
-                      {notification.title}
-                    </h3>
-                    <span className="text-xs text-gray-500 washtext-nowrap">
-                      {formatTimeAgo(notification.createdAt)}
-                    </span>
-                  </div>
-
-                  <p className="text-gray-700 text-sm mb-2 break-words">
-                    {notification.message}
-                  </p>
-
-                  {notification.data && Object.keys(notification.data).length > 0 && (
-                    <div className="bg-white/50 rounded p-2 mb-2 text-xs text-gray-600 max-h-20 overflow-y-auto">
-                      {Object.entries(notification.data).map(([key, value]) => (
-                        <div key={key} className="flex justify-between gap-2">
-                          <span className="font-medium">{key}:</span>
-                          <span className="text-gray-700">{String(value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs px-2 py-1 bg-white rounded-full capitalize font-medium">
-                      {notification.priority} priority
-                    </span>
-                    {!notification.isRead && (
-                      <span className="text-xs px-2 py-1 bg-blue-200 text-blue-800 rounded-full font-medium">
-                        Unread
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {filteredNotifications.map((notification, index) => (
+                <div
+                  key={`notification-${notification._id || index}-${index}`}
+                  className={`p-4 hover:bg-gray-50 transition-colors ${
+                    !notification.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Notification Icon */}
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${
+                      getPriorityColor(notification.priority)
+                    }`}>
+                      <span className="text-lg">
+                        {getNotificationIcon(notification.type)}
                       </span>
-                    )}
+                    </div>
+
+                    {/* Notification Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className={`text-sm font-medium ${
+                          !notification.isRead ? 'text-gray-900' : 'text-gray-700'
+                        }`}>
+                          {notification.title}
+                        </h4>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                          <FaClock className="text-xs" />
+                          {formatTimeAgo(notification.createdAt)}
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mt-1">
+                        {notification.message}
+                      </p>
+
+                      {/* Notification Data */}
+                      {notification.data && Object.keys(notification.data).length > 0 && (
+                        <div className="mt-2 text-xs text-gray-600 bg-gray-50 rounded p-2 max-h-16 overflow-y-auto">
+                          {Object.entries(notification.data).map(([key, value]) => (
+                            <div key={key} className="flex justify-between gap-2 mb-1">
+                              <span className="font-medium text-gray-700">{key}:</span>
+                              <span className="text-gray-600 truncate">{String(value)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Priority Badge */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-xs px-2 py-1 rounded-full border ${getPriorityColor(notification.priority)}`}>
+                          {notification.priority} priority
+                        </span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 mt-3">
+                        {!notification.isRead && (
+                          <button
+                            onClick={() => markAsRead(notification._id)}
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                          >
+                            <FaEye className="text-xs" />
+                            Mark as read
+                          </button>
+                        )}
+                        
+                        <button
+                          onClick={() => deleteNotification(notification._id)}
+                          className="flex items-center gap-1 px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                        >
+                          <FaTrash className="text-xs" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex flex-col gap-2 flex-shrink-0">
-                  {!notification.isRead && (
-                    <button
-                      onClick={() => markAsRead(notification._id)}
-                      className="text-blue-600 hover:text-blue-800 text-lg p-1 transition-colors"
-                      title="Mark as read"
-                    >
-                      <FaCheckDouble />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => deleteNotification(notification._id)}
-                    className="text-red-500 hover:text-red-700 text-lg p-1 transition-colors"
-                    title="Delete notification"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 bg-gray-50 flex justify-between items-center">
-          <p className="text-sm text-gray-600">
-            {notifications.length} total notifications
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <p className="text-xs text-gray-500 text-center">
+            Notifications are updated in real-time • Last updated: {new Date().toLocaleTimeString()}
           </p>
-          <button
-            onClick={() => setShowNotifications(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-          >
-            Close
-          </button>
         </div>
       </div>
     </div>
