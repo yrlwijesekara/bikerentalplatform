@@ -57,6 +57,23 @@ def get_elevation(lat: float, lon: float) -> float:
     return float(elevations[0]) if elevations else 0.0
 
 
+def get_current_precipitation(lat: float, lon: float) -> float:
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current": "precipitation",
+        "timezone": "auto",
+    }
+
+    response = requests.get(url, params=params, timeout=10)
+    response.raise_for_status()
+    payload = response.json()
+
+    current = payload.get("current") or {}
+    return float(current.get("precipitation", 0.0))
+
+
 def normalize_traffic_risk(value):
     try:
         risk = int(value)
@@ -80,8 +97,14 @@ def predict_bike_recommendation():
     payload = request.get_json(silent=True) or {}
     city = (payload.get("city") or "").strip()
     traffic_risk = normalize_traffic_risk(payload.get("traffic_risk", 0))
-    rainfall_mm = float(payload.get("rainfall_mm", 0) or 0)
-    rain_status = 1 if rainfall_mm > 0 else 0
+    rainfall_input = payload.get("rainfall_mm", None)
+
+    rainfall_mm = None
+    if rainfall_input not in (None, ""):
+        try:
+            rainfall_mm = float(rainfall_input)
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid rainfall_mm value. Use a numeric value or leave it empty."}), 400
 
     if not city:
         city = "Sri Lanka"
@@ -99,6 +122,14 @@ def predict_bike_recommendation():
                 return jsonify({"error": f"Could not locate '{city}' in Sri Lanka."}), 404
 
         elevation = get_elevation(geo_data["lat"], geo_data["lon"])
+
+        if rainfall_mm is None:
+            rainfall_mm = get_current_precipitation(geo_data["lat"], geo_data["lon"])
+            rainfall_source = "api_auto"
+        else:
+            rainfall_source = "user_input"
+
+        rain_status = 1 if rainfall_mm > 0 else 0
 
         feature_frame = pd.DataFrame(
             [[elevation, traffic_risk, rain_status]],
@@ -132,6 +163,7 @@ def predict_bike_recommendation():
                 "traffic_risk": traffic_risk,
                 "traffic_risk_label": ["Low", "Medium", "High"][traffic_risk],
                 "rainfall_mm": round(rainfall_mm, 2),
+                "rainfall_source": rainfall_source,
                 "rain_status": rain_status,
                 "recommendation": recommendation,
                 "recommendation_label": recommendation.title(),

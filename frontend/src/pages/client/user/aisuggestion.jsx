@@ -8,7 +8,7 @@ const apiBaseUrl = import.meta.env.VITE_BIKE_RECOMMENDATION_API_URL;
 export default function Aisuggestion() {
   const [city, setCity] = useState("");
   const [trafficRisk, setTrafficRisk] = useState("0");
-  const [rainfallMm, setRainfallMm] = useState("0");
+  const [rainfallMm, setRainfallMm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
@@ -26,10 +26,12 @@ export default function Aisuggestion() {
       setLoading(true);
       setError("");
 
+      const normalizedRainfall = rainfallMm === "" ? null : Number(rainfallMm);
+
       const response = await axios.post(`${apiBaseUrl}/api/bike-recommendation/predict`, {
         city: city.trim(),
         traffic_risk: Number(trafficRisk),
-        rainfall_mm: Number(rainfallMm),
+        rainfall_mm: normalizedRainfall,
       });
 
       setResult(response.data);
@@ -95,9 +97,12 @@ export default function Aisuggestion() {
                     step="0.1"
                     value={rainfallMm}
                     onChange={(e) => setRainfallMm(e.target.value)}
-                    placeholder="0 for dry weather"
+                    placeholder="Leave empty to auto-detect from weather API"
                     className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
                   />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Optional: if empty, live rainfall is fetched automatically.
+                  </p>
                 </div>
 
                 {error && (
@@ -117,7 +122,7 @@ export default function Aisuggestion() {
             </section>
 
             <aside className="space-y-6">
-              <div className="rounded-3xl border border-slate-200 bg-[var(--navbar-bg)] p-6 text-white shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
+              <div className="rounded-3xl border border-slate-200 bg-(--navbar-bg) p-6 text-white shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
                 <h2 className="text-xl font-semibold">How it works</h2>
                 <ul className="mt-4 space-y-3 text-sm text-slate-200">
                   {quickTips.map((tip) => (
@@ -155,6 +160,9 @@ export default function Aisuggestion() {
                     <div className="rounded-2xl bg-slate-50 p-3">
                       <p className="text-slate-500">Rainfall</p>
                       <p className="font-semibold text-slate-900">{result.rainfall_mm} mm</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {result.rainfall_source === "api_auto" ? "Auto from weather API" : "Provided by user"}
+                      </p>
                     </div>
                   </div>
 
