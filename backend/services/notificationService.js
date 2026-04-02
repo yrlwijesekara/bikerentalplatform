@@ -282,6 +282,84 @@ class NotificationService {
       priority: 'normal',
     }),
   };
+
+  // Get all admin users
+  async getAllAdmins() {
+    try {
+      const admins = await User.find({ role: 'admin' });
+      return admins;
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+      throw error;
+    }
+  }
+
+  // Notify all admins
+  async notifyAllAdmins({
+    type,
+    title,
+    message,
+    data = {},
+    priority = 'normal',
+    sendEmail = false,
+  }) {
+    try {
+      const admins = await this.getAllAdmins();
+      const notifications = [];
+
+      for (const admin of admins) {
+        const notification = await this.createNotification({
+          recipientId: admin._id,
+          type,
+          title,
+          message,
+          data,
+          priority,
+          sendEmail,
+        });
+        notifications.push(notification);
+      }
+
+      return notifications;
+    } catch (error) {
+      console.error('Error notifying admins:', error);
+      throw error;
+    }
+  }
+
+  // Get admin notifications
+  async getAdminNotifications(adminId, page = 1, limit = 20, unreadOnly = false) {
+    try {
+      const query = { recipient: adminId };
+      
+      if (unreadOnly) {
+        query.isRead = false;
+      }
+
+      const notifications = await Notification.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .populate('sender', 'firstname lastname email role');
+
+      const totalCount = await Notification.countDocuments(query);
+      const unreadCount = await Notification.countDocuments({ 
+        recipient: adminId, 
+        isRead: false 
+      });
+
+      return {
+        notifications,
+        totalCount,
+        pageCount: Math.ceil(totalCount / limit),
+        currentPage: page,
+        unreadCount,
+      };
+    } catch (error) {
+      console.error('Error fetching admin notifications:', error);
+      throw error;
+    }
+  }
 }
 
 export default NotificationService;

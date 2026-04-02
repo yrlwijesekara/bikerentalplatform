@@ -1,6 +1,7 @@
 import Product from "../model/product.js";
 import Order from "../model/order.js";
 import { checkVendor, checkAdmin } from "./usercontroller.js";
+import User from "../model/user.js";
 
 export async function createProduct(req, res) {
     // Check if user is a vendor
@@ -19,6 +20,31 @@ export async function createProduct(req, res) {
     const newProduct = new Product(productData);
     try {
         const savedProduct = await newProduct.save();
+        
+        // Send admin notification about new product
+        try {
+            const notificationService = req.app.locals.notificationService;
+            if (notificationService) {
+                const vendor = await User.findById(req.user.id);
+                await notificationService.notifyAllAdmins({
+                    type: 'product_added',
+                    title: '🚕 New Product Added',
+                    message: `Vendor ${vendor?.firstname} ${vendor?.lastname} has added a new bike: ${savedProduct.bikeName}. Please review and approve.`,
+                    data: {
+                        productId: savedProduct._id,
+                        bikeeName: savedProduct.bikeName,
+                        vendor: vendor?.firstname + ' ' + vendor?.lastname,
+                        vendorId: vendor?._id,
+                        pricePerDay: savedProduct.pricePerDay
+                    },
+                    priority: 'normal',
+                    sendEmail: true
+                });
+            }
+        } catch (notificationError) {
+            console.error('Error sending admin notification for new product:', notificationError);
+        }
+        
         res.status(201).json({
             message: "Product created successfully",
             product: savedProduct
@@ -283,13 +309,41 @@ export async function updateProductApproval(req, res) {
             productId,
             updateData,
             { new: true, runValidators: true }
-        );
+        ).populate('vendor', 'firstname lastname email');
 
         if (!updatedProduct) {
             return res.status(404).json({
                 message: "Product not found.",
                 error: "Not found"
             });
+        }
+
+        // Send vendor notification about product approval/rejection
+        try {
+            const notificationService = req.app.locals.notificationService;
+            if (notificationService && updatedProduct.vendor) {
+                const notificationType = isApproved ? 'product_approved' : 'product_rejected';
+                const notificationTitle = isApproved ? '✅ Product Approved' : '❌ Product Rejected';
+                const notificationMessage = isApproved 
+                    ? `Your bike "${updatedProduct.bikeName}" has been approved and is now live on the platform.`
+                    : `Your bike "${updatedProduct.bikeName}" has been rejected. Reason: ${note || 'Not specified'}`;
+                
+                await notificationService.createNotification({
+                    recipientId: updatedProduct.vendor._id,
+                    type: notificationType,
+                    title: notificationTitle,
+                    message: notificationMessage,
+                    data: {
+                        productId: updatedProduct._id,
+                        bikeName: updatedProduct.bikeName,
+                        note: note || ''
+                    },
+                    priority: 'high',
+                    sendEmail: true
+                });
+            }
+        } catch (notificationError) {
+            console.error('Error sending vendor notification for product approval:', notificationError);
         }
 
         res.status(200).json({

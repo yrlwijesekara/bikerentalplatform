@@ -1332,6 +1332,35 @@ export async function updateOrderStatus(req, res) {
                     });
                 }
 
+                // Send admin notifications for order completion or cancellation
+                if (customer && (orderStatus === 'completed' || orderStatus === 'cancelled')) {
+                    const adminNotificationType = orderStatus === 'completed' ? 'order_completed' : 'order_cancelled';
+                    const adminNotificationTitle = orderStatus === 'completed' ? '✅ Order Completed' : '❌ Order Cancelled';
+                    const adminNotificationMessage = orderStatus === 'completed'
+                        ? `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been completed. Total: $${order.finalTotal}`
+                        : `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been cancelled.`;
+                    
+                    try {
+                        await notificationService.notifyAllAdmins({
+                            type: adminNotificationType,
+                            title: adminNotificationTitle,
+                            message: adminNotificationMessage,
+                            data: {
+                                orderId: order._id,
+                                orderid: order.orderid,
+                                customerName: `${customer.firstname} ${customer.lastname}`,
+                                customerEmail: customer.email,
+                                total: order.finalTotal,
+                                status: orderStatus
+                            },
+                            priority: orderStatus === 'cancelled' ? 'high' : 'normal',
+                            sendEmail: true
+                        });
+                    } catch (adminNotificationError) {
+                        console.error('Error sending admin notification:', adminNotificationError);
+                    }
+                }
+
             } catch (notificationError) {
                 console.error('Error sending status update notification:', notificationError);
             }

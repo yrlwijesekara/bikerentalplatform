@@ -89,13 +89,13 @@ export default function Dashboard() {
 
     return (
         <div className="p-4 md:p-6">
-            <div className="max-w-[98vw] xl:max-w-400 mx-auto space-y-6 text-center">
+            <div className="max-w-[98vw] xl:max-w-400 mx-auto space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Admin Analytics Dashboard</h1>
                     <p className="text-gray-600 mt-1">Live overview of customers, vendors, orders, products and reviews.</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 text-center">
                     <div className="bg-white rounded-lg shadow p-5 border border-gray-200">
                         <p className="text-sm text-gray-500">Customers</p>
                         <p className="text-3xl font-bold text-blue-700 mt-1">{overview.customerCount || 0}</p>
