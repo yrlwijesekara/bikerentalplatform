@@ -22,6 +22,7 @@ import OrderSuccess from './user/ordersuccess.jsx';
 import Review from "./user/review.jsx";
 import Reviewvendor from "./vendor/reviewvendor.jsx";
 import RouteSafety from "./user/routesafety.jsx";
+import Aisuggestion from "./user/aisuggestion.jsx";
 
 export default function Clientpage() {
   return (
@@ -29,7 +30,7 @@ export default function Clientpage() {
         <Header />
         <Routes>
             <Route path="/find-bikes" element={<Findbike />} />
-            <Route path="/ai-suggestions" element={<h1 className="text-black">AI Suggestions Page</h1>} />
+            <Route path="/ai-suggestions" element={<Aisuggestion />} />
             <Route path="/my-bookings" element={
               <ProtectedRoute requiredRole="user">
                 <Mybooking />

@@ -145,6 +145,59 @@ class NotificationController {
       });
     }
   };
+
+  // Get admin notifications
+  getAdminNotifications = async (req, res) => {
+    try {
+      const adminId = req.user.id;
+      const { page = 1, limit = 20, unreadOnly = false } = req.query;
+
+      const result = await this.notificationService.getAdminNotifications(
+        adminId,
+        parseInt(page),
+        parseInt(limit),
+        unreadOnly === 'true'
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Error fetching admin notifications:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch admin notifications',
+        error: error.message,
+      });
+    }
+  };
+
+  // Get admin unread count
+  getAdminUnreadCount = async (req, res) => {
+    try {
+      const adminId = req.user.id;
+
+      const result = await this.notificationService.getAdminNotifications(
+        adminId,
+        1,
+        1,
+        true
+      );
+
+      res.status(200).json({
+        success: true,
+        unreadCount: result.unreadCount,
+      });
+    } catch (error) {
+      console.error('Error fetching admin unread count:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch admin unread count',
+        error: error.message,
+      });
+    }
+  };
 }
 
 export default NotificationController;

@@ -23,9 +23,21 @@ const notificationSchema = new mongoose.Schema(
         'review_received',
         'vendor_approved',
         'vendor_rejected',
+        'order_completed',
+        'order_cancelled',
+        'product_added',
+        'product_approved',
+        'product_rejected',
+        'vendor_registered',
+        'high_value_order',
         'general'
       ],
       required: true,
+    },
+    recipientRole: {
+      type: String,
+      enum: ['user', 'vendor', 'admin'],
+      default: 'user',
     },
     title: {
       type: String,

@@ -1,60 +1,63 @@
 # Bike Rental Platform
 
-A full-stack bike rental web app for customers, vendors, and admins.
+A full-stack bike rental platform for customers, vendors, and admins, with a modern React UI, booking workflows, notifications, reviews, and AI-assisted pricing and support.
 
-Customers can discover bikes, place bookings, and leave reviews. Vendors manage inventory and bookings with analytics. Admins manage users, products, places, orders, reviews, and platform-level analytics.
+## Highlights
 
-## Features
+- Clean, responsive frontend built for vendor and customer workflows.
+- AI chatbot for platform help and quick Q&A.
+- Route safety prediction for Sri Lankan locations.
+- AI price prediction for vendor add and update bike pages.
+- Strict booking status validation to prevent invalid transitions.
+- Real-time notifications and email review follow-ups.
 
-### Authentication and Roles
+## Latest Updates
+
+- Added a Flask price prediction backend and connected it to the vendor bike add/update pages.
+- Vendor edits now require admin re-approval before a bike goes live again.
+- Notification totals now show in Sri Lankan rupees instead of dollar formatting.
+- Added more polished UI actions for AI suggested price on bike forms.
+- Expanded AI launcher scripts to include all Python services.
+- Improved homepage discovery with rotating bikes and featured destinations.
+
+## Core Features
+
+### Authentication and Access
 - JWT-based authentication
 - Roles: `user`, `vendor`, `admin`
 - Role-based route protection in frontend and backend
 - Google login support
 
 ### Booking and Orders
-- Multi-bike order flow
-- Bike-level status tracking in orders
-- **Strict order status workflow**: Only valid status transitions allowed (pending → confirmed → ongoing → completed/cancelled)
-- Backend validation for status changes (prevents illogical transitions)
-- UI/UX guidance for vendors (only valid next statuses shown, clear error messages)
+- Multi-bike booking flow
+- Bike-level status tracking inside orders
+- Strict status transition validation
 - Payment support: card and PayPal
 - Vendor and customer order views
 
-### Reviews
-- **Comprehensive review system**: Multi-dimensional reviews for bikes and vendors (overall, bike experience, vendor service, detailed ratings)
-- Submit multiple reviews per completed order (one per bike)
-- Review eligibility checking (only for completed orders, no duplicates)
-- Product and vendor review listing with average ratings
-- Admin review management (approve, feature, remove)
-- Featured reviews support for homepage
-- Mark reviews as helpful, vendor response capability
-- **Completion emails**: Customers receive review links after order completion
-
-### Admin Capabilities
-- Manage users
-- Manage products (approval flow)
-- Manage places (including featured places)
-- View all orders with full order details
-- Manage featured reviews
-- Dashboard analytics with charts
-
-### Vendor Capabilities
-- Manage own bikes
-- Track bookings and status updates
-- View earnings and booking stats dashboard with charts
-
-### Homepage Enhancements
-- Rotating featured bikes (randomized, smart caching every 2 minutes)
-- Featured destinations (places marked as featured)
-- Featured review slider
-- Responsive grid layouts, loading/empty states, improved UX
+### Reviews and Feedback
+- Multi-dimensional reviews for bikes and vendors
+- Review eligibility checks for completed bookings
+- Duplicate review prevention
+- Featured reviews for homepage
+- Helpful votes and vendor responses
 
 ### Notifications
-- Real-time notifications with Socket.IO
-- Notification center UI (in-app notification bell and center)
-- Email notifications for key events (booking, completion, review reminders)
-- Review CTAs in completion emails (direct review links)
+- Real-time notifications via Socket.IO
+- In-app notification center with unread count
+- Admin notification center for platform events
+- Email notifications for booking lifecycle events
+- Completion emails include direct review links
+
+### AI Features
+- Chatbot API for user support and platform guidance
+- Route safety prediction API using model, weather, and geocoding
+- Bike price prediction API for vendor pricing suggestions
+- Frontend integration for chatbot, route safety, and bike pricing flows
+
+### Dashboards
+- Admin analytics: users, products, orders, reviews, revenue
+- Vendor analytics: earnings, bookings, bike status, and trends
 
 ## Tech Stack
 
@@ -64,8 +67,6 @@ Customers can discover bikes, place bookings, and leave reviews. Vendors manage 
 - Tailwind CSS 4
 - React Router DOM 7
 - Axios
-- React Hot Toast
-- React Icons
 - Recharts
 - Socket.IO Client
 
@@ -76,34 +77,60 @@ Customers can discover bikes, place bookings, and leave reviews. Vendors manage 
 - Socket.IO
 - Nodemailer
 
+### AI Backends
+- Python + Flask
+- Gemini API integration for chatbot
+- Joblib model inference for route safety and price prediction
+- Open-Meteo integration for route safety weather context
+
 ## Project Structure
 
 ```text
 bikerentalplatform/
-   backend/
-      controllers/
-      model/
-      routes/
-      services/
-      index.js
-   frontend/
-      src/
-         components/
-         contexts/
-         pages/
-         utils/
-      package.json
-   README.md
-   NOTIFICATION_SETUP.md
+  backend/
+    controllers/
+    model/
+    routes/
+    services/
+    index.js
+  frontend/
+    src/
+      components/
+      contexts/
+      pages/
+      utils/
+    package.json
+  aibackend/
+    app.py
+    run-ai-backends.ps1
+    run-ai-backends.cmd
+    chatbotbackend/
+      app.py
+      requirements.txt
+    routesafetybackend/
+      app.py
+      requirements.txt
+    bikerecommendationbackend/
+      app.py
+      requirements.txt
+    pricepredictbackend/
+      app.py
+      requirements.txt
+      bike_price_model.joblib
+      model_columns.joblib
+  README.md
+  NOTIFICATION_SETUP.md
 ```
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
 - Node.js 18+
-- MongoDB (local or cloud)
+- MongoDB, local or cloud
+- Python 3.10+
 
-### 1. Install Dependencies
+## Setup
+
+### 1. Install JavaScript Dependencies
 
 ```bash
 cd backend
@@ -113,7 +140,18 @@ cd ../frontend
 npm install
 ```
 
-### 2. Configure Environment Variables
+### 2. Install AI Backend Dependencies
+
+```bash
+cd aibackend
+py -m venv .venv
+.\.venv\Scripts\python -m pip install -r chatbotbackend\requirements.txt
+.\.venv\Scripts\python -m pip install -r routesafetybackend\requirements.txt
+.\.venv\Scripts\python -m pip install -r bikerecommendationbackend\requirements.txt
+.\.venv\Scripts\python -m pip install -r pricepredictbackend\requirements.txt
+```
+
+### 3. Configure Environment Variables
 
 Create `backend/.env`:
 
@@ -123,17 +161,14 @@ NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/bikerentalplatform
 JWT_SECRET=your_jwt_secret
 
-# Frontend URL for CORS and socket
 FRONTEND_URL=http://localhost:5173
 
-# PayPal
 PAYPAL_BASE_URL=https://api-m.sandbox.paypal.com
 PAYPAL_CLIENT_ID=your_paypal_client_id
 PAYPAL_CLIENT_SECRET=your_paypal_client_secret
 PAYPAL_CURRENCY=USD
 PAYPAL_LKR_PER_USD=300
 
-# Email
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASSWORD=your_app_password
 ```
@@ -142,24 +177,66 @@ Create `frontend/.env`:
 
 ```env
 VITE_BACKEND_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5000
 VITE_GOOGLE_CLIENT_ID=your_google_client_id
+VITE_CHATBOT_URL=http://localhost:8000/api/chatbot/chat
+VITE_ROUTE_SAFETY_API_URL=http://127.0.0.1:5001
+VITE_BIKE_RECOMMENDATION_API_URL=http://127.0.0.1:5002
+VITE_PRICE_PREDICT_API_URL=http://127.0.0.1:5003
 ```
 
-### 3. Run the App
+Create `aibackend/chatbotbackend/.env`:
 
-Backend:
+```env
+GEMINI_API_KEY=your_gemini_key
+GEMINI_MODEL=gemini-2.5-flash
+ALLOW_GENERAL_AI_FALLBACK=false
+BACKEND_API_BASE=http://localhost:5000/api
+PLACES_CONTEXT_TTL_SECONDS=120
+MAX_PLACES_IN_CONTEXT=80
+FRONTEND_ORIGIN=http://localhost:5173
+MAX_HISTORY_TURNS=8
+```
+
+## Run the Full Application
+
+### Terminal 1: Main Backend
 
 ```bash
 cd backend
 npm start
 ```
 
-Frontend:
+### Terminal 2: Frontend
 
 ```bash
 cd frontend
 npm run dev
 ```
+
+### Terminal 3: AI Backends
+
+From `aibackend`, run one of these:
+
+```bash
+python app.py
+```
+
+```powershell
+.\run-ai-backends.ps1
+```
+
+```cmd
+run-ai-backends.cmd
+```
+
+Services:
+- Frontend: http://localhost:5173
+- Main API: http://localhost:5000
+- Chatbot API: http://localhost:8000
+- Route Safety API: http://localhost:5001
+- Bike Recommendation API: http://localhost:5002
+- Price Prediction API: http://localhost:5003
 
 ## Scripts
 
@@ -172,81 +249,52 @@ npm run dev
 - `npm run preview` preview production build
 - `npm run lint` run ESLint
 
-## Core API Endpoints
+## Key API Endpoints
 
 ### Users
-- `POST /api/users` create user
-- `POST /api/users/login` login
-- `POST /api/users/google-login` google login
-- `GET /api/users` get current user from token
-- `GET /api/users/all` admin list users
-- `GET /api/users/profile` get profile
-- `PUT /api/users/profile` update profile
+- `POST /api/users`
+- `POST /api/users/login`
+- `POST /api/users/google-login`
+- `GET /api/users/profile`
+- `PUT /api/users/profile`
 
 ### Products
-- `GET /api/products` list products
-- `GET /api/products/available` list available and approved products
-- `GET /api/products/vender` vendor products (route name kept for compatibility)
-- `GET /api/products/:id` product details
-- `POST /api/products` create product
-- `PUT /api/products/:id` update product
-- `DELETE /api/products/:id` delete product
-- `PUT /api/products/admin/:id/approve` admin approval update
+- `GET /api/products/available`
+- `POST /api/products`
+- `PUT /api/products/:id`
+- `DELETE /api/products/:id`
+- `PUT /api/products/admin/:id/approve`
 
 ### Orders
-- `POST /api/orders` create order
-- `GET /api/orders/my-orders` customer orders
-- `GET /api/orders/vendor-orders` vendor orders
-- `GET /api/orders/admin/all` admin all orders
-- `GET /api/orders/admin/dashboard-stats` admin dashboard analytics
-- `GET /api/orders/:orderId` get single order
-- `PUT /api/orders/:orderId/status` update order or bike status
-- `GET /api/orders/vendor/earnings` vendor earnings stats
-- `GET /api/orders/vendor/stats` vendor booking stats
+- `POST /api/orders`
+- `GET /api/orders/my-orders`
+- `GET /api/orders/vendor-orders`
+- `PUT /api/orders/:orderId/status`
 
 ### Reviews
-- `POST /api/reviews` create review
-- `POST /api/reviews/submit-multiple` create multiple reviews
-- `GET /api/reviews/product/:productId` product reviews and average
-- `GET /api/reviews/featured` featured reviews for homepage
-- `GET /api/reviews/admin/all` admin all reviews
-- `PATCH /api/reviews/admin/:reviewId/featured` set featured review
+- `POST /api/reviews/submit-multiple`
+- `GET /api/reviews/product/:productId`
+- `GET /api/reviews/featured`
 
 ### Places
 - `GET /api/places`
 - `GET /api/places/:id`
-- `POST /api/places`
-- `PUT /api/places/:id`
-- `DELETE /api/places/:id`
 
-## Dashboards
+### AI Services
+- `POST /api/chatbot/chat` (chatbot backend, port 8000)
+- `POST /api/route-safety/predict` (route safety backend, port 5001)
+- `POST /api/bike-recommendation/predict` (bike recommendation backend, port 5002)
+- `POST /api/price-predict/predict` (price prediction backend, port 5003)
 
-### Admin Dashboard
-- Customer count
-- Vendor count
-- Product, order, review totals
-- Revenue total
-- Chart analytics:
-   - Monthly orders and revenue
-   - Order status distribution
-   - User role distribution
-   - Review ratings distribution
+## UI Notes
 
-### Vendor Dashboard
-- Total earnings
-- Total bikes
-- Active and completed bookings
-- Monthly earnings bar chart
-- Booking status pie chart
-
+- The vendor bike add and update forms now include an AI suggested price action.
+- Product edits require admin approval again after update.
+- Notifications display totals in Sri Lankan rupees.
+- The homepage uses featured content and rotating cards for a more dynamic first impression.
 
 ## Notes
 
-- **Order status workflow** and validation logic are implemented in both backend and frontend for robust booking management.
-- **Review system**: Only eligible users can review, with multi-dimensional feedback and admin/vendor integration.
-- **Homepage**: Dynamic content with random bikes, featured places, and reviews for better engagement.
-- **Notification setup and email workflow** are documented in `NOTIFICATION_SETUP.md`.
-- Some older route names are kept for backward compatibility (example: `/products/vender`).
-
-🏍️ **Built with passion for the bike rental community** ❤️  
-*Connecting bike owners with adventure seekers through technology*
+- Notification setup and advanced examples are documented in `NOTIFICATION_SETUP.md`.
+- Some legacy route names are intentionally kept for compatibility, for example `/products/vender`.
+- Do not commit real `.env` secrets.

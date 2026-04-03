@@ -2,7 +2,7 @@ import { RiMotorbikeFill } from "react-icons/ri";
 import { TbReportMoney } from "react-icons/tb";
 import { BsFileEarmarkImageFill } from "react-icons/bs";
 import { Link } from "react-router-dom";
-import { use, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +29,7 @@ export default function AddbikePage() {
   // Validation states
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPredictingPrice, setIsPredictingPrice] = useState(false);
 
   // Validation function
   const validateForm = () => {
@@ -94,6 +95,48 @@ export default function AddbikePage() {
       return false;
     }
   };
+
+  async function handlePredictPrice() {
+    if (!engineCC || !manufacturingYear || !city.trim()) {
+      toast.error("Add Engine CC, Manufacturing Year, and City to predict price.");
+      return;
+    }
+
+    setIsPredictingPrice(true);
+
+    try {
+      const priceApiBase =
+        import.meta.env.VITE_PRICE_PREDICT_API_URL ;
+
+      const response = await axios.post(
+        `${priceApiBase}/api/price-predict/predict`,
+        {
+          bikeType: biketype,
+          engineCC: Number(engineCC),
+          manufacturingYear: Number(manufacturingYear),
+          fuelType,
+          city: city.trim(),
+        },
+      );
+
+      const rounded = response?.data?.suggested_price_rounded_lkr;
+      if (rounded == null) {
+        throw new Error("Invalid prediction response");
+      }
+
+      setRecommendedprice(String(rounded));
+      if (!pricePerDay) {
+        setPricePerDay(String(rounded));
+      }
+      toast.success(`AI suggested price: Rs. ${Number(rounded).toLocaleString("en-LK")}/day`);
+    } catch (error) {
+      console.error("Error predicting bike price:", error);
+      const message = error?.response?.data?.error || "Failed to get AI price suggestion.";
+      toast.error(message);
+    } finally {
+      setIsPredictingPrice(false);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault(); // Prevent form from refreshing the page
@@ -500,6 +543,17 @@ export default function AddbikePage() {
           <h1 className="text-base sm:text-lg text-[var(--navbar-text)] mb-2 sm:mb-3">
             Our recommended price per day is
           </h1>
+          <button
+            type="button"
+            onClick={handlePredictPrice}
+            disabled={isPredictingPrice}
+            className={`mb-3 h-10 px-4 rounded-md text-white font-medium transition-all duration-200 ${
+              isPredictingPrice ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
+            }`}
+            style={{ backgroundColor: "var(--button-primary-bg)" }}
+          >
+            {isPredictingPrice ? "Predicting..." : "Get AI Suggested Price"}
+          </button>
           <input
             type="text"
             value={recommendedprice}

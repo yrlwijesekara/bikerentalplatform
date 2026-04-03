@@ -731,7 +731,7 @@ export async function createOrder(req, res) {
                         senderId: customer._id,
                         type: 'booking_received',
                         title: '🎉 New Booking Received!',
-                        message: `You have received a new booking from ${customer.firstname} ${customer.lastname}. Bikes: ${bikeNames}. Total: $${vendorTotal.toFixed(2)}`,
+                        message: `You have received a new booking from ${customer.firstname} ${customer.lastname}. Bikes: ${bikeNames}. Total: Rs. ${Number(vendorTotal || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                         data: {
                             orderId: savedOrder._id,
                             orderid: orderid,
@@ -1124,6 +1124,8 @@ export async function updateOrderStatus(req, res) {
             return res.status(404).json({ message: "Order not found" });
         }
 
+        const previousOrderStatus = (order.orderStatus || '').toLowerCase();
+
         console.log("Found order:", {
             orderId: order._id,
             vendors: order.vendors,
@@ -1191,17 +1193,23 @@ export async function updateOrderStatus(req, res) {
                 }
             }
 
-            // Calculate overall order status based on all bike statuses
-            const bikeStatuses = order.bikes.map(bike => bike.bikeStatus);
+            // Calculate overall order status based on all bike statuses.
+            // Treat mixed terminal states (completed + cancelled) as completed.
+            const bikeStatuses = order.bikes.map(bike => bike.bikeStatus || "pending");
             let newOrderStatus = order.orderStatus;
 
-            if (bikeStatuses.every(status => status === "completed")) {
-                newOrderStatus = "completed";
-            } else if (bikeStatuses.every(status => status === "cancelled")) {
+            const allCancelled = bikeStatuses.every(status => status === "cancelled");
+            const allTerminal = bikeStatuses.every(status => status === "completed" || status === "cancelled");
+            const hasCompleted = bikeStatuses.some(status => status === "completed");
+
+            if (allCancelled) {
                 newOrderStatus = "cancelled";
+            } else if (allTerminal && hasCompleted) {
+                newOrderStatus = "completed";
             } else if (bikeStatuses.some(status => status === "ongoing")) {
                 newOrderStatus = "ongoing";
-            } else if (bikeStatuses.every(status => status === "confirmed" || status === "completed")) {
+            } else if (bikeStatuses.every(status => status === "confirmed" || status === "completed" || status === "cancelled") &&
+                bikeStatuses.some(status => status === "confirmed")) {
                 newOrderStatus = "confirmed";
             } else {
                 newOrderStatus = "pending";
@@ -1256,6 +1264,7 @@ export async function updateOrderStatus(req, res) {
 
         // Save the updated order
         const updatedOrder = await order.save();
+        const finalOrderStatus = (updatedOrder.orderStatus || '').toLowerCase();
         console.log("Order updated successfully:", updatedOrder._id);
 
         // Send notifications for status updates
@@ -1320,7 +1329,7 @@ export async function updateOrderStatus(req, res) {
                         senderId: customer._id,
                         type: 'payment_received',
                         title: '💰 Payment Received',
-                        message: `Payment has been received for booking #${order.orderid}. Total amount: $${order.finalTotal}`,
+                        message: `Payment has been received for booking #${order.orderid}. Total amount: Rs. ${Number(order.finalTotal || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                         data: {
                             orderId: order._id,
                             orderid: order.orderid,
@@ -1330,6 +1339,39 @@ export async function updateOrderStatus(req, res) {
                         priority: 'normal',
                         sendEmail: true
                     });
+                }
+
+                // Send admin notifications when final order status transitions to a terminal state.
+                if (
+                    customer &&
+                    (finalOrderStatus === 'completed' || finalOrderStatus === 'cancelled') &&
+                    previousOrderStatus !== finalOrderStatus
+                ) {
+                    const adminNotificationType = finalOrderStatus === 'completed' ? 'order_completed' : 'order_cancelled';
+                    const adminNotificationTitle = finalOrderStatus === 'completed' ? '✅ Order Completed' : '❌ Order Cancelled';
+                    const adminNotificationMessage = finalOrderStatus === 'completed'
+                        ? `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been completed. Total: Rs. ${Number(order.finalTotal || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been cancelled.`;
+                    
+                    try {
+                        await notificationService.notifyAllAdmins({
+                            type: adminNotificationType,
+                            title: adminNotificationTitle,
+                            message: adminNotificationMessage,
+                            data: {
+                                orderId: order._id,
+                                orderid: order.orderid,
+                                customerName: `${customer.firstname} ${customer.lastname}`,
+                                customerEmail: customer.email,
+                                total: order.finalTotal,
+                                status: finalOrderStatus
+                            },
+                            priority: finalOrderStatus === 'cancelled' ? 'high' : 'normal',
+                            sendEmail: true
+                        });
+                    } catch (adminNotificationError) {
+                        console.error('Error sending admin notification:', adminNotificationError);
+                    }
                 }
 
             } catch (notificationError) {

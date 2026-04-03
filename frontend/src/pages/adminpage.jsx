@@ -21,6 +21,7 @@ import ReviewManagement from "./admin/reviewmanagment.jsx";
 import OrderManagement from "./admin/ordermanagment.jsx";
 import ViewOrder from "./admin/vieworder.jsx";
 import Dashboard from "./admin/admindashboard.jsx";
+import AdminNotificationCenter from "../components/AdminNotificationCenter.jsx";
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -28,10 +29,15 @@ export default function Adminpage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isAuthorizing, setIsAuthorizing] = useState(true);
     const [userInfo, setUserInfo] = useState(null);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     // Check authorization on component mount
     useEffect(() => {
         checkAdminAuthorization();
+        // Poll for unread notifications every 30 seconds
+        const interval = setInterval(fetchUnreadCount, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const checkAdminAuthorization = async () => {
@@ -98,6 +104,9 @@ export default function Adminpage() {
             setUserInfo(user);
             localStorage.setItem("role", user.role);
             
+            // Fetch initial notification count after successful authorization
+            fetchUnreadCount();
+            
         } catch (error) {
             console.error("Authorization check failed:", error);
             toast.error("Authorization failed. Please login again.");
@@ -106,6 +115,29 @@ export default function Adminpage() {
             navigate("/login");
         } finally {
             setIsAuthorizing(false);
+        }
+    };
+
+    // Fetch unread notification count
+    const fetchUnreadCount = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            const response = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/notifications/admin/unread-count`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (response.data.success) {
+                setUnreadCount(response.data.unreadCount || 0);
+            }
+        } catch (error) {
+            console.error('Error fetching unread count:', error);
         }
     };
 
@@ -218,11 +250,19 @@ export default function Adminpage() {
                     <h1 className="text-xl font-bold" style={{ color: 'var(--navbar-text)' }}>Admin Panel</h1>
                 </div>
                 <div className="flex items-center space-x-3">
-                    <button className="p-2 rounded-lg transition-colors" 
-                            style={{ color: 'var(--navbar-text)' }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--navbar-hover)'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>
+                    <button 
+                        onClick={() => setShowNotifications(true)}
+                        className="relative p-2 rounded-lg transition-colors" 
+                        style={{ color: 'var(--navbar-text)' }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--navbar-hover)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        title="View notifications">
                         <HiBell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold text-[10px]">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         onClick={toggleSidebar}
@@ -344,11 +384,19 @@ export default function Adminpage() {
                         <p className="text-sm" style={{ color: 'var(--navbar-border)' }}>Manage your bike rental platform</p>
                     </div>
                     <div className="flex items-center space-x-4">
-                        <button className="p-2 rounded-lg transition-colors" 
-                                style={{ color: 'var(--navbar-border)' }}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--main-background)'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>
+                        <button 
+                            onClick={() => setShowNotifications(true)}
+                            className="relative p-2 rounded-lg transition-colors" 
+                            style={{ color: 'var(--navbar-border)' }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--main-background)'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                            title="View notifications">
                             <HiBell className="h-5 w-5" />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold text-[10px]">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                            )}
                         </button>
                         <div className="flex items-center space-x-2">
                             <div className="w-8 h-8 bg-amber-900 rounded-full flex items-center justify-center">
@@ -379,6 +427,12 @@ export default function Adminpage() {
                     </Routes>
                 </div>
             </div>
+
+            {/* Admin Notification Center */}
+            <AdminNotificationCenter 
+                showNotifications={showNotifications}
+                setShowNotifications={setShowNotifications}
+            />
         </div>
     );
 }

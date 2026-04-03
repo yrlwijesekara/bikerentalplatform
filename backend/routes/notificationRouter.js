@@ -46,4 +46,15 @@ router.post('/test', requireAuth, (req, res) => {
   notificationController.createTestNotification(req, res);
 });
 
+// Admin notification routes
+// Get admin notifications
+router.get('/admin/notifications', requireAuth, (req, res) => {
+  notificationController.getAdminNotifications(req, res);
+});
+
+// Get admin unread count
+router.get('/admin/unread-count', requireAuth, (req, res) => {
+  notificationController.getAdminUnreadCount(req, res);
+});
+
 export default router;
