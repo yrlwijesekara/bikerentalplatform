@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 from datetime import datetime
 
@@ -34,6 +35,17 @@ DEFAULT_SRI_LANKA_COORDS = {
     "official_name": "Sri Lanka",
 }
 
+WEATHER_CACHE_TTL_SECONDS = int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "300"))
+DEFAULT_WEATHER_FALLBACK = {
+    "temperature": 28.0,
+    "humidity": 70.0,
+    "rainfall": 0.0,
+    "elevation": 0.0,
+    "hourly_temperature_next_hours": [],
+    "weather_source": "default_fallback",
+}
+_WEATHER_CACHE = {}
+
 
 def get_city_coordinates(city_input: str):
     url = "https://geocoding-api.open-meteo.com/v1/search"
@@ -61,6 +73,13 @@ def get_city_coordinates(city_input: str):
 
 
 def get_live_weather_and_elevation(lat: float, lon: float):
+    cache_key = (round(lat, 4), round(lon, 4))
+    now = time.time()
+
+    cached = _WEATHER_CACHE.get(cache_key)
+    if cached and (now - cached["timestamp"]) < WEATHER_CACHE_TTL_SECONDS:
+        return cached["data"]
+
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
@@ -71,9 +90,21 @@ def get_live_weather_and_elevation(lat: float, lon: float):
         "timezone": "auto",
     }
 
-    response = requests.get(url, params=params, timeout=10)
-    response.raise_for_status()
-    payload = response.json()
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+    except requests.RequestException as exc:
+        # If upstream rate-limits us, continue with cached/default weather so predictions still work.
+        if exc.response is not None and exc.response.status_code == 429:
+            if cached:
+                fallback_from_cache = dict(cached["data"])
+                fallback_from_cache["weather_source"] = "cache_fallback_rate_limited"
+                return fallback_from_cache
+
+            return dict(DEFAULT_WEATHER_FALLBACK)
+
+        raise
 
     current = payload.get("current", {})
     hourly = payload.get("hourly", {})
@@ -105,13 +136,17 @@ def get_live_weather_and_elevation(lat: float, lon: float):
         if len(next_hours) >= 8:
             break
 
-    return {
+    weather_data = {
         "temperature": float(current.get("temperature_2m", 28.0)),
         "humidity": float(current.get("relative_humidity_2m", 70.0)),
         "rainfall": float(current.get("precipitation", 0.0)),
         "elevation": float(payload.get("elevation", 0.0)),
         "hourly_temperature_next_hours": next_hours,
+        "weather_source": "live_api",
     }
+
+    _WEATHER_CACHE[cache_key] = {"timestamp": now, "data": weather_data}
+    return weather_data
 
 
 def classify_terrain(elevation: float):
@@ -250,6 +285,7 @@ def predict_route_safety():
                 "hourly_temperature_next_hours": weather["hourly_temperature_next_hours"],
                 "humidity_percent": round(weather["humidity"], 1),
                 "rainfall_mm": round(weather["rainfall"], 2),
+                "weather_source": weather.get("weather_source", "live_api"),
                 "base_historical_risk": base_risk_text,
                 "final_risk_level": final_risk,
                 "terrain_type": terrain_type,
