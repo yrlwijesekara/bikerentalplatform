@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 
 import joblib
@@ -15,6 +16,17 @@ app = Flask(__name__)
 CORS(app)
 
 model = joblib.load(MODEL_PATH)
+
+DEFAULT_COORDS = {
+    "lat": 7.8731,
+    "lon": 80.7718,
+    "official_name": "Sri Lanka",
+}
+WEATHER_CACHE_TTL_SECONDS = int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "300"))
+DEFAULT_ELEVATION_M = float(os.getenv("DEFAULT_ELEVATION_M", "0"))
+DEFAULT_RAINFALL_MM = float(os.getenv("DEFAULT_RAINFALL_MM", "0"))
+_ELEVATION_CACHE = {}
+_RAINFALL_CACHE = {}
 
 
 def get_city_coordinates(city_name: str):
@@ -44,21 +56,41 @@ def get_city_coordinates(city_name: str):
 
 
 def get_elevation(lat: float, lon: float) -> float:
+    cache_key = (round(lat, 4), round(lon, 4))
+    now = time.time()
+    cached = _ELEVATION_CACHE.get(cache_key)
+    if cached and (now - cached["timestamp"]) < WEATHER_CACHE_TTL_SECONDS:
+        return float(cached["value"])
+
     url = "https://api.open-meteo.com/v1/elevation"
     params = {
         "latitude": lat,
         "longitude": lon,
     }
 
-    response = requests.get(url, params=params, timeout=10)
-    response.raise_for_status()
-    payload = response.json()
-
-    elevations = payload.get("elevation") or []
-    return float(elevations[0]) if elevations else 0.0
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+        elevations = payload.get("elevation") or []
+        value = float(elevations[0]) if elevations else DEFAULT_ELEVATION_M
+        _ELEVATION_CACHE[cache_key] = {"timestamp": now, "value": value}
+        return value
+    except requests.RequestException as exc:
+        if exc.response is not None and exc.response.status_code == 429:
+            if cached:
+                return float(cached["value"])
+            return DEFAULT_ELEVATION_M
+        raise
 
 
 def get_current_precipitation(lat: float, lon: float) -> float:
+    cache_key = (round(lat, 4), round(lon, 4))
+    now = time.time()
+    cached = _RAINFALL_CACHE.get(cache_key)
+    if cached and (now - cached["timestamp"]) < WEATHER_CACHE_TTL_SECONDS:
+        return float(cached["value"])
+
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
@@ -67,12 +99,20 @@ def get_current_precipitation(lat: float, lon: float) -> float:
         "timezone": "auto",
     }
 
-    response = requests.get(url, params=params, timeout=10)
-    response.raise_for_status()
-    payload = response.json()
-
-    current = payload.get("current") or {}
-    return float(current.get("precipitation", 0.0))
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+        current = payload.get("current") or {}
+        value = float(current.get("precipitation", DEFAULT_RAINFALL_MM))
+        _RAINFALL_CACHE[cache_key] = {"timestamp": now, "value": value}
+        return value
+    except requests.RequestException as exc:
+        if exc.response is not None and exc.response.status_code == 429:
+            if cached:
+                return float(cached["value"])
+            return DEFAULT_RAINFALL_MM
+        raise
 
 
 def normalize_traffic_risk(value):
@@ -86,6 +126,17 @@ def normalize_traffic_risk(value):
 
 def build_recommendation_label(prediction: int) -> str:
     return "geared bike" if prediction == 1 else "automatic scooter"
+
+
+@app.get("/")
+def index():
+    return jsonify(
+        {
+            "status": "ok",
+            "service": "bike-recommendation-ai",
+            "message": "Use POST /api/bike-recommendation/predict for predictions.",
+        }
+    )
 
 
 @app.get("/health")
@@ -112,11 +163,7 @@ def predict_bike_recommendation():
 
     try:
         if city.lower() in {"sri lanka", "srilanka"}:
-            geo_data = {
-                "lat": 7.8731,
-                "lon": 80.7718,
-                "official_name": "Sri Lanka",
-            }
+            geo_data = dict(DEFAULT_COORDS)
         else:
             geo_data = get_city_coordinates(city)
             if not geo_data:
