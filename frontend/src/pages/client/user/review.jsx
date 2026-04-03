@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
-import Footer from "../../../components/Footer";
+import Footer from "../../../components/footer";
 
 export default function Review() {
   const { orderId } = useParams();

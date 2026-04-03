@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import Footer from "../../../components/Footer";
+import Footer from "../../../components/footer";
 
 export default function Reviewvendor() {
     const PAGE_SIZE = 6;

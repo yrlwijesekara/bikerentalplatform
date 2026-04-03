@@ -7,7 +7,7 @@ import Findbike from "./user/findbike.jsx";
 import Bikes from "./vendor/bikes.jsx";
 import AddbikePage from "./vendor/addbikePage.jsx";
 import ProtectedRoute from "../../components/ProtectedRoute.jsx";
-import UpdatebikePage from "./vendor/updatebikepage.jsx";
+import UpdatebikePage from "./vendor/updatebikePage.jsx";
 import BikeOverview from "./user/bikeoverview.jsx";
 import Cart from "./user/cart.jsx";
 import Checkout from "./user/checkout.jsx";
