@@ -21,9 +21,10 @@ DEFAULT_COORDS = {
     "lat": 7.8731,
     "lon": 80.7718,
     "official_name": "Sri Lanka",
+    "elevation": 300.0,
 }
 WEATHER_CACHE_TTL_SECONDS = int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "300"))
-DEFAULT_ELEVATION_M = float(os.getenv("DEFAULT_ELEVATION_M", "0"))
+DEFAULT_ELEVATION_M = float(os.getenv("DEFAULT_ELEVATION_M", "300"))
 DEFAULT_RAINFALL_MM = float(os.getenv("DEFAULT_RAINFALL_MM", "0"))
 _ELEVATION_CACHE = {}
 _RAINFALL_CACHE = {}
@@ -52,15 +53,18 @@ def get_city_coordinates(city_name: str):
         "lat": result["latitude"],
         "lon": result["longitude"],
         "official_name": result["name"],
+        "elevation": float(result.get("elevation", DEFAULT_ELEVATION_M)),
     }
 
 
-def get_elevation(lat: float, lon: float) -> float:
+def get_elevation(lat: float, lon: float, fallback_elevation: float | None = None) -> tuple[float, str]:
     cache_key = (round(lat, 4), round(lon, 4))
     now = time.time()
     cached = _ELEVATION_CACHE.get(cache_key)
     if cached and (now - cached["timestamp"]) < WEATHER_CACHE_TTL_SECONDS:
-        return float(cached["value"])
+        return float(cached["value"]), "cache"
+
+    fallback_value = float(fallback_elevation if fallback_elevation is not None else DEFAULT_ELEVATION_M)
 
     url = "https://api.open-meteo.com/v1/elevation"
     params = {
@@ -73,14 +77,14 @@ def get_elevation(lat: float, lon: float) -> float:
         response.raise_for_status()
         payload = response.json()
         elevations = payload.get("elevation") or []
-        value = float(elevations[0]) if elevations else DEFAULT_ELEVATION_M
+        value = float(elevations[0]) if elevations else fallback_value
         _ELEVATION_CACHE[cache_key] = {"timestamp": now, "value": value}
-        return value
+        return value, "live_api"
     except requests.RequestException as exc:
         if exc.response is not None and exc.response.status_code == 429:
             if cached:
-                return float(cached["value"])
-            return DEFAULT_ELEVATION_M
+                return float(cached["value"]), "cache_fallback_rate_limited"
+            return fallback_value, "fallback_rate_limited"
         raise
 
 
@@ -169,7 +173,11 @@ def predict_bike_recommendation():
             if not geo_data:
                 return jsonify({"error": f"Could not locate '{city}' in Sri Lanka."}), 404
 
-        elevation = get_elevation(geo_data["lat"], geo_data["lon"])
+        elevation, elevation_source = get_elevation(
+            geo_data["lat"],
+            geo_data["lon"],
+            fallback_elevation=geo_data.get("elevation"),
+        )
 
         if rainfall_mm is None:
             rainfall_mm = get_current_precipitation(geo_data["lat"], geo_data["lon"])
@@ -208,6 +216,7 @@ def predict_bike_recommendation():
                 "city": city,
                 "official_location": geo_data["official_name"],
                 "elevation_m": round(elevation, 1),
+                "elevation_source": elevation_source,
                 "traffic_risk": traffic_risk,
                 "traffic_risk_label": ["Low", "Medium", "High"][traffic_risk],
                 "rainfall_mm": round(rainfall_mm, 2),
