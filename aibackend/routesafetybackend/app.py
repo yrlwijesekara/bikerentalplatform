@@ -188,6 +188,17 @@ def build_safety_tips(terrain_type: str, elevation: float, base_risk_text: str, 
     return tips
 
 
+@app.get("/")
+def index():
+    return jsonify(
+        {
+            "status": "ok",
+            "service": "route-safety-ai",
+            "message": "Use POST /api/route-safety/predict for predictions.",
+        }
+    )
+
+
 @app.get("/health")
 def health_check():
     return jsonify({"status": "ok", "service": "route-safety-ai"})
