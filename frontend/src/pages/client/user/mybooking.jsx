@@ -184,8 +184,21 @@ export default function Mybooking() {
     return (status || '').toLowerCase() === 'completed';
   };
 
+  const hasCancelledBikes = (booking) => {
+    return booking.bikes && booking.bikes.some(bike => bike.bikeStatus === 'cancelled');
+  };
+
   const BookingCard = ({ booking }) => (
     <div className="w-full bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 hover:scale-[1.02]">
+      {/* Refund Notice - Display when bikes are cancelled */}
+      {hasCancelledBikes(booking) && (
+        <div className="mb-4 p-3 bg-amber-50 border-l-4 border-amber-500 rounded-md">
+          <p className="text-sm text-amber-800">
+            <span className="font-semibold">Refund Notice:</span> One or more bikes in this order have been cancelled. You will receive a refund for the cancelled bike(s). Please contact us for more details.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Booking Header */}
         <div className="flex-1">

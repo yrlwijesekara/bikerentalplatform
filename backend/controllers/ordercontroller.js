@@ -1124,6 +1124,8 @@ export async function updateOrderStatus(req, res) {
             return res.status(404).json({ message: "Order not found" });
         }
 
+        const previousOrderStatus = (order.orderStatus || '').toLowerCase();
+
         console.log("Found order:", {
             orderId: order._id,
             vendors: order.vendors,
@@ -1191,17 +1193,23 @@ export async function updateOrderStatus(req, res) {
                 }
             }
 
-            // Calculate overall order status based on all bike statuses
-            const bikeStatuses = order.bikes.map(bike => bike.bikeStatus);
+            // Calculate overall order status based on all bike statuses.
+            // Treat mixed terminal states (completed + cancelled) as completed.
+            const bikeStatuses = order.bikes.map(bike => bike.bikeStatus || "pending");
             let newOrderStatus = order.orderStatus;
 
-            if (bikeStatuses.every(status => status === "completed")) {
-                newOrderStatus = "completed";
-            } else if (bikeStatuses.every(status => status === "cancelled")) {
+            const allCancelled = bikeStatuses.every(status => status === "cancelled");
+            const allTerminal = bikeStatuses.every(status => status === "completed" || status === "cancelled");
+            const hasCompleted = bikeStatuses.some(status => status === "completed");
+
+            if (allCancelled) {
                 newOrderStatus = "cancelled";
+            } else if (allTerminal && hasCompleted) {
+                newOrderStatus = "completed";
             } else if (bikeStatuses.some(status => status === "ongoing")) {
                 newOrderStatus = "ongoing";
-            } else if (bikeStatuses.every(status => status === "confirmed" || status === "completed")) {
+            } else if (bikeStatuses.every(status => status === "confirmed" || status === "completed" || status === "cancelled") &&
+                bikeStatuses.some(status => status === "confirmed")) {
                 newOrderStatus = "confirmed";
             } else {
                 newOrderStatus = "pending";
@@ -1256,6 +1264,7 @@ export async function updateOrderStatus(req, res) {
 
         // Save the updated order
         const updatedOrder = await order.save();
+        const finalOrderStatus = (updatedOrder.orderStatus || '').toLowerCase();
         console.log("Order updated successfully:", updatedOrder._id);
 
         // Send notifications for status updates
@@ -1332,11 +1341,15 @@ export async function updateOrderStatus(req, res) {
                     });
                 }
 
-                // Send admin notifications for order completion or cancellation
-                if (customer && (orderStatus === 'completed' || orderStatus === 'cancelled')) {
-                    const adminNotificationType = orderStatus === 'completed' ? 'order_completed' : 'order_cancelled';
-                    const adminNotificationTitle = orderStatus === 'completed' ? '✅ Order Completed' : '❌ Order Cancelled';
-                    const adminNotificationMessage = orderStatus === 'completed'
+                // Send admin notifications when final order status transitions to a terminal state.
+                if (
+                    customer &&
+                    (finalOrderStatus === 'completed' || finalOrderStatus === 'cancelled') &&
+                    previousOrderStatus !== finalOrderStatus
+                ) {
+                    const adminNotificationType = finalOrderStatus === 'completed' ? 'order_completed' : 'order_cancelled';
+                    const adminNotificationTitle = finalOrderStatus === 'completed' ? '✅ Order Completed' : '❌ Order Cancelled';
+                    const adminNotificationMessage = finalOrderStatus === 'completed'
                         ? `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been completed. Total: $${order.finalTotal}`
                         : `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been cancelled.`;
                     
@@ -1351,9 +1364,9 @@ export async function updateOrderStatus(req, res) {
                                 customerName: `${customer.firstname} ${customer.lastname}`,
                                 customerEmail: customer.email,
                                 total: order.finalTotal,
-                                status: orderStatus
+                                status: finalOrderStatus
                             },
-                            priority: orderStatus === 'cancelled' ? 'high' : 'normal',
+                            priority: finalOrderStatus === 'cancelled' ? 'high' : 'normal',
                             sendEmail: true
                         });
                     } catch (adminNotificationError) {

@@ -57,10 +57,7 @@ export default function Aisuggestion() {
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
                 Find the right bike for the road you are riding on.
               </h1>
-              <p className="mt-3 text-slate-600 max-w-2xl">
-                Enter a Sri Lankan city plus road conditions, and the Flask backend will use
-                your trained model to recommend a geared bike or an automatic scooter.
-              </p>
+             
 
               <form onSubmit={fetchRecommendation} className="mt-8 space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
