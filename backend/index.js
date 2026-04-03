@@ -1,7 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import bodyParser from 'body-parser';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import userRouter from './routes/userRouter.js';
@@ -38,7 +37,7 @@ const io = new Server(server, {
 // Initialize notification service
 const notificationService = new NotificationService(io);
 
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
