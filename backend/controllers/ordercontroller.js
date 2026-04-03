@@ -731,7 +731,7 @@ export async function createOrder(req, res) {
                         senderId: customer._id,
                         type: 'booking_received',
                         title: '🎉 New Booking Received!',
-                        message: `You have received a new booking from ${customer.firstname} ${customer.lastname}. Bikes: ${bikeNames}. Total: $${vendorTotal.toFixed(2)}`,
+                        message: `You have received a new booking from ${customer.firstname} ${customer.lastname}. Bikes: ${bikeNames}. Total: Rs. ${Number(vendorTotal || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                         data: {
                             orderId: savedOrder._id,
                             orderid: orderid,
@@ -1329,7 +1329,7 @@ export async function updateOrderStatus(req, res) {
                         senderId: customer._id,
                         type: 'payment_received',
                         title: '💰 Payment Received',
-                        message: `Payment has been received for booking #${order.orderid}. Total amount: $${order.finalTotal}`,
+                        message: `Payment has been received for booking #${order.orderid}. Total amount: Rs. ${Number(order.finalTotal || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                         data: {
                             orderId: order._id,
                             orderid: order.orderid,
@@ -1350,7 +1350,7 @@ export async function updateOrderStatus(req, res) {
                     const adminNotificationType = finalOrderStatus === 'completed' ? 'order_completed' : 'order_cancelled';
                     const adminNotificationTitle = finalOrderStatus === 'completed' ? '✅ Order Completed' : '❌ Order Cancelled';
                     const adminNotificationMessage = finalOrderStatus === 'completed'
-                        ? `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been completed. Total: $${order.finalTotal}`
+                        ? `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been completed. Total: Rs. ${Number(order.finalTotal || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                         : `Order #${order.orderid} from ${customer.firstname} ${customer.lastname} has been cancelled.`;
                     
                     try {
