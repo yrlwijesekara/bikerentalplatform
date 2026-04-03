@@ -21,6 +21,7 @@ if (!(Test-Path $sharedVenvPython)) {
         Write-Host "  .\.venv\Scripts\python -m pip install -r chatbotbackend\requirements.txt" -ForegroundColor Yellow
         Write-Host "  .\.venv\Scripts\python -m pip install -r routesafetybackend\requirements.txt" -ForegroundColor Yellow
         Write-Host "  .\.venv\Scripts\python -m pip install -r bikerecommendationbackend\requirements.txt" -ForegroundColor Yellow
+        Write-Host "  .\.venv\Scripts\python -m pip install -r pricepredictbackend\requirements.txt" -ForegroundColor Yellow
         exit 1
     }
 }

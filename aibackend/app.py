@@ -35,6 +35,7 @@ def main() -> int:
     chatbot_dir = base_dir / "chatbotbackend"
     route_safety_dir = base_dir / "routesafetybackend"
     bike_recommendation_dir = base_dir / "bikerecommendationbackend"
+    price_predict_dir = base_dir / "pricepredictbackend"
 
     python_exe = resolve_python(base_dir)
     env = os.environ.copy()
@@ -55,17 +56,24 @@ def main() -> int:
         cwd=str(bike_recommendation_dir),
         env=env,
     )
+    price_proc = subprocess.Popen(
+        [python_exe, "app.py"],
+        cwd=str(price_predict_dir),
+        env=env,
+    )
 
     print("Started AI chatbot backend on http://127.0.0.1:8000")
     print("Started route safety backend on http://127.0.0.1:5001")
     print("Started bike recommendation backend on http://127.0.0.1:5002")
-    print("Both services are running in this terminal")
+    print("Started price prediction backend on http://127.0.0.1:5003")
+    print("All AI services are running in this terminal")
 
     try:
         while True:
             chatbot_code = chatbot_proc.poll()
             route_code = route_proc.poll()
             bike_code = bike_proc.poll()
+            price_code = price_proc.poll()
 
             if chatbot_code is not None:
                 print(f"Chatbot backend exited with code {chatbot_code}")
@@ -76,13 +84,22 @@ def main() -> int:
                 print(f"Route safety backend exited with code {route_code}")
                 terminate_process(chatbot_proc)
                 terminate_process(bike_proc)
+                terminate_process(price_proc)
                 return route_code
 
             if bike_code is not None:
                 print(f"Bike recommendation backend exited with code {bike_code}")
                 terminate_process(chatbot_proc)
                 terminate_process(route_proc)
+                terminate_process(price_proc)
                 return bike_code
+
+            if price_code is not None:
+                print(f"Price prediction backend exited with code {price_code}")
+                terminate_process(chatbot_proc)
+                terminate_process(route_proc)
+                terminate_process(bike_proc)
+                return price_code
 
             time.sleep(0.5)
     except KeyboardInterrupt:
@@ -90,6 +107,7 @@ def main() -> int:
         terminate_process(chatbot_proc)
         terminate_process(route_proc)
         terminate_process(bike_proc)
+        terminate_process(price_proc)
         return 0
 
 
