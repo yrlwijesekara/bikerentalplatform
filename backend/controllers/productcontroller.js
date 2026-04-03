@@ -127,7 +127,7 @@ export async function updateProduct(req, res) {
         });
     }
     
-    const data = req.body;
+    const data = { ...req.body };
     const productId = req.params.id;
     
     try {
@@ -144,15 +144,50 @@ export async function updateProduct(req, res) {
             });
         }
         
+        // Vendors must not directly control approval/ownership/system-calculated fields.
+        delete data.isApproved;
+        delete data.vendor;
+        delete data.note;
+        delete data.rating;
+        delete data.totalReviews;
+
+        // Any vendor edit requires admin re-approval.
+        data.isApproved = false;
+
         // Update the product only if it belongs to the vendor
         const updatedProduct = await Product.findByIdAndUpdate(
             productId, 
             data, 
             { new: true, runValidators: true }
         );
+
+        // Notify admins that updated product is waiting for approval.
+        try {
+            const notificationService = req.app.locals.notificationService;
+            if (notificationService) {
+                const vendor = await User.findById(req.user.id);
+                await notificationService.notifyAllAdmins({
+                    type: 'product_added',
+                    title: '📝 Product Update Pending Approval',
+                    message: `Vendor ${vendor?.firstname} ${vendor?.lastname} has updated bike: ${updatedProduct.bikeName}. Please review and approve again.`,
+                    data: {
+                        productId: updatedProduct._id,
+                        bikeName: updatedProduct.bikeName,
+                        vendor: `${vendor?.firstname || ''} ${vendor?.lastname || ''}`.trim(),
+                        vendorId: vendor?._id,
+                        pricePerDay: updatedProduct.pricePerDay,
+                        action: 'product_updated'
+                    },
+                    priority: 'high',
+                    sendEmail: true
+                });
+            }
+        } catch (notificationError) {
+            console.error('Error sending admin notification for updated product:', notificationError);
+        }
         
         res.status(200).json({
-            message: "Product updated successfully",
+            message: "Product updated successfully and sent for admin approval",
             product: updatedProduct
         });
     } catch (error) {

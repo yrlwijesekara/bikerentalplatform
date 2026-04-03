@@ -207,12 +207,7 @@ export default function Bikes() {
         
         {/* Action Buttons */}
         <div className="flex lg:flex-col gap-2 justify-end">
-          <button 
-            className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
-            title="View Details"
-          >
-            <IoIosEye size={18} />
-          </button>
+          
           <button 
             onClick={() => navigate(`/vendor/update-bike`, { state: { bike } })}
             className="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200"
