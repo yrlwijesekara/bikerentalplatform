@@ -18,11 +18,17 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
+const PORT = process.env.PORT;
+
+const allowedOrigins = (process.env.FRONTEND_URL )
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // Setup Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL ,
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     allowedHeaders: ["*"],
     credentials: true
@@ -34,7 +40,7 @@ const notificationService = new NotificationService(io);
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: allowedOrigins,
   credentials: true,
   exposedHeaders: ["Content-Disposition", "Content-Type"]
 }));
@@ -147,7 +153,6 @@ app.use('/api/reviews', reviewRouter);
 app.use('/api/notifications', initializeNotificationRoutes(notificationService));
 
 const connectionString = process.env.MONGODB_URI;
-const PORT = process.env.PORT;
 
 mongoose.connect(connectionString).then(() => {
     console.log('Connected to MongoDB');
@@ -158,7 +163,3 @@ mongoose.connect(connectionString).then(() => {
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-/*Vv0NTmQ6Yx9iVvIu
-yehanjb_db_user
-*/
