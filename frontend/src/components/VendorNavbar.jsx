@@ -1,11 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HiMenu, HiX } from "react-icons/hi";
 import NotificationBell from "./NotificationBell";
 
 const VendorNavbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const mobileMenuRef = useRef(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -17,6 +18,26 @@ const VendorNavbar = () => {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [isMenuOpen]);
 
   return (
     <>
@@ -54,7 +75,7 @@ const VendorNavbar = () => {
       </nav>
 
       {/* Mobile Navigation */}
-      <div className="lg:hidden flex items-center gap-2">
+      <div ref={mobileMenuRef} className="lg:hidden flex items-center gap-2">
         {/* Notification Bell for mobile */}
         <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
         

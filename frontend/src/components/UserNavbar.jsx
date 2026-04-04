@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { HiMenu, HiX } from "react-icons/hi";
 import { FaOpencart } from "react-icons/fa";
 import { getCartItemCount } from "../utils/cart";
@@ -9,6 +9,7 @@ const UserNavbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const mobileMenuRef = useRef(null);
 
   useEffect(() => {
     const updateCartCount = () => {
@@ -36,6 +37,26 @@ const UserNavbar = () => {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [isMenuOpen]);
 
   return (
     <>
@@ -94,7 +115,7 @@ const UserNavbar = () => {
       </nav>
 
       {/* Mobile Navigation */}
-      <div className="lg:hidden flex items-center gap-3">
+      <div ref={mobileMenuRef} className="lg:hidden flex items-center gap-3">
         {/* Notification Bell for mobile */}
         <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
         

@@ -3,6 +3,7 @@ import axios from "axios";
 import Footer from "../../../components/footer";
 
 const apiBaseUrl = import.meta.env.VITE_ROUTE_SAFETY_API_URL ;
+let hasFetchedDefaultRouteSafety = false;
 
 export default function RouteSafety() {
     const [city, setCity] = useState("");
@@ -37,6 +38,11 @@ export default function RouteSafety() {
     };
 
     useEffect(() => {
+        if (hasFetchedDefaultRouteSafety) {
+            return;
+        }
+
+        hasFetchedDefaultRouteSafety = true;
         fetchRouteSafety("");
     }, []);
 

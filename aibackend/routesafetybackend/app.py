@@ -36,6 +36,7 @@ DEFAULT_SRI_LANKA_COORDS = {
 }
 
 WEATHER_CACHE_TTL_SECONDS = int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "300"))
+GEOCODE_CACHE_TTL_SECONDS = int(os.getenv("GEOCODE_CACHE_TTL_SECONDS", "86400"))
 DEFAULT_WEATHER_FALLBACK = {
     "temperature": 28.0,
     "humidity": 70.0,
@@ -45,9 +46,17 @@ DEFAULT_WEATHER_FALLBACK = {
     "weather_source": "default_fallback",
 }
 _WEATHER_CACHE = {}
+_GEOCODE_CACHE = {}
 
 
 def get_city_coordinates(city_input: str):
+    normalized_city = city_input.strip().lower()
+    now = time.time()
+
+    cached = _GEOCODE_CACHE.get(normalized_city)
+    if cached and (now - cached["timestamp"]) < GEOCODE_CACHE_TTL_SECONDS:
+        return cached["data"]
+
     url = "https://geocoding-api.open-meteo.com/v1/search"
     params = {
         "name": city_input,
@@ -57,19 +66,28 @@ def get_city_coordinates(city_input: str):
         "format": "json",
     }
 
-    response = requests.get(url, params=params, timeout=10)
-    response.raise_for_status()
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        if exc.response is not None and exc.response.status_code == 429 and cached:
+            return cached["data"]
+        raise
+
     payload = response.json()
 
     if not payload.get("results"):
         return None
 
     result = payload["results"][0]
-    return {
+    coordinates = {
         "lat": result["latitude"],
         "lon": result["longitude"],
         "official_name": result["name"],
     }
+
+    _GEOCODE_CACHE[normalized_city] = {"timestamp": now, "data": coordinates}
+    return coordinates
 
 
 def get_live_weather_and_elevation(lat: float, lon: float):
