@@ -49,6 +49,18 @@ _WEATHER_CACHE = {}
 _GEOCODE_CACHE = {}
 
 
+def build_hourly_temperature_fallback(base_temp: float, slots: int = 8):
+    rounded_temp = round(float(base_temp), 1)
+    start = datetime.now().replace(minute=0, second=0, microsecond=0)
+    return [
+        {
+            "time": (start + pd.Timedelta(hours=index)).strftime("%Y-%m-%d %H:%M"),
+            "temperature_c": rounded_temp,
+        }
+        for index in range(slots)
+    ]
+
+
 def get_city_coordinates(city_input: str):
     normalized_city = city_input.strip().lower()
     now = time.time()
@@ -117,10 +129,18 @@ def get_live_weather_and_elevation(lat: float, lon: float):
         if exc.response is not None and exc.response.status_code == 429:
             if cached:
                 fallback_from_cache = dict(cached["data"])
+                if not fallback_from_cache.get("hourly_temperature_next_hours"):
+                    fallback_from_cache["hourly_temperature_next_hours"] = build_hourly_temperature_fallback(
+                        fallback_from_cache.get("temperature", DEFAULT_WEATHER_FALLBACK["temperature"])
+                    )
                 fallback_from_cache["weather_source"] = "cache_fallback_rate_limited"
                 return fallback_from_cache
 
-            return dict(DEFAULT_WEATHER_FALLBACK)
+            fallback_default = dict(DEFAULT_WEATHER_FALLBACK)
+            fallback_default["hourly_temperature_next_hours"] = build_hourly_temperature_fallback(
+                fallback_default["temperature"]
+            )
+            return fallback_default
 
         raise
 
@@ -159,7 +179,9 @@ def get_live_weather_and_elevation(lat: float, lon: float):
         "humidity": float(current.get("relative_humidity_2m", 70.0)),
         "rainfall": float(current.get("precipitation", 0.0)),
         "elevation": float(payload.get("elevation", 0.0)),
-        "hourly_temperature_next_hours": next_hours,
+        "hourly_temperature_next_hours": next_hours
+        if next_hours
+        else build_hourly_temperature_fallback(float(current.get("temperature_2m", 28.0))),
         "weather_source": "live_api",
     }
 
