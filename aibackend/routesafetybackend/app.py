@@ -33,20 +33,23 @@ DEFAULT_SRI_LANKA_COORDS = {
     "lat": 7.8731,
     "lon": 80.7718,
     "official_name": "Sri Lanka",
+    "elevation": 300.0,
 }
 
 WEATHER_CACHE_TTL_SECONDS = int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "300"))
 GEOCODE_CACHE_TTL_SECONDS = int(os.getenv("GEOCODE_CACHE_TTL_SECONDS", "86400"))
+DEFAULT_ELEVATION_M = float(os.getenv("DEFAULT_ELEVATION_M", "300"))
 DEFAULT_WEATHER_FALLBACK = {
     "temperature": 28.0,
     "humidity": 70.0,
     "rainfall": 0.0,
-    "elevation": 0.0,
+    "elevation": DEFAULT_ELEVATION_M,
     "hourly_temperature_next_hours": [],
     "weather_source": "default_fallback",
 }
 _WEATHER_CACHE = {}
 _GEOCODE_CACHE = {}
+_ELEVATION_CACHE = {}
 
 
 def build_hourly_temperature_fallback(base_temp: float, slots: int = 8):
@@ -96,13 +99,46 @@ def get_city_coordinates(city_input: str):
         "lat": result["latitude"],
         "lon": result["longitude"],
         "official_name": result["name"],
+        "elevation": float(result.get("elevation", DEFAULT_ELEVATION_M)),
     }
 
     _GEOCODE_CACHE[normalized_city] = {"timestamp": now, "data": coordinates}
     return coordinates
 
 
-def get_live_weather_and_elevation(lat: float, lon: float):
+def get_live_elevation(lat: float, lon: float, fallback_elevation: float | None = None):
+    cache_key = (round(lat, 4), round(lon, 4))
+    now = time.time()
+
+    cached = _ELEVATION_CACHE.get(cache_key)
+    if cached and (now - cached["timestamp"]) < WEATHER_CACHE_TTL_SECONDS:
+        return float(cached["value"])
+
+    fallback_value = float(fallback_elevation if fallback_elevation is not None else DEFAULT_ELEVATION_M)
+
+    url = "https://api.open-meteo.com/v1/elevation"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+        elevations = payload.get("elevation") or []
+        value = float(elevations[0]) if elevations else fallback_value
+        _ELEVATION_CACHE[cache_key] = {"timestamp": now, "value": value}
+        return value
+    except requests.RequestException as exc:
+        if exc.response is not None and exc.response.status_code == 429:
+            if cached:
+                return float(cached["value"])
+            return fallback_value
+        raise
+
+
+def get_live_weather_and_elevation(lat: float, lon: float, fallback_elevation: float | None = None):
     cache_key = (round(lat, 4), round(lon, 4))
     now = time.time()
 
@@ -133,10 +169,17 @@ def get_live_weather_and_elevation(lat: float, lon: float):
                     fallback_from_cache["hourly_temperature_next_hours"] = build_hourly_temperature_fallback(
                         fallback_from_cache.get("temperature", DEFAULT_WEATHER_FALLBACK["temperature"])
                     )
+                if fallback_from_cache.get("elevation") is None:
+                    fallback_from_cache["elevation"] = float(
+                        fallback_elevation if fallback_elevation is not None else DEFAULT_ELEVATION_M
+                    )
                 fallback_from_cache["weather_source"] = "cache_fallback_rate_limited"
                 return fallback_from_cache
 
             fallback_default = dict(DEFAULT_WEATHER_FALLBACK)
+            fallback_default["elevation"] = float(
+                fallback_elevation if fallback_elevation is not None else DEFAULT_ELEVATION_M
+            )
             fallback_default["hourly_temperature_next_hours"] = build_hourly_temperature_fallback(
                 fallback_default["temperature"]
             )
@@ -174,11 +217,15 @@ def get_live_weather_and_elevation(lat: float, lon: float):
         if len(next_hours) >= 8:
             break
 
+    elevation_value = payload.get("elevation")
+    if elevation_value is None:
+        elevation_value = get_live_elevation(lat, lon, fallback_elevation=fallback_elevation)
+
     weather_data = {
         "temperature": float(current.get("temperature_2m", 28.0)),
         "humidity": float(current.get("relative_humidity_2m", 70.0)),
         "rainfall": float(current.get("precipitation", 0.0)),
-        "elevation": float(payload.get("elevation", 0.0)),
+        "elevation": float(elevation_value),
         "hourly_temperature_next_hours": next_hours
         if next_hours
         else build_hourly_temperature_fallback(float(current.get("temperature_2m", 28.0))),
@@ -295,7 +342,11 @@ def predict_route_safety():
                 return jsonify({"error": f"Could not locate '{city_input}' in Sri Lanka."}), 404
             feature_lookup_key = city_input
 
-        weather = get_live_weather_and_elevation(geo_data["lat"], geo_data["lon"])
+        weather = get_live_weather_and_elevation(
+            geo_data["lat"],
+            geo_data["lon"],
+            fallback_elevation=geo_data.get("elevation", DEFAULT_ELEVATION_M),
+        )
         terrain_type = classify_terrain(weather["elevation"])
 
         city_features = get_city_traffic_features(feature_lookup_key)
