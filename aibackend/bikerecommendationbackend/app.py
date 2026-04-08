@@ -26,8 +26,26 @@ DEFAULT_COORDS = {
 WEATHER_CACHE_TTL_SECONDS = int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "300"))
 DEFAULT_ELEVATION_M = float(os.getenv("DEFAULT_ELEVATION_M", "300"))
 DEFAULT_RAINFALL_MM = float(os.getenv("DEFAULT_RAINFALL_MM", "0"))
+OPEN_METEO_TIMEOUT_SECONDS = int(os.getenv("OPEN_METEO_TIMEOUT_SECONDS", "10"))
+OPEN_METEO_MAX_RETRIES = int(os.getenv("OPEN_METEO_MAX_RETRIES", "2"))
 _ELEVATION_CACHE = {}
 _RAINFALL_CACHE = {}
+
+
+def _open_meteo_get_json(url: str, params: dict):
+    last_error = None
+    for attempt in range(OPEN_METEO_MAX_RETRIES + 1):
+        try:
+            response = requests.get(url, params=params, timeout=OPEN_METEO_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < OPEN_METEO_MAX_RETRIES:
+                # Exponential backoff reduces repeat timeout collisions.
+                time.sleep(0.4 * (2**attempt))
+                continue
+            raise last_error
 
 
 def get_city_coordinates(city_name: str):
@@ -40,9 +58,7 @@ def get_city_coordinates(city_name: str):
         "format": "json",
     }
 
-    response = requests.get(url, params=params, timeout=10)
-    response.raise_for_status()
-    payload = response.json()
+    payload = _open_meteo_get_json(url, params)
 
     results = payload.get("results") or []
     if not results:
@@ -73,9 +89,7 @@ def get_elevation(lat: float, lon: float, fallback_elevation: float | None = Non
     }
 
     try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        payload = response.json()
+        payload = _open_meteo_get_json(url, params)
         elevations = payload.get("elevation") or []
         value = float(elevations[0]) if elevations else fallback_value
         _ELEVATION_CACHE[cache_key] = {"timestamp": now, "value": value}
@@ -85,15 +99,17 @@ def get_elevation(lat: float, lon: float, fallback_elevation: float | None = Non
             if cached:
                 return float(cached["value"]), "cache_fallback_rate_limited"
             return fallback_value, "fallback_rate_limited"
-        raise
+        if cached:
+            return float(cached["value"]), "cache_fallback_timeout"
+        return fallback_value, "fallback_timeout"
 
 
-def get_current_precipitation(lat: float, lon: float) -> float:
+def get_current_precipitation(lat: float, lon: float) -> tuple[float, str]:
     cache_key = (round(lat, 4), round(lon, 4))
     now = time.time()
     cached = _RAINFALL_CACHE.get(cache_key)
     if cached and (now - cached["timestamp"]) < WEATHER_CACHE_TTL_SECONDS:
-        return float(cached["value"])
+        return float(cached["value"]), "cache"
 
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
@@ -104,19 +120,19 @@ def get_current_precipitation(lat: float, lon: float) -> float:
     }
 
     try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        payload = response.json()
+        payload = _open_meteo_get_json(url, params)
         current = payload.get("current") or {}
         value = float(current.get("precipitation", DEFAULT_RAINFALL_MM))
         _RAINFALL_CACHE[cache_key] = {"timestamp": now, "value": value}
-        return value
+        return value, "live_api"
     except requests.RequestException as exc:
         if exc.response is not None and exc.response.status_code == 429:
             if cached:
-                return float(cached["value"])
-            return DEFAULT_RAINFALL_MM
-        raise
+                return float(cached["value"]), "cache_fallback_rate_limited"
+            return DEFAULT_RAINFALL_MM, "fallback_rate_limited"
+        if cached:
+            return float(cached["value"]), "cache_fallback_timeout"
+        return DEFAULT_RAINFALL_MM, "fallback_timeout"
 
 
 def normalize_traffic_risk(value):
@@ -180,8 +196,8 @@ def predict_bike_recommendation():
         )
 
         if rainfall_mm is None:
-            rainfall_mm = get_current_precipitation(geo_data["lat"], geo_data["lon"])
-            rainfall_source = "api_auto"
+            rainfall_mm, rainfall_fetch_source = get_current_precipitation(geo_data["lat"], geo_data["lon"])
+            rainfall_source = f"api_auto_{rainfall_fetch_source}"
         else:
             rainfall_source = "user_input"
 

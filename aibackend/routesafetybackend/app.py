@@ -29,16 +29,11 @@ if hasattr(model, "feature_names_in_"):
 else:
     FEATURE_COLUMNS = [c for c in df.columns if c not in IGNORED_COLUMNS]
 
-DEFAULT_SRI_LANKA_COORDS = {
-    "lat": 7.8731,
-    "lon": 80.7718,
-    "official_name": "Sri Lanka",
-    "elevation": 300.0,
-}
-
 WEATHER_CACHE_TTL_SECONDS = int(os.getenv("WEATHER_CACHE_TTL_SECONDS", "300"))
 GEOCODE_CACHE_TTL_SECONDS = int(os.getenv("GEOCODE_CACHE_TTL_SECONDS", "86400"))
 DEFAULT_ELEVATION_M = float(os.getenv("DEFAULT_ELEVATION_M", "300"))
+OPEN_METEO_TIMEOUT_SECONDS = int(os.getenv("OPEN_METEO_TIMEOUT_SECONDS", "10"))
+OPEN_METEO_MAX_RETRIES = int(os.getenv("OPEN_METEO_MAX_RETRIES", "2"))
 DEFAULT_WEATHER_FALLBACK = {
     "temperature": 28.0,
     "humidity": 70.0,
@@ -50,6 +45,22 @@ DEFAULT_WEATHER_FALLBACK = {
 _WEATHER_CACHE = {}
 _GEOCODE_CACHE = {}
 _ELEVATION_CACHE = {}
+
+
+def _open_meteo_get_json(url: str, params: dict):
+    last_error = None
+    for attempt in range(OPEN_METEO_MAX_RETRIES + 1):
+        try:
+            response = requests.get(url, params=params, timeout=OPEN_METEO_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < OPEN_METEO_MAX_RETRIES:
+                # Small exponential backoff helps avoid transient upstream spikes.
+                time.sleep(0.4 * (2**attempt))
+                continue
+            raise last_error
 
 
 def build_hourly_temperature_fallback(base_temp: float, slots: int = 8):
@@ -82,14 +93,13 @@ def get_city_coordinates(city_input: str):
     }
 
     try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
+        payload = _open_meteo_get_json(url, params)
     except requests.RequestException as exc:
         if exc.response is not None and exc.response.status_code == 429 and cached:
             return cached["data"]
+        if cached:
+            return cached["data"]
         raise
-
-    payload = response.json()
 
     if not payload.get("results"):
         return None
@@ -123,9 +133,7 @@ def get_live_elevation(lat: float, lon: float, fallback_elevation: float | None 
     }
 
     try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        payload = response.json()
+        payload = _open_meteo_get_json(url, params)
         elevations = payload.get("elevation") or []
         value = float(elevations[0]) if elevations else fallback_value
         _ELEVATION_CACHE[cache_key] = {"timestamp": now, "value": value}
@@ -135,7 +143,9 @@ def get_live_elevation(lat: float, lon: float, fallback_elevation: float | None 
             if cached:
                 return float(cached["value"])
             return fallback_value
-        raise
+        if cached:
+            return float(cached["value"])
+        return fallback_value
 
 
 def get_live_weather_and_elevation(lat: float, lon: float, fallback_elevation: float | None = None):
@@ -157,35 +167,72 @@ def get_live_weather_and_elevation(lat: float, lon: float, fallback_elevation: f
     }
 
     try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        payload = response.json()
+        payload = _open_meteo_get_json(url, params)
     except requests.RequestException as exc:
-        # If upstream rate-limits us, continue with cached/default weather so predictions still work.
-        if exc.response is not None and exc.response.status_code == 429:
-            if cached:
-                fallback_from_cache = dict(cached["data"])
-                if not fallback_from_cache.get("hourly_temperature_next_hours"):
-                    fallback_from_cache["hourly_temperature_next_hours"] = build_hourly_temperature_fallback(
-                        fallback_from_cache.get("temperature", DEFAULT_WEATHER_FALLBACK["temperature"])
-                    )
-                if fallback_from_cache.get("elevation") is None:
-                    fallback_from_cache["elevation"] = float(
-                        fallback_elevation if fallback_elevation is not None else DEFAULT_ELEVATION_M
-                    )
-                fallback_from_cache["weather_source"] = "cache_fallback_rate_limited"
-                return fallback_from_cache
-
-            fallback_default = dict(DEFAULT_WEATHER_FALLBACK)
-            fallback_default["elevation"] = float(
-                fallback_elevation if fallback_elevation is not None else DEFAULT_ELEVATION_M
+        # Retry with a lighter payload (current weather only) if hourly forecast fails.
+        light_payload = None
+        light_exc = None
+        try:
+            light_payload = _open_meteo_get_json(
+                url,
+                {
+                    "latitude": lat,
+                    "longitude": lon,
+                    "current": "temperature_2m,relative_humidity_2m,precipitation",
+                    "timezone": "auto",
+                },
             )
-            fallback_default["hourly_temperature_next_hours"] = build_hourly_temperature_fallback(
-                fallback_default["temperature"]
-            )
-            return fallback_default
+        except requests.RequestException as err:
+            light_exc = err
 
-        raise
+        if light_payload is not None:
+            current = light_payload.get("current", {})
+            elevation_value = get_live_elevation(lat, lon, fallback_elevation=fallback_elevation)
+            weather_data = {
+                "temperature": float(current.get("temperature_2m", DEFAULT_WEATHER_FALLBACK["temperature"])),
+                "humidity": float(current.get("relative_humidity_2m", DEFAULT_WEATHER_FALLBACK["humidity"])),
+                "rainfall": float(current.get("precipitation", DEFAULT_WEATHER_FALLBACK["rainfall"])),
+                "elevation": float(elevation_value),
+                "hourly_temperature_next_hours": build_hourly_temperature_fallback(
+                    float(current.get("temperature_2m", DEFAULT_WEATHER_FALLBACK["temperature"]))
+                ),
+                "weather_source": "live_api_current_only",
+            }
+            _WEATHER_CACHE[cache_key] = {"timestamp": now, "data": weather_data}
+            return weather_data
+
+        effective_exc = light_exc or exc
+        # Continue with cached/default weather when Open-Meteo is unavailable.
+        if cached:
+            fallback_from_cache = dict(cached["data"])
+            if not fallback_from_cache.get("hourly_temperature_next_hours"):
+                fallback_from_cache["hourly_temperature_next_hours"] = build_hourly_temperature_fallback(
+                    fallback_from_cache.get("temperature", DEFAULT_WEATHER_FALLBACK["temperature"])
+                )
+            if fallback_from_cache.get("elevation") is None:
+                fallback_from_cache["elevation"] = float(
+                    fallback_elevation if fallback_elevation is not None else DEFAULT_ELEVATION_M
+                )
+            fallback_from_cache["weather_source"] = (
+                "cache_fallback_rate_limited"
+                if effective_exc.response is not None and effective_exc.response.status_code == 429
+                else "cache_fallback_upstream_error"
+            )
+            return fallback_from_cache
+
+        fallback_default = dict(DEFAULT_WEATHER_FALLBACK)
+        fallback_default["elevation"] = float(
+            fallback_elevation if fallback_elevation is not None else DEFAULT_ELEVATION_M
+        )
+        fallback_default["hourly_temperature_next_hours"] = build_hourly_temperature_fallback(
+            fallback_default["temperature"]
+        )
+        fallback_default["weather_source"] = (
+            "default_fallback_rate_limited"
+            if effective_exc.response is not None and effective_exc.response.status_code == 429
+            else "default_fallback_upstream_error"
+        )
+        return fallback_default
 
     current = payload.get("current", {})
     hourly = payload.get("hourly", {})
@@ -331,16 +378,14 @@ def predict_route_safety():
     payload = request.get_json(silent=True) or {}
     city_input = (payload.get("city") or "").strip()
 
+    if not city_input:
+        return jsonify({"error": "City is required. Please enter a Sri Lankan city."}), 400
+
     try:
-        used_default_country = not city_input
-        if used_default_country:
-            geo_data = DEFAULT_SRI_LANKA_COORDS.copy()
-            feature_lookup_key = ""
-        else:
-            geo_data = get_city_coordinates(city_input)
-            if not geo_data:
-                return jsonify({"error": f"Could not locate '{city_input}' in Sri Lanka."}), 404
-            feature_lookup_key = city_input
+        geo_data = get_city_coordinates(city_input)
+        if not geo_data:
+            return jsonify({"error": f"Could not locate '{city_input}' in Sri Lanka."}), 404
+        feature_lookup_key = city_input
 
         weather = get_live_weather_and_elevation(
             geo_data["lat"],
@@ -365,8 +410,8 @@ def predict_route_safety():
 
         return jsonify(
             {
-                "searched_input": city_input if city_input else "Sri Lanka (default)",
-                "official_location": geo_data["official_name"] if used_default_country else f"{geo_data['official_name']}, Sri Lanka",
+                "searched_input": city_input,
+                "official_location": f"{geo_data['official_name']}, Sri Lanka",
                 "coordinates": {
                     "lat": geo_data["lat"],
                     "lon": geo_data["lon"],

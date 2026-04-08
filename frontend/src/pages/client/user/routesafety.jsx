@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import axios from "axios";
 import Footer from "../../../components/footer";
 
 const apiBaseUrl = import.meta.env.VITE_ROUTE_SAFETY_API_URL ;
-let hasFetchedDefaultRouteSafety = false;
 
 export default function RouteSafety() {
     const [city, setCity] = useState("");
@@ -37,37 +36,32 @@ export default function RouteSafety() {
         }
     };
 
-    useEffect(() => {
-        if (hasFetchedDefaultRouteSafety) {
-            return;
-        }
-
-        hasFetchedDefaultRouteSafety = true;
-        fetchRouteSafety("");
-    }, []);
-
     const handleCheckRoute = async (event) => {
         event.preventDefault();
+        if (!city.trim()) {
+            setError("City is required.");
+            setResult(null);
+            return;
+        }
         await fetchRouteSafety(city);
     };
 
     return (
-        <div className="w-full min-h-screen bg-(--main-background) flex flex-col overflow-hidden">
-        <div className="p-4 md:p-8 max-w-5xl mx-auto">
+        <div className="w-full min-h-screen bg-(--main-background) flex flex-col ">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-bold mb-2 text-black text-center">AI Route Safety</h1>
             <p className="text-gray-700 mb-6">
                 Enter a Sri Lankan city to get live weather-aware accident risk and riding guidance.
-                Leave the city empty to view Sri Lanka default details.
             </p>
 
-            <form onSubmit={handleCheckRoute} className="bg-white border rounded-xl p-4 md:p-6 shadow-sm mb-6">
+            <form onSubmit={handleCheckRoute} className="bg-white border rounded-xl p-4 md:p-6 shadow-sm mb-6 overflow-hidden">
                 <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
                 <div className="flex flex-col md:flex-row gap-3">
                     <input
                         type="text"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        placeholder="Optional: e.g. Colombo, Kandy, Galle"
+                        placeholder="Required: e.g. Colombo, Kandy, Galle"
                         className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <button
@@ -84,6 +78,11 @@ export default function RouteSafety() {
             {result && (
                 <div className="bg-white  rounded-xl p-4 md:p-6 shadow-2xl mb-6">
                     <h2 className="text-xl font-semibold text-black mb-4">Prediction Result</h2>
+                    {result.weather_source && result.weather_source !== "live_api" && (
+                        <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
+                            Live weather is temporarily unavailable. Showing {result.weather_source.replaceAll("_", " ")}.
+                        </p>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm md:text-base">
                         <p><strong>Location:</strong> {result.official_location}</p>
                         <p><strong>Final Risk:</strong> {result.final_risk_level}</p>
