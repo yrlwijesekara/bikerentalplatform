@@ -136,6 +136,22 @@ function escapeHtml(text = "") {
         .replaceAll("'", "&#039;");
 }
 
+function normalizeOrderStatus(order) {
+    const orderObject = typeof order?.toObject === "function" ? order.toObject() : { ...order };
+
+    return {
+        ...orderObject,
+        orderStatus: orderObject.orderStatus || "pending",
+        paymentStatus: orderObject.paymentStatus || "pending",
+        bikes: Array.isArray(orderObject.bikes)
+            ? orderObject.bikes.map((bikeItem) => ({
+                ...bikeItem,
+                bikeStatus: bikeItem.bikeStatus || "pending"
+            }))
+            : []
+    };
+}
+
 function streamPdfExport(res, rows, { startDate, endDate }) {
     const doc = new PDFDocument({ margin: 40, size: "A4" });
     const filename = getExportFilename("order_history", "pdf", startDate, endDate);
@@ -801,7 +817,7 @@ export async function getUserOrders(req, res) {
 
         res.status(200).json({
             message: "Orders retrieved successfully",
-            orders: orders
+            orders: orders.map(normalizeOrderStatus)
         });
 
     } catch (error) {
@@ -830,8 +846,10 @@ export async function getVendorOrders(req, res) {
 
         // Filter and modify orders to show only vendor's bikes and calculate vendor-specific totals
         const vendorOrders = allOrders.map(order => {
+            const normalizedOrder = normalizeOrderStatus(order);
+
             // Filter bikes to only include this vendor's bikes
-            const vendorBikes = order.bikes.filter(bikeItem => 
+            const vendorBikes = normalizedOrder.bikes.filter(bikeItem => 
                 bikeItem.vendor._id.toString() === req.user.id.toString()
             );
 
@@ -850,7 +868,7 @@ export async function getVendorOrders(req, res) {
 
             // Return modified order with only vendor's data
             return {
-                ...order.toObject(),
+                ...normalizedOrder,
                 bikes: vendorBikes,
                 totalAmount: vendorTotalAmount,
                 serviceFee: vendorServiceFee,
@@ -899,7 +917,7 @@ export async function getAllOrdersAdmin(req, res) {
 
         return res.status(200).json({
             message: "All orders retrieved successfully",
-            orders
+            orders: orders.map(normalizeOrderStatus)
         });
     } catch (error) {
         console.error("Error fetching all admin orders:", error);
@@ -1425,7 +1443,7 @@ export async function getOrderById(req, res) {
 
         res.status(200).json({
             message: "Order retrieved successfully",
-            order: order
+            order: normalizeOrderStatus(order)
         });
 
     } catch (error) {

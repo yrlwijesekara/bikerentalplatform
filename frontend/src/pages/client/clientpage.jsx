@@ -24,6 +24,7 @@ import Reviewvendor from "./vendor/reviewvendor.jsx";
 import RouteSafety from "./user/routesafety.jsx";
 import Aisuggestion from "./user/aisuggestion.jsx";
 import Support from "./user/usersupport.jsx";
+import VendorProfile from "./vendor/vendorprofile.jsx";
 import VendorSupport from "./vendor/vendorsupport.jsx";
 
 export default function Clientpage() {
@@ -78,6 +79,11 @@ export default function Clientpage() {
             <Route path="/vendor/reviews" element={
               <ProtectedRoute requiredRole="vendor">
                 <Reviewvendor />
+              </ProtectedRoute>
+            } />
+            <Route path="/vendor/vendor-profile" element={
+              <ProtectedRoute requiredRole="vendor">
+                <VendorProfile />
               </ProtectedRoute>
             } />
             <Route path="/vendor/support" element={

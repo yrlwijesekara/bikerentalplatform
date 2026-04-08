@@ -62,6 +62,9 @@ const VendorNavbar = () => {
         <Link to="/vendor/reviews" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
           Reviews
         </Link>
+          <Link to="/vendor/vendor-profile" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
+          Profile
+        </Link>
         
         {/* Notification Bell */}
         <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
@@ -134,6 +137,13 @@ const VendorNavbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Reviews
+              </Link>
+              <Link 
+                to="/vendor/vendor-profile" 
+                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Profile
               </Link>
               
               <button 

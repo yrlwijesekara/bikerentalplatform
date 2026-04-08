@@ -268,7 +268,7 @@ export function updateUserProfile(req, res) {
         return res.status(401).json({ error: "User not authenticated" });
     }
 
-    const { firstname, lastname, email, phone, address, city } = req.body;
+    const { firstname, lastname, email, phone, address, city, shopName, shopLicenseNo, description, image } = req.body;
 
     // Validation
     if (!firstname || !lastname || !email || !phone || !address || !city) {
@@ -285,16 +285,33 @@ export function updateUserProfile(req, res) {
         return res.status(400).json({ error: "Please enter a valid phone number (at least 10 digits)" });
     }
 
+    const updateData = {
+        firstname,
+        lastname,
+        email,
+        phone,
+        address,
+        city
+    };
+
+    if (typeof image === 'string') {
+        updateData.image = image;
+    }
+
+    if (req.user.role === 'vendor') {
+        updateData.vendorDetails = {
+            shopName: shopName || '',
+            shopLicenseNo: shopLicenseNo || '',
+            description: description || '',
+            rating: req.user.vendorDetails?.rating || 0,
+            totalReviews: req.user.vendorDetails?.totalReviews || 0,
+            isApproved: req.user.vendorDetails?.isApproved || false
+        };
+    }
+
     User.findByIdAndUpdate(
         req.user.id,
-        {
-            firstname,
-            lastname,
-            email,
-            phone,
-            address,
-            city
-        },
+        updateData,
         {
             new: true,
             runValidators: true
