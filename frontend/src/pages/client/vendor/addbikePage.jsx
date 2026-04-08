@@ -2,13 +2,15 @@ import { RiMotorbikeFill } from "react-icons/ri";
 import { TbReportMoney } from "react-icons/tb";
 import { BsFileEarmarkImageFill } from "react-icons/bs";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import MediaUpload from "../../../utils/mediaupload.jsx";
 
 export default function AddbikePage() {
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [isApprovedVendor, setIsApprovedVendor] = useState(false);
   const [bikename, setBikename] = useState("");
   const [biketype, setBiketype] = useState("Scooter");
   const [manufacturingYear, setManufacturingYear] = useState("");
@@ -30,6 +32,37 @@ export default function AddbikePage() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPredictingPrice, setIsPredictingPrice] = useState(false);
+
+  useEffect(() => {
+    const verifyVendorApproval = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Please login as a vendor first.");
+          navigate("/login");
+          return;
+        }
+
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const approved = Boolean(response.data?.vendorDetails?.isApproved);
+        setIsApprovedVendor(approved);
+
+        if (!approved) {
+          toast.error("Your vendor account needs admin approval before you can add bikes.");
+        }
+      } catch (error) {
+        console.error("Error checking vendor approval:", error);
+        toast.error(error.response?.data?.error || "Failed to verify vendor account.");
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    verifyVendorApproval();
+  }, [navigate]);
 
   // Validation function
   const validateForm = () => {
@@ -141,6 +174,11 @@ export default function AddbikePage() {
   async function handleSubmit(e) {
     e.preventDefault(); // Prevent form from refreshing the page
 
+    if (!isApprovedVendor) {
+      toast.error("Only approved vendors can add bikes.");
+      return;
+    }
+
     // Validate form before submission
     if (!validateForm()) {
       toast.error("Please fill required fields correctly.");
@@ -220,6 +258,39 @@ export default function AddbikePage() {
           display: none; /* Safari and Chrome */
         }
       `}</style>
+      {profileLoading ? (
+        <div className="min-h-full flex items-center justify-center p-4 py-6">
+          <div className="rounded-xl bg-[var(--card-background)] p-6 shadow-2xl">
+            <p className="text-slate-700">Checking vendor approval status...</p>
+          </div>
+        </div>
+      ) : !isApprovedVendor ? (
+        <div className="min-h-full flex flex-col items-center justify-center p-4 py-6">
+          <div className="w-full max-w-2xl rounded-xl bg-[var(--card-background)] p-8 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl text-amber-700">
+              <RiMotorbikeFill />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">Vendor approval required</h1>
+            <p className="mt-3 text-slate-600">
+              Your vendor account is pending admin approval. Once approved, you can add bikes and manage your fleet.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link
+                to="/vendor/vendor-profile"
+                className="rounded-lg bg-[var(--brand-primary)] px-5 py-2.5 font-medium text-white transition-colors hover:opacity-90"
+              >
+                View Vendor Profile
+              </Link>
+              <Link
+                to="/vendor/dashboard"
+                className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Go to Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="min-h-full flex flex-col items-center justify-center p-4 py-6">
         <div className="w-full max-w-3xl bg-[var(--card-background)] shadow-2xl rounded-xl p-6">
           <h1 className="text-2xl font-bold text-center mb-6 text-[var(--brand-primary)]">
@@ -563,7 +634,8 @@ export default function AddbikePage() {
           />
         </div>
       </div>
-    </div>
+      </div>
+      )}
     </div>
   );
 }

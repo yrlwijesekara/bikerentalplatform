@@ -11,6 +11,19 @@ export async function createProduct(req, res) {
         });
     }
 
+    const vendorAccount = await User.findById(req.user.id).select("vendorDetails role firstname lastname email");
+    if (!vendorAccount) {
+        return res.status(404).json({
+            message: "Vendor account not found."
+        });
+    }
+
+    if (!vendorAccount.vendorDetails?.isApproved) {
+        return res.status(403).json({
+            message: "Your vendor account is pending approval. Only approved vendors can add bikes."
+        });
+    }
+
     // Add vendor ID to product data
     const productData = {
         ...req.body,

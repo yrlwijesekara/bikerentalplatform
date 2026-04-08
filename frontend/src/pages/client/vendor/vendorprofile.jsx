@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FaEdit, FaSave, FaTimes, FaStore, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import { FaEdit, FaSave, FaTimes, FaUser, FaPhone, FaEnvelope } from "react-icons/fa";
 import Loader from "../../../components/loader.jsx";
 import Footer from "../../../components/footer.jsx";
 
@@ -18,9 +18,6 @@ export default function VendorProfile() {
     address: "",
     city: "",
     image: "",
-    shopName: "",
-    shopLicenseNo: "",
-    description: "",
   });
 
   useEffect(() => {
@@ -46,9 +43,6 @@ export default function VendorProfile() {
         address: profile.address || "",
         city: profile.city || "",
         image: profile.image || "",
-        shopName: profile.vendorDetails?.shopName || "",
-        shopLicenseNo: profile.vendorDetails?.shopLicenseNo || "",
-        description: profile.vendorDetails?.description || "",
       });
     } catch (error) {
       console.error("Error loading vendor profile:", error);
@@ -73,8 +67,6 @@ export default function VendorProfile() {
     if (!formData.phone.trim()) return toast.error("Phone number is required"), false;
     if (!formData.address.trim()) return toast.error("Address is required"), false;
     if (!formData.city.trim()) return toast.error("City is required"), false;
-    if (!formData.shopName.trim()) return toast.error("Shop name is required"), false;
-    if (!formData.shopLicenseNo.trim()) return toast.error("Shop license number is required"), false;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
@@ -126,9 +118,6 @@ export default function VendorProfile() {
       address: user.address || "",
       city: user.city || "",
       image: user.image || "",
-      shopName: user.vendorDetails?.shopName || "",
-      shopLicenseNo: user.vendorDetails?.shopLicenseNo || "",
-      description: user.vendorDetails?.description || "",
     });
     setIsEditing(false);
   };
@@ -165,8 +154,8 @@ export default function VendorProfile() {
           <p className="mb-2 inline-flex rounded-full bg-(--navbar-hover) px-4 py-1 text-sm font-medium text-white">
             Vendor Profile
           </p>
-          <h1 className="text-3xl font-bold text-(--navbar-bg)">Manage your business profile</h1>
-          <p className="mt-2 text-gray-600">Update your business and account details from one place.</p>
+          <h1 className="text-3xl font-bold text-(--navbar-bg)">Manage your account profile</h1>
+          <p className="mt-2 text-gray-600">Update your personal account details from one place.</p>
         </div>
 
         <div className="rounded-2xl bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
@@ -185,7 +174,6 @@ export default function VendorProfile() {
                 </h2>
                 <p className="text-sm font-medium text-slate-600">Vendor account</p>
                 <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                  <FaStore />
                   {user.vendorDetails?.isApproved ? "Approved business" : "Pending approval"}
                 </div>
               </div>
@@ -202,32 +190,19 @@ export default function VendorProfile() {
             )}
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div>
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Personal Details</h3>
-              <div className="space-y-4">
+          <div>
+            <h3 className="mb-4 text-lg font-semibold text-slate-900">Personal Details</h3>
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <Field label="First Name" value={formData.firstname} name="firstname" onChange={handleChange} isEditing={isEditing} />
                 <Field label="Last Name" value={formData.lastname} name="lastname" onChange={handleChange} isEditing={isEditing} />
                 <Field label="Email" value={formData.email} name="email" onChange={handleChange} isEditing={isEditing} type="email" icon={<FaEnvelope className="text-sm text-(--brand-primary)" />} />
                 <Field label="Phone" value={formData.phone} name="phone" onChange={handleChange} isEditing={isEditing} type="tel" icon={<FaPhone className="text-sm text-(--brand-primary)" />} />
                 <Field label="City" value={formData.city} name="city" onChange={handleChange} isEditing={isEditing} />
-                <Field label="Address" value={formData.address} name="address" onChange={handleChange} isEditing={isEditing} textarea />
                 <Field label="Profile Image URL" value={formData.image} name="image" onChange={handleChange} isEditing={isEditing} />
               </div>
-            </div>
-
-            <div>
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Business Details</h3>
-              <div className="space-y-4">
-                <Field label="Shop Name" value={formData.shopName} name="shopName" onChange={handleChange} isEditing={isEditing} icon={<FaStore className="text-sm text-(--brand-primary)" />} />
-                <Field label="License Number" value={formData.shopLicenseNo} name="shopLicenseNo" onChange={handleChange} isEditing={isEditing} />
-                <Field label="Business Description" value={formData.description} name="description" onChange={handleChange} isEditing={isEditing} textarea />
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm font-medium text-slate-700">Rating</p>
-                  <p className="mt-1 text-sm text-slate-600">{user.vendorDetails?.rating || 0}/5 from {user.vendorDetails?.totalReviews || 0} reviews</p>
-                </div>
-
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Address" value={formData.address} name="address" onChange={handleChange} isEditing={isEditing} textarea />
                 <div className="rounded-2xl bg-slate-50 p-4">
                   <p className="text-sm font-medium text-slate-700">Approval Status</p>
                   <p className="mt-1 text-sm text-slate-600">

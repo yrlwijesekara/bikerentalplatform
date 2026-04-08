@@ -339,7 +339,7 @@ export async function getAllUsers(req, res) {
         }
 
         const users = await User.find({})
-            .select('firstname lastname email phone role address city')
+            .select('firstname lastname email phone role address city location image isemailverified isblocked vendorDetails preferences')
             .sort({ createdAt: -1 });
 
         const formattedUsers = users.map((user) => ({
@@ -349,7 +349,15 @@ export async function getAllUsers(req, res) {
             phone: user.phone,
             address: user.address,
             city: user.city,
-            role: user.role
+            role: user.role,
+            image: user.image,
+            location: user.location,
+            isemailverified: user.isemailverified,
+            isblocked: user.isblocked,
+            vendorDetails: user.vendorDetails,
+            preferences: user.preferences,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
         }));
 
         return res.status(200).json({
@@ -358,6 +366,44 @@ export async function getAllUsers(req, res) {
         });
     } catch (error) {
         return res.status(500).json({ error: error.message || 'Failed to fetch users' });
+    }
+}
+
+export async function updateVendorApproval(req, res) {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Admin access required" });
+        }
+
+        const { id } = req.params;
+        const { isApproved } = req.body;
+
+        if (typeof isApproved !== 'boolean') {
+            return res.status(400).json({ error: "isApproved must be a boolean value" });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ error: "Vendor not found" });
+        }
+
+        if (user.role !== 'vendor') {
+            return res.status(400).json({ error: "Only vendor accounts can be approved" });
+        }
+
+        user.vendorDetails = {
+            ...(user.vendorDetails || {}),
+            isApproved
+        };
+
+        await user.save();
+
+        return res.status(200).json({
+            message: `Vendor ${isApproved ? 'approved' : 'unapproved'} successfully`,
+            user: buildUserPayload(user)
+        });
+    } catch (error) {
+        return res.status(500).json({ error: error.message || 'Failed to update vendor approval' });
     }
 }
 

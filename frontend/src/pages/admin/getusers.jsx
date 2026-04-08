@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { FaCheck, FaTimes, FaEye, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
 import Loader from "../../components/loader.jsx";
 
 export default function Users() {
@@ -11,18 +12,60 @@ export default function Users() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRole, setSelectedRole] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [approvalLoading, setApprovalLoading] = useState(false);
 
-    const filteredUsers = users.filter((user) => {
-        const searchLower = searchTerm.toLowerCase();
-        const matchesSearch =
-            (user.name || "").toLowerCase().includes(searchLower) ||
-            (user.email || "").toLowerCase().includes(searchLower) ||
-            (user.phone || "").toLowerCase().includes(searchLower);
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                setLoading(true);
+                setError(null);
 
-        const matchesRole = !selectedRole || user.role === selectedRole;
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    setError("Please login first");
+                    return;
+                }
 
-        return matchesSearch && matchesRole;
-    });
+                const response = await axios.get(
+                    `${import.meta.env.VITE_BACKEND_URL}/users/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                setUsers(response.data?.users || []);
+            } catch (err) {
+                const message = err.response?.data?.error || "Failed to fetch users";
+                setError(message);
+                toast.error(message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+    const filteredUsers = useMemo(() => {
+        const loweredSearch = searchTerm.toLowerCase();
+
+        return users.filter((user) => {
+            const matchesSearch =
+                !searchTerm ||
+                (user.name || "").toLowerCase().includes(loweredSearch) ||
+                (user.email || "").toLowerCase().includes(loweredSearch) ||
+                (user.phone || "").toLowerCase().includes(loweredSearch) ||
+                (user.city || "").toLowerCase().includes(loweredSearch) ||
+                (user.address || "").toLowerCase().includes(loweredSearch);
+
+            const matchesRole = !selectedRole || user.role === selectedRole;
+
+            return matchesSearch && matchesRole;
+        });
+    }, [users, searchTerm, selectedRole]);
 
     useEffect(() => {
         const pages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
@@ -60,45 +103,69 @@ export default function Users() {
         return pages;
     };
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+    const openDetails = (user) => {
+        setSelectedUser(user);
+    };
 
-                const token = localStorage.getItem("token");
-                if (!token) {
-                    setError("Please login first");
-                    return;
+    const closeDetails = () => {
+        if (approvalLoading) return;
+        setSelectedUser(null);
+    };
+
+    const handleVendorApproval = async (user, nextApprovalState) => {
+        try {
+            setApprovalLoading(true);
+            const token = localStorage.getItem("token");
+
+            const response = await axios.put(
+                `${import.meta.env.VITE_BACKEND_URL}/users/vendor/${user.id}/approval`,
+                { isApproved: nextApprovalState },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
+            );
 
-                const response = await axios.get(
-                    `${import.meta.env.VITE_BACKEND_URL}/users/all`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                    
-                );
+            const updatedUser = response.data?.user;
+            setUsers((prevUsers) =>
+                prevUsers.map((item) =>
+                    item.id === user.id
+                        ? {
+                              ...item,
+                              vendorDetails: {
+                                  ...(item.vendorDetails || {}),
+                                  isApproved: updatedUser?.vendorDetails?.isApproved ?? nextApprovalState,
+                              },
+                          }
+                        : item
+                )
+            );
 
-                toast.success("Users fetched successfully");
-                setUsers(response.data?.users || []);
-            } catch (err) {
-                const message = err.response?.data?.error || "Failed to fetch users";
-                setError(message);
-                toast.error(message);
-            } finally {
-                setLoading(false);
-            }
-        };
+            setSelectedUser((prevUser) =>
+                prevUser && prevUser.id === user.id
+                    ? {
+                          ...prevUser,
+                          vendorDetails: {
+                              ...(prevUser.vendorDetails || {}),
+                              isApproved: updatedUser?.vendorDetails?.isApproved ?? nextApprovalState,
+                          },
+                      }
+                    : prevUser
+            );
 
-        fetchUsers();
-    }, []);
+            toast.success(response.data?.message || "Vendor approval updated successfully");
+        } catch (err) {
+            const message = err.response?.data?.error || "Failed to update vendor approval";
+            toast.error(message);
+        } finally {
+            setApprovalLoading(false);
+        }
+    };
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <div className="flex flex-col items-center justify-center min-h-100">
                 <Loader />
                 <p className="text-gray-600 mt-4">Loading users...</p>
             </div>
@@ -107,7 +174,7 @@ export default function Users() {
 
     return (
         <div className="w-full p-4 md:p-6">
-            <div className="w-full max-w-[98vw] xl:max-w-[1600px] mx-auto">
+            <div className="w-full max-w-[98vw] xl:max-w-400 mx-auto">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Users</h1>
 
                 <div className="mb-6 text-center text-sm text-gray-600">
@@ -122,7 +189,7 @@ export default function Users() {
                                 <label className="block text-sm font-medium text-gray-700">Search User</label>
                                 <input
                                     type="text"
-                                    placeholder="Search by name, email, phone..."
+                                    placeholder="Search by name, email, phone, city..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
@@ -173,35 +240,67 @@ export default function Users() {
                         <div className="p-6 text-center text-gray-600">No users match your filters.</div>
                     ) : (
                         <div className="overflow-x-auto show-scrollbar">
-                            <table className="w-full border-collapse min-w-[700px]">
+                            <table className="w-full border-collapse min-w-225">
                                 <thead className="bg-gray-100">
                                     <tr>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Name</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Email</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Phone</th>
                                         <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Role</th>
+                                        <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Approval</th>
+                                        <th className="py-3 px-4 text-left font-semibold text-gray-700 border border-gray-300">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {paginatedUsers.map((user) => (
-                                        <tr key={user.id} className="hover:bg-gray-50">
-                                            <td className="py-3 px-4 border border-gray-300">{user.name || "N/A"}</td>
-                                            <td className="py-3 px-4 border border-gray-300">{user.email || "N/A"}</td>
-                                            <td className="py-3 px-4 border border-gray-300">{user.phone || "N/A"}</td>
-                                            <td className="py-3 px-4 border border-gray-300">
+                                    {paginatedUsers.map((user) => {
+                                        const isVendor = user.role === "vendor";
+                                        const isApproved = Boolean(user.vendorDetails?.isApproved);
 
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    user.role === "admin"
-                                                        ? "bg-purple-100 text-purple-800"
-                                                        : user.role === "vendor"
-                                                            ? "bg-blue-100 text-blue-800"
-                                                            : "bg-green-100 text-green-800"
-                                                }`}>
-                                                    {user.role}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                        return (
+                                            <tr key={user.id} className="hover:bg-gray-50">
+                                                <td className="py-3 px-4 border border-gray-300">{user.name || "N/A"}</td>
+                                                <td className="py-3 px-4 border border-gray-300">{user.email || "N/A"}</td>
+                                                <td className="py-3 px-4 border border-gray-300">{user.phone || "N/A"}</td>
+                                                <td className="py-3 px-4 border border-gray-300">
+                                                    <span
+                                                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                            user.role === "admin"
+                                                                ? "bg-purple-100 text-purple-800"
+                                                                : user.role === "vendor"
+                                                                    ? "bg-blue-100 text-blue-800"
+                                                                    : "bg-green-100 text-green-800"
+                                                        }`}
+                                                    >
+                                                        {user.role}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4 border border-gray-300">
+                                                    {isVendor ? (
+                                                        <span
+                                                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                isApproved
+                                                                    ? "bg-emerald-100 text-emerald-800"
+                                                                    : "bg-amber-100 text-amber-800"
+                                                            }`}
+                                                        >
+                                                            {isApproved ? "Approved" : "Pending"}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-sm text-gray-500">Not required</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-4 border border-gray-300">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openDetails(user)}
+                                                        className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors duration-200"
+                                                    >
+                                                        <FaEye /> View Details
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
 
@@ -258,6 +357,101 @@ export default function Users() {
                     )}
                 </div>
             </div>
+
+            {selectedUser && (
+                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:items-center">
+                    <div className="flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh]">
+                        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">User Details</h2>
+                                <p className="text-sm text-gray-500">Full information for {selectedUser.name || "this account"}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeDetails}
+                                disabled={approvalLoading}
+                                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-y-auto p-6 show-scrollbar">
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <InfoCard icon={<FaUser />} label="Name" value={selectedUser.name || "N/A"} />
+                                <InfoCard icon={<FaEnvelope />} label="Email" value={selectedUser.email || "N/A"} />
+                                <InfoCard icon={<FaPhone />} label="Phone" value={selectedUser.phone || "N/A"} />
+                                <InfoCard icon={<FaMapMarkerAlt />} label="City" value={selectedUser.city || "N/A"} />
+                                <InfoCard label="Address" value={selectedUser.address || "N/A"} />
+                                <InfoCard label="Role" value={selectedUser.role || "N/A"} />
+                                <InfoCard label="Email Verified" value={selectedUser.isemailverified ? "Yes" : "No"} />
+                                <InfoCard label="Blocked" value={selectedUser.isblocked ? "Yes" : "No"} />
+                            </div>
+
+                            {selectedUser.role === "vendor" && (
+                                <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5">
+                                    <div className="text-blue-800 font-semibold text-lg">Vendor Approval</div>
+
+                                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                        <InfoCard
+                                            label="Approval Status"
+                                            value={selectedUser.vendorDetails?.isApproved ? "Approved" : "Pending Approval"}
+                                        />
+                                    </div>
+
+                                    <div className="mt-5 flex flex-wrap gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleVendorApproval(selectedUser, true)}
+                                            disabled={approvalLoading || Boolean(selectedUser.vendorDetails?.isApproved)}
+                                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            <FaCheck /> Approve Vendor
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handleVendorApproval(selectedUser, false)}
+                                            disabled={approvalLoading || !Boolean(selectedUser.vendorDetails?.isApproved)}
+                                            className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 font-medium text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            <FaTimes /> Remove Approval
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedUser.role !== "vendor" && selectedUser.preferences && (
+                                <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">User Preferences</h3>
+                                    <div className="grid gap-4 md:grid-cols-3">
+                                        <InfoCard label="Preferred Bike Type" value={selectedUser.preferences.preferredBikeType || "N/A"} />
+                                        <InfoCard label="Travel Style" value={selectedUser.preferences.travelStyle || "N/A"} />
+                                        <InfoCard label="Budget Range" value={selectedUser.preferences.budgetRange || "N/A"} />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-6 grid gap-4 md:grid-cols-2">
+                                <InfoCard label="Created At" value={selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : "N/A"} />
+                                <InfoCard label="Updated At" value={selectedUser.updatedAt ? new Date(selectedUser.updatedAt).toLocaleString() : "N/A"} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function InfoCard({ label, value, icon = null }) {
+    return (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                {icon}
+                <span>{label}</span>
+            </div>
+            <p className="mt-2 text-sm font-semibold text-gray-900 wrap-break-word break-all">{value}</p>
         </div>
     );
 }

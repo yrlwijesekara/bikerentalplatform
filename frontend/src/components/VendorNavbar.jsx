@@ -9,14 +9,10 @@ const VendorNavbar = () => {
   const mobileMenuRef = useRef(null);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
     sessionStorage.clear();
-    navigate('/');
-  };
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+    navigate("/");
   };
 
   useEffect(() => {
@@ -39,119 +35,60 @@ const VendorNavbar = () => {
     };
   }, [isMenuOpen]);
 
+  const linkClass = "hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium";
+  const mobileLinkClass = "block px-4 py-3 hover:text-(--navbar-active) hover:bg-(--navbar-hover) transition-all font-medium border-b border-(--navbar-border) last:border-b-0";
+
   return (
     <>
-      {/* Desktop Navigation - Hidden on small screens */}
       <nav className="hidden lg:flex items-center gap-6">
-        <Link to="/vendor/dashboard" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          Dashboard
-        </Link>
-        
-        <Link to="/vendor/bikes" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          My Bikes
-        </Link>
-        
-        <Link to="/vendor/bookings" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          Bookings
-        </Link>
-        
-        <Link to="/vendor/earning" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          Earnings
-        </Link>
-        
-        <Link to="/vendor/reviews" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          Reviews
-        </Link>
-          <Link to="/vendor/vendor-profile" className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium">
-          Profile
-        </Link>
-        
-        {/* Notification Bell */}
-        <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
-        
-        <button 
+        <Link to="/vendor/dashboard" className={linkClass}>Dashboard</Link>
+        <Link to="/vendor/bikes" className={linkClass}>My Bikes</Link>
+        <Link to="/vendor/bookings" className={linkClass}>Bookings</Link>
+        <Link to="/vendor/earning" className={linkClass}>Earnings</Link>
+        <Link to="/vendor/reviews" className={linkClass}>Reviews</Link>
+        <Link to="/vendor/vendor-profile" className={linkClass}>Profile</Link>
+
+        <NotificationBell className="hover:text-(--navbar-active) hover:bg-(--navbar-hover)" />
+
+        <button
           onClick={handleLogout}
-          className="px-4 py-2 bg-[var(--brand-warning)] rounded-md hover:bg-red-600 transition-colors duration-200 font-medium text-white"
+          className="px-4 py-2 bg-(--brand-warning) rounded-md hover:bg-red-600 transition-colors duration-200 font-medium text-white"
         >
           Logout
         </button>
       </nav>
 
-      {/* Mobile Navigation */}
       <div ref={mobileMenuRef} className="lg:hidden flex items-center gap-2">
-        {/* Notification Bell for mobile */}
-        <NotificationBell className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)]" />
-        
-        {/* Hamburger Button */}
+        <NotificationBell className="hover:text-(--navbar-active) hover:bg-(--navbar-hover)" />
+
         <button
-          onClick={toggleMenu}
-          className="p-2 rounded-md hover:bg-[var(--navbar-hover)] transition-colors duration-200"
+          onClick={() => setIsMenuOpen((open) => !open)}
+          className="p-2 rounded-md hover:bg-(--navbar-hover) transition-colors duration-200"
           aria-label="Toggle menu"
         >
           {isMenuOpen ? (
-            <HiX className="h-6 w-6 text-[var(--navbar-text)]" />
+            <HiX className="h-6 w-6 text-(--navbar-text)" />
           ) : (
-            <HiMenu className="h-6 w-6 text-[var(--navbar-text)]" />
+            <HiMenu className="h-6 w-6 text-(--navbar-text)" />
           )}
         </button>
 
-        {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
-          <div className="absolute top-12 right-0 w-64 bg-[var(--navbar-bg)] border border-[var(--navbar-border)] rounded-lg shadow-xl z-50">
+          <div className="absolute top-12 right-0 w-64 bg-(--navbar-bg) border border-(--navbar-border) rounded-lg shadow-xl z-50">
             <div className="flex flex-col py-2">
-              <Link 
-                to="/vendor/dashboard" 
-                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
-              
-              <Link 
-                to="/vendor/bikes" 
-                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                My Bikes
-              </Link>
-              
-              <Link 
-                to="/vendor/bookings" 
-                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Bookings
-              </Link>
-              
-              <Link 
-                to="/vendor/earning" 
-                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Earnings
-              </Link>
-              
-              <Link 
-                to="/vendor/reviews" 
-                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Reviews
-              </Link>
-              <Link 
-                to="/vendor/vendor-profile" 
-                className="block px-4 py-3 hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] transition-all font-medium border-b border-[var(--navbar-border)] last:border-b-0"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Profile
-              </Link>
-              
-              <button 
+              <Link to="/vendor/dashboard" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+              <Link to="/vendor/bikes" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>My Bikes</Link>
+              <Link to="/vendor/bookings" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Bookings</Link>
+              <Link to="/vendor/earning" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Earnings</Link>
+              <Link to="/vendor/reviews" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Reviews</Link>
+              <Link to="/vendor/vendor-profile" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Profile</Link>
+
+              <button
                 onClick={() => {
                   handleLogout();
                   setIsMenuOpen(false);
                 }}
-                className="block mx-4 my-3 px-4 py-2 bg-[var(--brand-warning)] rounded-md hover:bg-red-600 transition-colors duration-200 font-medium text-white text-center"
+                className="block mx-4 my-3 px-4 py-2 bg-(--brand-warning) rounded-md hover:bg-red-600 transition-colors duration-200 font-medium text-white text-center"
               >
                 Logout
               </button>
