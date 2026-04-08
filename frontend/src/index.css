@@ -29,6 +29,15 @@
     --section-divider: #E0E0E0;
     --shadow-color: rgba(0,0,0,0.08);
 
+    /* Support Page Colors */
+    --support-hero-start: #08111F;
+    --support-hero-mid: #0F172A;
+    --support-hero-end: #1D4ED8;
+    --support-hero-glow: rgba(255, 255, 255, 0.16);
+    --support-hero-accent: rgba(251, 191, 36, 0.18);
+    --support-link: #2563EB;
+    --support-link-hover: #1D4ED8;
+
 }
 
 /* Hide scrollbars globally */

@@ -23,10 +23,12 @@ import Review from "./user/review.jsx";
 import Reviewvendor from "./vendor/reviewvendor.jsx";
 import RouteSafety from "./user/routesafety.jsx";
 import Aisuggestion from "./user/aisuggestion.jsx";
+import Support from "./user/usersupport.jsx";
+import VendorSupport from "./vendor/vendorsupport.jsx";
 
 export default function Clientpage() {
   return (
-    <div className="w-full min-h-screen bg-[var(--main-background)] flex flex-col overflow-hidden">
+    <div className="w-full min-h-screen bg-(--main-background) flex flex-col overflow-hidden">
         <Header />
         <Routes>
             <Route path="/find-bikes" element={<Findbike />} />
@@ -78,6 +80,11 @@ export default function Clientpage() {
                 <Reviewvendor />
               </ProtectedRoute>
             } />
+            <Route path="/vendor/support" element={
+              <ProtectedRoute requiredRole="vendor">
+                <VendorSupport />
+              </ProtectedRoute>
+            } />
             <Route path="/vendor/update-bike" element={
               <ProtectedRoute requiredRole="vendor">
                 <UpdatebikePage />
@@ -108,6 +115,7 @@ export default function Clientpage() {
             <Route path="/*" element={<Notfoundpage />} />
             <Route path="/bikeoverview/:bikeid" element={<BikeOverview />} />
             <Route path="/placeoverview/:placeid" element={<PlaceOverview />} />
+            <Route path="/support" element={<Support />} />
         </Routes>
        
     </div>

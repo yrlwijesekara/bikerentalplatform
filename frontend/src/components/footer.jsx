@@ -78,14 +78,14 @@ export default function Footer() {
   };
 
   return (
-    <footer className="w-full bg-[var(--navbar-bg)] text-[var(--navbar-text)] border-t border-[var(--navbar-border)]">
+    <footer className="w-full bg-(--navbar-bg) text-(--navbar-text) border-t border-(--navbar-border)">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           
           {/* Brand Section */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2 text-2xl font-bold hover:text-[var(--navbar-active)] transition-colors">
+            <Link to="/" className="flex items-center gap-2 text-2xl font-bold hover:text-(--navbar-active) transition-colors">
               <GiFullMotorcycleHelmet className="pt-0.5"/>
               RideLanka
             </Link>
@@ -100,19 +100,19 @@ export default function Footer() {
             <div className="flex gap-4 text-sm">
               <a 
                 href="#" 
-                className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-2 py-3 rounded transition-all"
+                className="hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-2 py-3 rounded transition-all"
               >
                 <FaFacebookF />
               </a>
               <a 
                 href="#" 
-                className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-2 py-3 rounded transition-all"
+                className="hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-2 py-3 rounded transition-all"
               >
                 <FaInstagram />
               </a>
               <a 
                 href="#" 
-                className="hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-2 py-3 rounded transition-all"
+                className="hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-2 py-3 rounded transition-all"
               >
                 <BsTwitterX />
               </a>
@@ -121,7 +121,7 @@ export default function Footer() {
 
           {/* Dynamic Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-[var(--navbar-active)]">
+            <h3 className="text-lg font-semibold text-(--navbar-active)">
               {userRole === 'vendor' ? 'Vendor Tools' : userRole === 'customer' ? 'Your Account' : 'Quick Links'}
             </h3>
             <nav className="flex flex-col space-y-2">
@@ -129,7 +129,7 @@ export default function Footer() {
                 <Link 
                   key={link.to}
                   to={link.to} 
-                  className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                 >
                   {link.text}
                 </Link>
@@ -139,90 +139,90 @@ export default function Footer() {
 
           {/* Dynamic Support Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-[var(--navbar-active)]">
+            <h3 className="text-lg font-semibold text-(--navbar-active)">
               {userRole === 'vendor' ? 'Business Support' : 'Support'}
             </h3>
             <nav className="flex flex-col space-y-2">
               {userRole === 'vendor' ? (
                 <>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  <Link 
+                    to="/vendor/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
-                    Vendor Guidelines
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                    Vendor Support Center
+                  </Link>
+                  <Link 
+                    to="/vendor/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Business Tools
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  </Link>
+                  <Link 
+                    to="/vendor/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Partner Support
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  </Link>
+                  <Link 
+                    to="/vendor/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Revenue Management
-                  </a>
+                  </Link>
                 </>
               ) : userRole === 'customer' ? (
                 <>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  <Link 
+                    to="/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Booking Support
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  </Link>
+                  <Link 
+                    to="/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Travel Insurance
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  </Link>
+                  <Link 
+                    to="/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Safety Guidelines
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  </Link>
+                  <Link 
+                    to="/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Trip Planning
-                  </a>
+                  </Link>
                 </>
               ) : (
                 <>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  <Link 
+                    to="/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Help Center
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  </Link>
+                  <Link 
+                    to="/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Safety Guidelines
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  </Link>
+                  <Link 
+                    to="/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Terms & Conditions
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-sm hover:text-[var(--navbar-active)] hover:bg-[var(--navbar-hover)] px-3 py-2 rounded transition-all font-medium w-fit"
+                  </Link>
+                  <Link 
+                    to="/support" 
+                    className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Privacy Policy
-                  </a>
+                  </Link>
                 </>
               )}
             </nav>
@@ -230,7 +230,7 @@ export default function Footer() {
 
           {/* Contact Info & Newsletter */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-[var(--navbar-active)]">
+            <h3 className="text-lg font-semibold text-(--navbar-active)">
               {userRole === 'vendor' ? 'Partner Support' : 'Contact Us'}
             </h3>
             <div className="space-y-3 text-sm">
@@ -257,7 +257,7 @@ export default function Footer() {
             </div>
             
             {/* Newsletter Signup */}
-            <div className="pt-4 border-t border-[var(--navbar-border)]">
+            <div className="pt-4 border-t border-(--navbar-border)">
               <h4 className="text-sm font-medium mb-2">
                 {userRole === 'vendor' ? 'Business Updates' : 'Stay Updated'}
               </h4>
@@ -265,9 +265,9 @@ export default function Footer() {
                 <input
                   type="email"
                   placeholder={userRole === 'vendor' ? 'Business email' : 'Your email'}
-                  className="flex-1 px-3 py-2 text-sm bg-[var(--navbar-hover)] border border-[var(--navbar-border)] rounded text-[var(--navbar-text)] placeholder-gray-400 focus:outline-none focus:border-[var(--navbar-active)] transition-colors"
+                  className="flex-1 px-3 py-2 text-sm bg-(--navbar-hover) border border-(--navbar-border) rounded text-(--navbar-text) placeholder-gray-400 focus:outline-none focus:border-(--navbar-active) transition-colors"
                 />
-                <button className="px-4 py-2 bg-[var(--navbar-active)] text-white rounded hover:bg-[var(--brand-secondary)] transition-colors duration-200 text-sm font-medium">
+                <button className="px-4 py-2 bg-(--navbar-active) text-white rounded hover:bg-(--brand-secondary) transition-colors duration-200 text-sm font-medium">
                  <MdEmail />
                 </button>
               </div>
@@ -276,7 +276,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-[var(--navbar-border)] mt-8 pt-6">
+        <div className="border-t border-(--navbar-border) mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-sm text-gray-300">
               © 2026 RideLanka Tourism Platform. All rights reserved.
@@ -286,27 +286,27 @@ export default function Footer() {
             <div className="flex gap-6 text-sm">
               <a 
                 href="#" 
-                className="hover:text-[var(--navbar-active)] transition-colors"
+                className="hover:text-(--navbar-active) transition-colors"
               >
                 Terms of Service
               </a>
               <a 
                 href="#" 
-                className="hover:text-[var(--navbar-active)] transition-colors"
+                className="hover:text-(--navbar-active) transition-colors"
               >
                 Privacy Policy
               </a>
               {userRole === 'vendor' && (
                 <a 
                   href="#" 
-                  className="hover:text-[var(--navbar-active)] transition-colors"
+                  className="hover:text-(--navbar-active) transition-colors"
                 >
                   Partner Agreement
                 </a>
               )}
               <a 
                 href="#" 
-                className="hover:text-[var(--navbar-active)] transition-colors"
+                className="hover:text-(--navbar-active) transition-colors"
               >
                 Cookie Policy
               </a>
