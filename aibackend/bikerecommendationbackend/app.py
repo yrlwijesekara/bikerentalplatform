@@ -197,9 +197,10 @@ def predict_bike_recommendation():
 
         if rainfall_mm is None:
             rainfall_mm, rainfall_fetch_source = get_current_precipitation(geo_data["lat"], geo_data["lon"])
-            rainfall_source = f"api_auto_{rainfall_fetch_source}"
+            rainfall_source = "api_auto"
         else:
             rainfall_source = "user_input"
+            rainfall_fetch_source = None
 
         rain_status = 1 if rainfall_mm > 0 else 0
 
@@ -237,6 +238,7 @@ def predict_bike_recommendation():
                 "traffic_risk_label": ["Low", "Medium", "High"][traffic_risk],
                 "rainfall_mm": round(rainfall_mm, 2),
                 "rainfall_source": rainfall_source,
+                "rainfall_source_detail": rainfall_fetch_source,
                 "rain_status": rain_status,
                 "recommendation": recommendation,
                 "recommendation_label": recommendation.title(),

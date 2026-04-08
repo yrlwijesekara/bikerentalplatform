@@ -26,13 +26,17 @@ export default function Aisuggestion() {
       setLoading(true);
       setError("");
 
-      const normalizedRainfall = rainfallMm === "" ? null : Number(rainfallMm);
-
-      const response = await axios.post(`${apiBaseUrl}/api/bike-recommendation/predict`, {
+      const hasRainfallInput = rainfallMm !== "";
+      const requestPayload = {
         city: city.trim(),
         traffic_risk: Number(trafficRisk),
-        rainfall_mm: normalizedRainfall,
-      });
+      };
+
+      if (hasRainfallInput) {
+        requestPayload.rainfall_mm = Number(rainfallMm);
+      }
+
+      const response = await axios.post(`${apiBaseUrl}/api/bike-recommendation/predict`, requestPayload);
 
       setResult(response.data);
     } catch (err) {
@@ -158,7 +162,9 @@ export default function Aisuggestion() {
                       <p className="text-slate-500">Rainfall</p>
                       <p className="font-semibold text-slate-900">{result.rainfall_mm} mm</p>
                       <p className="text-xs text-slate-500 mt-1">
-                        {result.rainfall_source === "api_auto" ? "Auto from weather API" : "Provided by user"}
+                        {String(result.rainfall_source || "").startsWith("api_auto")
+                          ? "Auto from weather API"
+                          : "Provided by user"}
                       </p>
                     </div>
                   </div>

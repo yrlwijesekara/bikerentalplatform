@@ -9,6 +9,7 @@ import { FaOpencart } from 'react-icons/fa';
 import { CiLocationOn } from 'react-icons/ci';
 import Loader from '../../../components/loader';
 import PaymentDetails from '../../../components/PaymentDetails.jsx';
+import Footer from '../../../components/footer.jsx';
 
 
 
@@ -248,6 +249,7 @@ export default function Checkout() {
     }
 
     return (
+            <div className="flex flex-col min-h-screen">
         <div className="container mx-auto px-4 py-6 max-w-6xl" style={{ backgroundColor: 'var(--main-background)' }}>
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -503,5 +505,7 @@ export default function Checkout() {
             )
             }
         </div>
+        <Footer />
+      </div>
     )
 }
