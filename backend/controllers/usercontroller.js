@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import OTP from "../model/otp.js";
+import NotificationService from "../services/notificationService.js";
 
 function getEmailTransporter() {
         const emailUser = process.env.EMAIL_USER;
@@ -447,6 +448,8 @@ export async function updateVendorApproval(req, res) {
             return res.status(400).json({ error: "Only vendor accounts can be approved" });
         }
 
+        const wasApproved = Boolean(user.vendorDetails?.isApproved);
+
         user.vendorDetails = {
             ...(user.vendorDetails || {}),
             isApproved,
@@ -454,6 +457,31 @@ export async function updateVendorApproval(req, res) {
         };
 
         await user.save();
+
+        // Notify vendor only when approval transitions from false -> true.
+        if (!wasApproved && isApproved) {
+            try {
+                const notificationService = req.app?.locals?.notificationService;
+                if (notificationService) {
+                    const vendorNotification = NotificationService.TEMPLATES.VENDOR_APPROVED();
+                    await notificationService.createNotification({
+                        recipientId: user._id,
+                        senderId: req.user.id,
+                        type: vendorNotification.type,
+                        title: vendorNotification.title,
+                        message: vendorNotification.message,
+                        data: {
+                            approvedAt: user.vendorDetails?.approvedAt,
+                            dashboardUrl: `${process.env.FRONTEND_URL || ''}/vendor`,
+                        },
+                        priority: vendorNotification.priority,
+                        sendEmail: true,
+                    });
+                }
+            } catch (notificationError) {
+                console.error('Error sending vendor approval notification:', notificationError);
+            }
+        }
 
         return res.status(200).json({
             message: `Vendor ${isApproved ? 'approved' : 'unapproved'} successfully`,

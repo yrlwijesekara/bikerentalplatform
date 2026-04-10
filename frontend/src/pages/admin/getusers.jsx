@@ -53,8 +53,10 @@ export default function Users() {
         const loweredSearch = searchTerm.toLowerCase();
 
         return users.filter((user) => {
+            const userId = (user.id || user._id || "").toString();
             const matchesSearch =
                 !searchTerm ||
+                userId.toLowerCase().includes(loweredSearch) ||
                 (user.name || "").toLowerCase().includes(loweredSearch) ||
                 (user.email || "").toLowerCase().includes(loweredSearch) ||
                 (user.phone || "").toLowerCase().includes(loweredSearch) ||
@@ -191,7 +193,7 @@ export default function Users() {
                                 <label className="block text-sm font-medium text-gray-700">Search User</label>
                                 <input
                                     type="text"
-                                    placeholder="Search by name, email, phone, city..."
+                                    placeholder="Search by user ID, name, email, phone, city..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"

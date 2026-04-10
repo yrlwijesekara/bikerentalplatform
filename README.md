@@ -15,6 +15,7 @@ A full-stack bike rental platform for customers, vendors, and admins, with a mod
 
 - Added a Flask price prediction backend and connected it to the vendor bike add/update pages.
 - Vendor edits now require admin re-approval before a bike goes live again.
+- When an admin approves a vendor account, the vendor now receives both an in-app notification and an email alert.
 - Notification totals now show in Sri Lankan rupees instead of dollar formatting.
 - Added more polished UI actions for AI suggested price on bike forms.
 - Expanded AI launcher scripts to include all Python services.
@@ -47,6 +48,7 @@ A full-stack bike rental platform for customers, vendors, and admins, with a mod
 - In-app notification center with unread count
 - Admin notification center for platform events
 - Email notifications for booking lifecycle events
+- Vendor approval notifications (in-app + email) on admin approval
 - Completion emails include direct review links
 
 ### AI Features
@@ -257,6 +259,7 @@ Services:
 - `POST /api/users/google-login`
 - `GET /api/users/profile`
 - `PUT /api/users/profile`
+- `PUT /api/users/vendor/:id/approval` (admin vendor approval action)
 
 ### Products
 - `GET /api/products/available`

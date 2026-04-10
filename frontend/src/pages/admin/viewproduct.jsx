@@ -27,6 +27,8 @@ export default function ViewProduct() {
         images: [],
         isAvailable: false,
         vendor: null,
+        vendorName: "",
+        vendorPhone: "",
         isApproved: false,
         adminNote: "",
         recommendedprice: ""
@@ -57,6 +59,13 @@ export default function ViewProduct() {
                 );
                 
                 const product = response.data.product;
+                const vendorName = product.vendor && typeof product.vendor === 'object'
+                    ? `${product.vendor.firstname || ''} ${product.vendor.lastname || ''}`.trim()
+                    : "";
+                const vendorPhone = product.vendor && typeof product.vendor === 'object'
+                    ? (product.vendor.phone || "")
+                    : "";
+
                 setProductData({
                     bikeName: product.bikeName || "",
                     bikeType: product.bikeType || "",
@@ -72,6 +81,8 @@ export default function ViewProduct() {
                     images: product.images || [],
                     isAvailable: product.isAvailable || false,
                     vendor: product.vendor || null,
+                    vendorName,
+                    vendorPhone,
                     isApproved: product.isApproved || false,
                     adminNote: product.adminNote || "",
                     recommendedprice: product.recommendedprice || ""
@@ -301,6 +312,31 @@ export default function ViewProduct() {
                                         {productData.mapUrl}
                                     </a>
                                 ) : "Not specified"}
+                            </div>
+                        </div>
+
+                        {/* Vendor Information Section */}
+                        <div className="md:col-span-2 mt-6">
+                            <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b pb-2">
+                                Vendor Information
+                            </h3>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Vendor Name
+                            </label>
+                            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-800">
+                                {productData.vendorName || "Not specified"}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Vendor Telephone
+                            </label>
+                            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-800">
+                                {productData.vendorPhone || "Not specified"}
                             </div>
                         </div>
 

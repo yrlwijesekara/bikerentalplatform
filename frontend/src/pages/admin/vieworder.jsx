@@ -158,7 +158,12 @@ export default function ViewOrder() {
                                                 <p className="text-xs text-gray-500">{item.bike?.bikeType || "N/A"} {item.bike?.city ? `| ${item.bike.city}` : ""}</p>
                                             </td>
                                             <td className="py-3 px-4 border-b text-sm text-gray-800">
-                                                {item.vendor ? `${item.vendor.firstname || ""} ${item.vendor.lastname || ""}`.trim() : "Unknown Vendor"}
+                                                <p>
+                                                    {item.vendor ? `${item.vendor.firstname || ""} ${item.vendor.lastname || ""}`.trim() : "Unknown Vendor"}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    ID: {item.vendor?._id || "N/A"}
+                                                </p>
                                             </td>
                                             <td className="py-3 px-4 border-b text-sm text-gray-800">{item.quantity || 0}</td>
                                             <td className="py-3 px-4 border-b text-sm text-gray-800">{item.rentalDays || 0}</td>

@@ -301,7 +301,7 @@ export async function getproductinfo(req, res) {
         let product;
         
         if(checkAdmin(req.user) || checkVendor(req.user)) {
-            product = await Product.findById(productId);
+            product = await Product.findById(productId).populate('vendor', 'firstname lastname phone');
         } else {
             product = await Product.findOne({ _id: productId, isAvailable: true  });
         }
