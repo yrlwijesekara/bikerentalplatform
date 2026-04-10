@@ -84,7 +84,8 @@ export function createUser(req, res) {
             description: req.body.description,
             rating: req.body.rating || 0,
             totalReviews: req.body.totalReviews || 0,
-            isApproved: req.body.isApproved || false
+            isApproved: req.body.isApproved || false,
+            approvedAt: req.body.isApproved ? new Date() : null
         } : undefined,
         preferences: {
             preferredBikeType: req.body.preferredBikeType,
@@ -94,7 +95,29 @@ export function createUser(req, res) {
     }
     const newUser = new User(userData);
     newUser.save()
-        .then(() => {
+        .then(async () => {
+            if (newUser.role === 'vendor') {
+                try {
+                    const notificationService = req.app?.locals?.notificationService;
+                    if (notificationService) {
+                        await notificationService.notifyAllAdmins({
+                            type: 'vendor_registered',
+                            title: 'New Vendor Registration',
+                            message: `A new vendor account was created by ${newUser.firstname} ${newUser.lastname}.`,
+                            data: {
+                                vendorId: newUser._id,
+                                vendorName: `${newUser.firstname || ''} ${newUser.lastname || ''}`.trim(),
+                                vendorEmail: newUser.email,
+                            },
+                            priority: 'high',
+                            sendEmail: true,
+                        });
+                    }
+                } catch (notificationError) {
+                    console.error('Error sending admin notification for vendor registration:', notificationError);
+                }
+            }
+
             // Remove password from response
             const { password, ...userResponse } = newUser.toObject();
             res.status(201).json(
@@ -193,10 +216,34 @@ export async function googleLoginUser(req, res) {
                         description: '',
                         rating: 0,
                         totalReviews: 0,
-                        isApproved: false
+                        isApproved: false,
+                        approvedAt: null
                     }
                     : undefined
             });
+
+            if (requestedRole === 'vendor') {
+                try {
+                    const notificationService = req.app?.locals?.notificationService;
+                    if (notificationService) {
+                        await notificationService.notifyAllAdmins({
+                            type: 'vendor_registered',
+                            title: 'New Vendor Registration',
+                            message: `A new vendor account was created by ${user.firstname} ${user.lastname} via Google login.`,
+                            data: {
+                                vendorId: user._id,
+                                vendorName: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+                                vendorEmail: user.email,
+                                signupMethod: 'google',
+                            },
+                            priority: 'high',
+                            sendEmail: true,
+                        });
+                    }
+                } catch (notificationError) {
+                    console.error('Error sending admin notification for Google vendor registration:', notificationError);
+                }
+            }
         } else if (!user.image && googleUser.picture) {
             user.image = googleUser.picture;
             if (!user.isemailverified) {
@@ -305,7 +352,8 @@ export function updateUserProfile(req, res) {
             description: description || '',
             rating: req.user.vendorDetails?.rating || 0,
             totalReviews: req.user.vendorDetails?.totalReviews || 0,
-            isApproved: req.user.vendorDetails?.isApproved || false
+            isApproved: req.user.vendorDetails?.isApproved || false,
+            approvedAt: req.user.vendorDetails?.approvedAt || null
         };
     }
 
@@ -339,7 +387,7 @@ export async function getAllUsers(req, res) {
         }
 
         const users = await User.find({})
-            .select('firstname lastname email phone role address city location image isemailverified isblocked vendorDetails preferences')
+            .select('firstname lastname email phone role address city location image isemailverified isblocked vendorDetails preferences createdAt updatedAt')
             .sort({ createdAt: -1 });
 
         const formattedUsers = users.map((user) => ({
@@ -354,7 +402,15 @@ export async function getAllUsers(req, res) {
             location: user.location,
             isemailverified: user.isemailverified,
             isblocked: user.isblocked,
-            vendorDetails: user.vendorDetails,
+            vendorDetails: user.role === 'vendor'
+                ? {
+                    ...(user.vendorDetails || {}),
+                    // Backward-compatibility for previously approved vendors without approvedAt.
+                    approvedAt:
+                        user.vendorDetails?.approvedAt ||
+                        (user.vendorDetails?.isApproved ? user.updatedAt : null),
+                }
+                : user.vendorDetails,
             preferences: user.preferences,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
@@ -393,7 +449,8 @@ export async function updateVendorApproval(req, res) {
 
         user.vendorDetails = {
             ...(user.vendorDetails || {}),
-            isApproved
+            isApproved,
+            approvedAt: isApproved ? new Date() : null
         };
 
         await user.save();

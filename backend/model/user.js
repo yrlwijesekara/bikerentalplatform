@@ -33,7 +33,8 @@ const userSchema = new mongoose.Schema({
         description: String,
         rating: { type: Number, default: 0 },
         totalReviews: { type: Number, default: 0 },
-        isApproved: { type: Boolean, default: false }
+        isApproved: { type: Boolean, default: false },
+        approvedAt: { type: Date, default: null }
     },
 
     preferences: {

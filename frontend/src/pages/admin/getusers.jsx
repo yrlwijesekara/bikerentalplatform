@@ -136,6 +136,7 @@ export default function Users() {
                               vendorDetails: {
                                   ...(item.vendorDetails || {}),
                                   isApproved: updatedUser?.vendorDetails?.isApproved ?? nextApprovalState,
+                                  approvedAt: updatedUser?.vendorDetails?.approvedAt ?? (nextApprovalState ? new Date().toISOString() : null),
                               },
                           }
                         : item
@@ -149,6 +150,7 @@ export default function Users() {
                           vendorDetails: {
                               ...(prevUser.vendorDetails || {}),
                               isApproved: updatedUser?.vendorDetails?.isApproved ?? nextApprovalState,
+                              approvedAt: updatedUser?.vendorDetails?.approvedAt ?? (nextApprovalState ? new Date().toISOString() : null),
                           },
                       }
                     : prevUser
@@ -397,6 +399,10 @@ export default function Users() {
                                             label="Approval Status"
                                             value={selectedUser.vendorDetails?.isApproved ? "Approved" : "Pending Approval"}
                                         />
+                                        <InfoCard
+                                            label="Approved At"
+                                            value={selectedUser.vendorDetails?.approvedAt ? new Date(selectedUser.vendorDetails.approvedAt).toLocaleString() : "N/A"}
+                                        />
                                     </div>
 
                                     <div className="mt-5 flex flex-wrap gap-3">
@@ -433,8 +439,15 @@ export default function Users() {
                             )}
 
                             <div className="mt-6 grid gap-4 md:grid-cols-2">
-                                <InfoCard label="Created At" value={selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : "N/A"} />
-                                <InfoCard label="Updated At" value={selectedUser.updatedAt ? new Date(selectedUser.updatedAt).toLocaleString() : "N/A"} />
+                                <InfoCard label="Registered At" value={selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : "N/A"} />
+                                <InfoCard
+                                    label={selectedUser.role === "vendor" ? "Approval Updated At" : "Updated At"}
+                                    value={
+                                        selectedUser.role === "vendor"
+                                            ? (selectedUser.vendorDetails?.approvedAt ? new Date(selectedUser.vendorDetails.approvedAt).toLocaleString() : "N/A")
+                                            : (selectedUser.updatedAt ? new Date(selectedUser.updatedAt).toLocaleString() : "N/A")
+                                    }
+                                />
                             </div>
                         </div>
                     </div>

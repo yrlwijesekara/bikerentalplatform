@@ -274,6 +274,9 @@ export default function AddbikePage() {
             <p className="mt-3 text-slate-600">
               Your vendor account is pending admin approval. Once approved, you can add bikes and manage your fleet.
             </p>
+             <p className="mt-3 text-slate-600">
+              Please fill your profile
+            </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
                 to="/vendor/vendor-profile"

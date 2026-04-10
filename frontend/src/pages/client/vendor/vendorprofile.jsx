@@ -199,7 +199,7 @@ export default function VendorProfile() {
                 <Field label="Email" value={formData.email} name="email" onChange={handleChange} isEditing={isEditing} type="email" icon={<FaEnvelope className="text-sm text-(--brand-primary)" />} />
                 <Field label="Phone" value={formData.phone} name="phone" onChange={handleChange} isEditing={isEditing} type="tel" icon={<FaPhone className="text-sm text-(--brand-primary)" />} />
                 <Field label="City" value={formData.city} name="city" onChange={handleChange} isEditing={isEditing} />
-                <Field label="Profile Image URL" value={formData.image} name="image" onChange={handleChange} isEditing={isEditing} />
+               
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Address" value={formData.address} name="address" onChange={handleChange} isEditing={isEditing} textarea />
