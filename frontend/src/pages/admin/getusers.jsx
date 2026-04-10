@@ -14,6 +14,9 @@ export default function Users() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedUser, setSelectedUser] = useState(null);
     const [approvalLoading, setApprovalLoading] = useState(false);
+    const [vendorProducts, setVendorProducts] = useState([]);
+    const [vendorProductsLoading, setVendorProductsLoading] = useState(false);
+    const [vendorProductsError, setVendorProductsError] = useState("");
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -105,13 +108,55 @@ export default function Users() {
         return pages;
     };
 
-    const openDetails = (user) => {
+    const openDetails = async (user) => {
         setSelectedUser(user);
+        setVendorProducts([]);
+        setVendorProductsError("");
+
+        if (user.role !== "vendor") {
+            return;
+        }
+
+        try {
+            setVendorProductsLoading(true);
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                setVendorProductsError("Please login first");
+                return;
+            }
+
+            const response = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/products`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const allProducts = response.data?.products || [];
+            const selectedUserId = (user.id || user._id || "").toString();
+
+            const vendorBikeList = allProducts.filter((product) => {
+                const vendorId = (product.vendor?._id || product.vendor || "").toString();
+                return vendorId === selectedUserId;
+            });
+
+            setVendorProducts(vendorBikeList);
+        } catch (err) {
+            const message = err.response?.data?.message || "Failed to load vendor bikes";
+            setVendorProductsError(message);
+        } finally {
+            setVendorProductsLoading(false);
+        }
     };
 
     const closeDetails = () => {
         if (approvalLoading) return;
         setSelectedUser(null);
+        setVendorProducts([]);
+        setVendorProductsError("");
     };
 
     const handleVendorApproval = async (user, nextApprovalState) => {
@@ -425,6 +470,34 @@ export default function Users() {
                                         >
                                             <FaTimes /> Remove Approval
                                         </button>
+                                    </div>
+
+                                    <div className="mt-6 rounded-xl border border-blue-200 bg-white p-4">
+                                        <h4 className="text-sm font-semibold text-gray-800">Vendor Bikes Added</h4>
+                                        <p className="mt-1 text-sm text-gray-700">
+                                            Bike Count: <span className="font-semibold">{vendorProducts.length}</span>
+                                        </p>
+
+                                        {vendorProductsLoading ? (
+                                            <p className="mt-3 text-sm text-gray-600">Loading bikes...</p>
+                                        ) : vendorProductsError ? (
+                                            <p className="mt-3 text-sm text-red-600">{vendorProductsError}</p>
+                                        ) : vendorProducts.length === 0 ? (
+                                            <p className="mt-3 text-sm text-gray-600">No bikes added by this vendor yet.</p>
+                                        ) : (
+                                            <div className="mt-3 max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3 show-scrollbar">
+                                                <ul className="space-y-2">
+                                                    {vendorProducts.map((bike) => (
+                                                        <li key={bike._id} className="rounded-md border border-gray-200 bg-white p-2">
+                                                            <p className="text-sm font-medium text-gray-900">{bike.bikeName || "Unnamed Bike"}</p>
+                                                            <p className="text-xs text-gray-600">
+                                                                {bike.bikeType || "N/A"} | {bike.city || "N/A"} | Rs. {Number(bike.pricePerDay || 0).toLocaleString()}
+                                                            </p>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
