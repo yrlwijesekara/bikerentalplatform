@@ -38,8 +38,8 @@ const faqItems = [
         answer: "Go to My Bookings and check the current booking status before contacting support.",
     },
     {
-        question: "Do you help vendors too?",
-        answer: "Yes. Vendor users can use the footer's business support links and contact details.",
+        question: "How do I get a refund for a cancelled booking?",
+        answer: "Refunds are processed within 5-7 business days. Contact support with your booking ID for assistance.",
     },
 ];
 
@@ -119,7 +119,7 @@ export default function Support() {
                                 <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-200">
                                     <li>Have your booking ID ready before contacting support.</li>
                                     <li>For route and weather questions, try the AI suggestions page first.</li>
-                                    <li>Vendor users can use the footer's business support links for account issues.</li>
+                                    <li>Refund requests are processed within 5-7 business days.</li>
                                 </ul>
                             </div>
 

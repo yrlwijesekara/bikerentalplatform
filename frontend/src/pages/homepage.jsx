@@ -30,6 +30,13 @@ export default function Homepage() {
   const [featuredReviews, setFeaturedReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [currentReviewSlide, setCurrentReviewSlide] = useState(0);
+  const [refundSummary, setRefundSummary] = useState({
+    cancelledOrders: 0,
+    cancelledBikes: 0,
+    refundableSubtotal: 0,
+    refundableServiceFee: 0,
+    refundableAmount: 0,
+  });
 
   useEffect(() => {
     // Check if user is already logged in and redirect based on role
@@ -239,6 +246,75 @@ export default function Homepage() {
     fetchFeaturedReviews();
   }, []);
 
+  // Refund summary for logged-in users (based on cancelled bike items)
+  useEffect(() => {
+    const fetchRefundSummary = async () => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      if (!token || role !== "user") {
+        setRefundSummary({
+          cancelledOrders: 0,
+          cancelledBikes: 0,
+          refundableSubtotal: 0,
+          refundableServiceFee: 0,
+          refundableAmount: 0,
+        });
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/orders/my-orders`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const orders = response.data?.orders || [];
+
+        let cancelledOrders = 0;
+        let cancelledBikes = 0;
+        let refundableSubtotal = 0;
+        let refundableServiceFee = 0;
+        let refundableAmount = 0;
+
+        orders.forEach((order) => {
+          const cancelledItems = (order.bikes || []).filter(
+            (bikeItem) => (bikeItem.bikeStatus || "").toLowerCase() === "cancelled"
+          );
+
+          if (cancelledItems.length > 0) {
+            cancelledOrders += 1;
+          }
+
+          cancelledItems.forEach((bikeItem) => {
+            cancelledBikes += Number(bikeItem.quantity || 1);
+            const itemSubtotal = Number(bikeItem.subtotal || 0);
+            const orderSubtotal = Number(order.totalAmount || 0);
+            const orderServiceFee = Number(order.serviceFee || 0);
+            const serviceFeeShare = orderSubtotal > 0 ? (itemSubtotal / orderSubtotal) * orderServiceFee : 0;
+
+            refundableSubtotal += itemSubtotal;
+            refundableServiceFee += serviceFeeShare;
+            refundableAmount += itemSubtotal + serviceFeeShare;
+          });
+        });
+
+        setRefundSummary({
+          cancelledOrders,
+          cancelledBikes,
+          refundableSubtotal,
+          refundableServiceFee,
+          refundableAmount,
+        });
+      } catch (error) {
+        console.error("Error fetching refund summary:", error);
+      }
+    };
+
+    fetchRefundSummary();
+  }, []);
+
   useEffect(() => {
     if (featuredReviews.length <= 1) return;
 
@@ -377,6 +453,39 @@ export default function Homepage() {
             </div>
           </div>
         </div>
+
+        {/* Refund Alert Section */}
+        {refundSummary.cancelledBikes > 0 && (
+          <div className="max-w-7xl mx-auto mb-8 px-6">
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-5">
+              <h2 className="text-lg md:text-xl font-bold text-amber-900 mb-2">Refund Alert</h2>
+              <p className="text-amber-800 text-sm md:text-base">
+                One or more bikes in your order history were cancelled. Estimated refundable amount including service fee:
+                <span className="font-semibold"> Rs. {Number(refundSummary.refundableAmount || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </p>
+              <p className="text-amber-800 text-sm mt-1">
+                Affected orders: {refundSummary.cancelledOrders} | Cancelled bikes: {refundSummary.cancelledBikes}
+              </p>
+              <p className="text-amber-800 text-sm mt-1">
+                Bike amount: Rs. {Number(refundSummary.refundableSubtotal || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Service fee refund: Rs. {Number(refundSummary.refundableServiceFee || 0).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  to="/my-bookings"
+                  className="inline-flex items-center gap-2 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 transition-colors"
+                >
+                  View My Bookings
+                </Link>
+                <Link
+                  to="/support"
+                  className="inline-flex items-center gap-2 rounded-md border border-amber-500 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors"
+                >
+                  Contact Support
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Featured Bikes Section */}
         <div className="max-w-7xl mx-auto mb-8 px-6">
