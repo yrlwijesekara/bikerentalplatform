@@ -22,6 +22,13 @@ import OrderManagement from "./admin/ordermanagment.jsx";
 import ViewOrder from "./admin/vieworder.jsx";
 import Dashboard from "./admin/admindashboard.jsx";
 import AdminNotificationCenter from "../components/AdminNotificationCenter.jsx";
+import Setting from "./admin/setting.jsx";
+
+const ADMIN_SETTINGS_STORAGE_KEY = "adminPanelSettings";
+
+const defaultAdminSettings = {
+    backgroundColor: "#F8F9FA",
+};
 
 export default function Adminpage() {
     const navigate = useNavigate();
@@ -31,6 +38,7 @@ export default function Adminpage() {
     const [userInfo, setUserInfo] = useState(null);
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [adminSettings, setAdminSettings] = useState(defaultAdminSettings);
 
     // Check authorization on component mount
     useEffect(() => {
@@ -38,6 +46,36 @@ export default function Adminpage() {
         // Poll for unread notifications every 30 seconds
         const interval = setInterval(fetchUnreadCount, 30000);
         return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        const syncAdminSettings = () => {
+            try {
+                const savedSettings = localStorage.getItem(ADMIN_SETTINGS_STORAGE_KEY);
+                if (!savedSettings) {
+                    setAdminSettings(defaultAdminSettings);
+                    return;
+                }
+
+                const parsedSettings = JSON.parse(savedSettings);
+                setAdminSettings({
+                    ...defaultAdminSettings,
+                    ...parsedSettings,
+                });
+            } catch (error) {
+                console.warn("Failed to read admin settings:", error);
+                setAdminSettings(defaultAdminSettings);
+            }
+        };
+
+        syncAdminSettings();
+        window.addEventListener("storage", syncAdminSettings);
+        window.addEventListener("admin-settings-updated", syncAdminSettings);
+
+        return () => {
+            window.removeEventListener("storage", syncAdminSettings);
+            window.removeEventListener("admin-settings-updated", syncAdminSettings);
+        };
     }, []);
 
     const checkAdminAuthorization = async () => {
@@ -223,7 +261,13 @@ export default function Adminpage() {
     }
 
     return (
-        <div className="w-full h-screen flex relative overflow-hidden" style={{ backgroundColor: 'var(--main-background)' }}>
+        <div
+            className="w-full h-screen flex relative overflow-hidden"
+            style={{
+                backgroundColor: adminSettings.backgroundColor,
+                "--main-background": adminSettings.backgroundColor,
+            }}
+        >
             <style jsx>{`
                 .scrollbar-hide {
                     -ms-overflow-style: none;
@@ -348,7 +392,12 @@ export default function Adminpage() {
 
                 {/* Sidebar Footer */}
                 <div className="p-4 border-t space-y-2" style={{ borderColor: 'var(--navbar-border)' }}>
-                    <button className="w-full flex items-center px-4 py-3 rounded-lg transition-all duration-200"
+                    <button
+                            onClick={() => {
+                                navigate("/admin/settings");
+                                closeSidebar();
+                            }}
+                            className="w-full flex items-center px-4 py-3 rounded-lg transition-all duration-200"
                             style={{ color: 'var(--navbar-text)' }}
                             onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--navbar-hover)'}
                             onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>
@@ -422,6 +471,7 @@ export default function Adminpage() {
                         <Route path="orders" element={<OrderManagement />} />
                         <Route path="view-order/:id" element={<ViewOrder />} />
                         <Route path="reviews" element={<ReviewManagement />} />
+                        <Route path="settings" element={<Setting />} />
                         <Route path="add-places" element={<AddPlacesPage />} />
                         <Route path="update-places/:id" element={<UpdatePlacesPage />} />
                     </Routes>
