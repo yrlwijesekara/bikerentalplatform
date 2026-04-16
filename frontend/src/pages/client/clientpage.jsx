@@ -26,6 +26,9 @@ import Aisuggestion from "./user/aisuggestion.jsx";
 import Support from "./user/usersupport.jsx";
 import VendorProfile from "./vendor/vendorprofile.jsx";
 import VendorSupport from "./vendor/vendorsupport.jsx";
+import TermsPage from "./user/termspage.jsx";
+import PrivacyPage from "./user/privacypage.jsx";
+import CookiePolicyPage from "./user/cookiepolicypage.jsx";
 
 export default function Clientpage() {
   return (
@@ -122,6 +125,9 @@ export default function Clientpage() {
             <Route path="/bikeoverview/:bikeid" element={<BikeOverview />} />
             <Route path="/placeoverview/:placeid" element={<PlaceOverview />} />
             <Route path="/support" element={<Support />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
         </Routes>
        
     </div>

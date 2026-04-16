@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { GiFullMotorcycleHelmet } from "react-icons/gi";
 import { BsTwitterX } from "react-icons/bs";
 import { FaInstagram } from "react-icons/fa";
@@ -14,6 +15,8 @@ import { MdOutlineMoreTime } from "react-icons/md";
 export default function Footer() {
   const [userRole, setUserRole] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -75,6 +78,58 @@ export default function Footer() {
       { to: "/", text: "Home" },
       { to: "/find-bikes", text: "Find Bikes" }
     ];
+  };
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+
+    const normalizedEmail = newsletterEmail.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!normalizedEmail) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    if (!emailRegex.test(normalizedEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsSubscribing(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/newsletter/subscribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          audienceType: userRole === "vendor" ? "business" : "general",
+          source: "footer",
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 409) {
+        toast("You are already subscribed", { icon: "ℹ️" });
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Subscription failed");
+      }
+
+      setNewsletterEmail("");
+      toast.success("Subscribed successfully. You will receive updates soon.");
+    } catch (error) {
+      toast.error(error?.message || "Subscription failed. Please try again.");
+      console.error("Newsletter subscription error:", error);
+    } finally {
+      setIsSubscribing(false);
+    }
   };
 
   return (
@@ -212,13 +267,13 @@ export default function Footer() {
                     Safety Guidelines
                   </Link>
                   <Link 
-                    to="/support" 
+                    to="/terms" 
                     className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Terms & Conditions
                   </Link>
                   <Link 
-                    to="/support" 
+                    to="/privacy" 
                     className="text-sm hover:text-(--navbar-active) hover:bg-(--navbar-hover) px-3 py-2 rounded transition-all font-medium w-fit"
                   >
                     Privacy Policy
@@ -261,16 +316,23 @@ export default function Footer() {
               <h4 className="text-sm font-medium mb-2">
                 {userRole === 'vendor' ? 'Business Updates' : 'Stay Updated'}
               </h4>
-              <div className="flex gap-2">
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
                 <input
                   type="email"
                   placeholder={userRole === 'vendor' ? 'Business email' : 'Your email'}
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="flex-1 px-3 py-2 text-sm bg-(--navbar-hover) border border-(--navbar-border) rounded text-(--navbar-text) placeholder-gray-400 focus:outline-none focus:border-(--navbar-active) transition-colors"
+                  aria-label="Email for newsletter subscription"
                 />
-                <button className="px-4 py-2 bg-(--navbar-active) text-white rounded hover:bg-(--brand-secondary) transition-colors duration-200 text-sm font-medium">
+                <button
+                  type="submit"
+                  disabled={isSubscribing}
+                  className="px-4 py-2 bg-(--navbar-active) text-white rounded hover:bg-(--brand-secondary) transition-colors duration-200 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-70"
+                >
                  <MdEmail />
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </div>
@@ -284,18 +346,18 @@ export default function Footer() {
               {userRole === 'customer' && ' | Premium Member Access'}
             </div>
             <div className="flex gap-6 text-sm">
-              <a 
-                href="#" 
+              <Link 
+                to="/terms" 
                 className="hover:text-(--navbar-active) transition-colors"
               >
                 Terms of Service
-              </a>
-              <a 
-                href="#" 
+              </Link>
+              <Link 
+                to="/privacy" 
                 className="hover:text-(--navbar-active) transition-colors"
               >
                 Privacy Policy
-              </a>
+              </Link>
               {userRole === 'vendor' && (
                 <a 
                   href="#" 
@@ -304,12 +366,12 @@ export default function Footer() {
                   Partner Agreement
                 </a>
               )}
-              <a 
-                href="#" 
+              <Link 
+                to="/cookie-policy" 
                 className="hover:text-(--navbar-active) transition-colors"
               >
                 Cookie Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>
