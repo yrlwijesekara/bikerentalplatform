@@ -5,7 +5,7 @@ import { FaUserAlt } from "react-icons/fa";
 import { TiVendorAndroid } from "react-icons/ti";
 import { FaBookmark } from "react-icons/fa6";
 import { VscCodeReview } from "react-icons/vsc";
-import { FiLogOut, FiSettings } from "react-icons/fi";
+import { FiLogOut, FiSettings, FiMail } from "react-icons/fi";
 import { HiMenu, HiX, HiBell } from "react-icons/hi";
 import { MdOutlinePlace } from "react-icons/md";
 import ProductAdminPage from "./admin/productAdmin.jsx";
@@ -23,6 +23,7 @@ import ViewOrder from "./admin/vieworder.jsx";
 import Dashboard from "./admin/admindashboard.jsx";
 import AdminNotificationCenter from "../components/AdminNotificationCenter.jsx";
 import Setting from "./admin/setting.jsx";
+import NewsletterManagement from "./admin/newsletters.jsx";
 
 const ADMIN_SETTINGS_STORAGE_KEY = "adminPanelSettings";
 
@@ -212,6 +213,11 @@ export default function Adminpage() {
             path: "/admin/reviews",
             icon: VscCodeReview,
             label: "Reviews"
+        },
+        {
+            path: "/admin/newsletters",
+            icon: FiMail,
+            label: "Newsletters"
         }
     ];
 
@@ -471,6 +477,7 @@ export default function Adminpage() {
                         <Route path="orders" element={<OrderManagement />} />
                         <Route path="view-order/:id" element={<ViewOrder />} />
                         <Route path="reviews" element={<ReviewManagement />} />
+                        <Route path="newsletters" element={<NewsletterManagement />} />
                         <Route path="settings" element={<Setting />} />
                         <Route path="add-places" element={<AddPlacesPage />} />
                         <Route path="update-places/:id" element={<UpdatePlacesPage />} />

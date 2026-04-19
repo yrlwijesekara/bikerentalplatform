@@ -40,6 +40,7 @@ export default function OrderManagement() {
                         },
                     },
                 );
+                toast.success("Orders fetched successfully");
 
                 setOrders(response.data?.orders || []);
             } catch (err) {

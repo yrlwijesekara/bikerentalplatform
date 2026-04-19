@@ -38,7 +38,7 @@ export default function Users() {
                         },
                     }
                 );
-
+                toast.success("Users fetched successfully");
                 setUsers(response.data?.users || []);
             } catch (err) {
                 const message = err.response?.data?.error || "Failed to fetch users";
@@ -173,7 +173,7 @@ export default function Users() {
                     },
                 }
             );
-
+            
             const updatedUser = response.data?.user;
             setUsers((prevUsers) =>
                 prevUsers.map((item) =>
