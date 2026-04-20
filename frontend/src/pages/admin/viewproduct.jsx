@@ -12,6 +12,9 @@ export default function ViewProduct() {
     const navigate = useNavigate();
     const { id } = useParams();
     const [isLoading, setIsLoading] = useState(true);
+    const [isCheckingAiPrice, setIsCheckingAiPrice] = useState(false);
+    const [latestAiPrice, setLatestAiPrice] = useState(null);
+    const [priceCheckResult, setPriceCheckResult] = useState("");
     const [productData, setProductData] = useState({
         bikeName: "",
         bikeType: "",
@@ -115,6 +118,69 @@ export default function ViewProduct() {
             fetchProductData();
         }
     }, [id, navigate]);
+
+    const handleCheckAiSuggestionPrice = async () => {
+        if (!productData.engineCC || !productData.manufacturingYear || !productData.city) {
+            toast.error("Engine CC, Manufacturing Year, and City are required to check AI price.");
+            return;
+        }
+
+        setIsCheckingAiPrice(true);
+        setPriceCheckResult("");
+
+        try {
+            const priceApiBase = import.meta.env.VITE_PRICE_PREDICT_API_URL;
+
+            const response = await axios.post(
+                `${priceApiBase}/api/price-predict/predict`,
+                {
+                    bikeType: productData.bikeType,
+                    engineCC: Number(productData.engineCC),
+                    manufacturingYear: Number(productData.manufacturingYear),
+                    fuelType: productData.fuelType,
+                    city: productData.city.trim(),
+                },
+            );
+
+            const suggested = response?.data?.suggested_price_rounded_lkr;
+            if (suggested == null) {
+                throw new Error("Invalid prediction response");
+            }
+
+            const suggestedNumber = Number(suggested);
+            const listedPrice = Number(productData.pricePerDay);
+            const difference = Math.abs(listedPrice - suggestedNumber);
+            const differencePercent = suggestedNumber > 0
+                ? (difference / suggestedNumber) * 100
+                : 0;
+
+            setLatestAiPrice(suggestedNumber);
+
+            if (!listedPrice) {
+                setPriceCheckResult("No listed price to compare. AI suggestion calculated successfully.");
+                toast.success(`AI price calculated: Rs. ${suggestedNumber.toLocaleString("en-LK")}/day`);
+                return;
+            }
+
+            if (differencePercent <= 15) {
+                setPriceCheckResult(
+                    `Price looks correct. Listed price is within ${differencePercent.toFixed(1)}% of AI suggestion.`,
+                );
+                toast.success("Listed price is aligned with AI suggestion.");
+            } else {
+                setPriceCheckResult(
+                    `Price may be inaccurate. Listed price differs by ${differencePercent.toFixed(1)}% from AI suggestion.`,
+                );
+                toast.error("Listed price differs significantly from AI suggestion.");
+            }
+        } catch (error) {
+            console.error("Error checking AI suggested price:", error);
+            const message = error?.response?.data?.error || "Failed to check AI suggested price.";
+            toast.error(message);
+        } finally {
+            setIsCheckingAiPrice(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -294,6 +360,27 @@ export default function ViewProduct() {
                             <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-800">
                                 {productData.recommendedprice ? `Rs. ${productData.recommendedprice}` : "Not available"}
                             </div>
+                            <button
+                                type="button"
+                                onClick={handleCheckAiSuggestionPrice}
+                                disabled={isCheckingAiPrice}
+                                className="mt-3 w-full px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:bg-emerald-300 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isCheckingAiPrice ? "Checking..." : "Check AI Suggestion Price"}
+                            </button>
+                            {latestAiPrice !== null && (
+                                <div className="mt-2 text-sm text-gray-700">
+                                    Latest AI Price: <span className="font-semibold">Rs. {latestAiPrice.toLocaleString("en-LK")}/day</span>
+                                </div>
+                            )}
+                            {priceCheckResult && (
+                                <div className={`mt-2 text-sm px-3 py-2 rounded-md ${priceCheckResult.includes("looks correct")
+                                    ? "bg-green-50 text-green-700 border border-green-200"
+                                    : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                                }`}>
+                                    {priceCheckResult}
+                                </div>
+                            )}
                         </div>
 
                         {/* Map URL */}

@@ -17,7 +17,12 @@ import Footer from '../../../components/footer.jsx';
 export default function Checkout() {
     const location = useLocation();
     const navigate = useNavigate();
-    const [cartItems, setCartItems] = useState(location.state.items || []);
+    const [cartItems, setCartItems] = useState(() => {
+        if (Array.isArray(location.state?.items)) {
+            return location.state.items;
+        }
+        return getCart();
+    });
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('paypal');
     const [paymentData, setPaymentData] = useState({
@@ -28,10 +33,17 @@ export default function Checkout() {
     const [orderPaymentStatus, setOrderPaymentStatus] = useState(null);
     // Holds latest PayPal capture data so useEffect can trigger order placement
     const pendingPayPalData = useRef(null);
-    if(location.state.items == null) {
-        toast.error('please add items to cart before checkout');
-        navigate('/find-bikes');
-    }
+
+    useEffect(() => {
+        if (Array.isArray(location.state?.items)) {
+            return;
+        }
+
+        if (cartItems.length === 0) {
+            toast.error('please add items to cart before checkout');
+            navigate('/find-bikes');
+        }
+    }, [location.state, cartItems.length, navigate]);
 
     function gettotal() {
         let total = 0;

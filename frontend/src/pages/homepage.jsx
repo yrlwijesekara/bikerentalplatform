@@ -30,6 +30,8 @@ export default function Homepage() {
   const [featuredReviews, setFeaturedReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [currentReviewSlide, setCurrentReviewSlide] = useState(0);
+  const [profileReminderVisible, setProfileReminderVisible] = useState(false);
+  const [profileReminderChecked, setProfileReminderChecked] = useState(false);
   const [refundSummary, setRefundSummary] = useState({
     cancelledOrders: 0,
     cancelledBikes: 0,
@@ -63,6 +65,36 @@ export default function Homepage() {
       }
     }
   }, [navigate]);
+
+  useEffect(() => {
+    const checkProfilePhone = async () => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      if (!token || role !== "user") {
+        setProfileReminderVisible(false);
+        setProfileReminderChecked(true);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const phone = String(response.data?.phone || "").trim();
+        const hasValidPhone = phone && phone.toLowerCase() !== "not provided";
+        setProfileReminderVisible(!hasValidPhone);
+      } catch (error) {
+        console.error("Error checking user profile for phone number:", error);
+        setProfileReminderVisible(false);
+      } finally {
+        setProfileReminderChecked(true);
+      }
+    };
+
+    checkProfilePhone();
+  }, []);
 
   // Preload images to ensure they're cached
   useEffect(() => {
@@ -425,6 +457,27 @@ export default function Homepage() {
             </div>
           </div>
         </div>
+
+        {profileReminderChecked && profileReminderVisible && (
+          <div className="max-w-7xl mx-auto mb-8 px-6">
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-5 md:p-6 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-amber-900">Complete your profile</h2>
+                  <p className="text-sm md:text-base text-amber-800 mt-1">
+                    Your phone number is missing or not set yet. Please update your profile so vendors can contact you after booking.
+                  </p>
+                </div>
+                <Link
+                  to="/profile"
+                  className="inline-flex items-center justify-center rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
+                >
+                  Update Profile
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Introduction Section */}
         <div className="max-w-7xl mx-auto mb-8 px-6">

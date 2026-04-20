@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FaUser, FaEdit, FaSave, FaTimes, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 import Loader from '../../../components/loader';
 import Footer from '../../../components/footer';
 
 export default function Profile() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -18,6 +21,10 @@ export default function Profile() {
     city: ''
   });
   const [saving, setSaving] = useState(false);
+  const returnToQuery = new URLSearchParams(location.search).get('returnTo');
+  const returnToState = location.state?.returnTo;
+  const returnTo = (returnToQuery || returnToState || '').trim();
+  const safeReturnTo = returnTo.startsWith('/') ? returnTo : '';
 
   // Load user profile on component mount
   useEffect(() => {
@@ -113,7 +120,12 @@ export default function Profile() {
       
       setUser(response.data.user);
       setIsEditing(false);
-      toast.success('Profile updated successfully!');
+      if (safeReturnTo) {
+        toast.success('Profile updated. Redirecting back to checkout...');
+        navigate(safeReturnTo);
+      } else {
+        toast.success('Profile updated successfully!');
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       const errorMessage = error.response?.data?.error || 'Failed to update profile. Please try again.';

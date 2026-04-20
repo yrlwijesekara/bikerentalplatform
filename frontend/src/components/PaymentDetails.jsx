@@ -1,6 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FaCheckCircle } from 'react-icons/fa';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+function isProvided(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return Boolean(normalized) && normalized !== 'not provided' && normalized !== 'n/a';
+}
+
+function isProfileComplete(profile) {
+    const requiredFields = ['firstname', 'lastname', 'email', 'phone', 'address', 'city'];
+    return requiredFields.every((field) => isProvided(profile?.[field]));
+}
 
 export default function PaymentDetails({
     paymentMethod,
@@ -8,6 +19,8 @@ export default function PaymentDetails({
     onPaymentDataChange,
     totalAmount
 }) {
+    const navigate = useNavigate();
+    const location = useLocation();
     const initialized = useRef(false);
     const paypalButtonsRef = useRef(null);
 
@@ -116,6 +129,31 @@ export default function PaymentDetails({
             },
             createOrder: async () => {
                 const token = localStorage.getItem('token');
+
+                const profileResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/profile`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                if (!profileResponse.ok) {
+                    throw new Error('Please login and complete your profile before using PayPal');
+                }
+
+                const profileData = await profileResponse.json();
+                if (!isProfileComplete(profileData)) {
+                    onPaymentDataChange?.({
+                        paymentMethod: 'paypal',
+                        isCompleted: false
+                    });
+
+                    toast.error('Please complete your profile details before purchasing');
+                    navigate('/profile?returnTo=/checkout', {
+                        state: { returnTo: `${location.pathname}${location.search || ''}` }
+                    });
+                    throw new Error('PROFILE_INCOMPLETE_REDIRECT');
+                }
+
                 const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/orders/paypal/create-order`, {
                     method: 'POST',
                     headers: {
@@ -173,6 +211,9 @@ export default function PaymentDetails({
                     paymentMethod: 'paypal',
                     isCompleted: false
                 });
+                if (error?.message === 'PROFILE_INCOMPLETE_REDIRECT') {
+                    return;
+                }
                 toast.error(error?.message || 'PayPal payment failed');
             }
         }).render(paypalButtonsRef.current);
