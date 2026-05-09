@@ -613,7 +613,7 @@ export default function AddbikePage() {
             </button>
           </div>
         </form>
-        <div className="w-full min-h-[80px] sm:min-h-[100px] bg-[var(--brand-warning)] mt-4 sm:mt-6 rounded p-3 sm:p-4">
+        <div className="w-full min-h-[80px] sm:min-h-[100px] bg-gray-400 mt-4 sm:mt-6 rounded p-3 sm:p-4">
           <h1 className="text-base sm:text-lg text-[var(--navbar-text)] mb-2 sm:mb-3">
             Our recommended price per day is
           </h1>
