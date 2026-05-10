@@ -123,15 +123,15 @@ export default function Homepage() {
   // Auto-slide functionality
   useEffect(() => {
     if (!imagesLoaded) return; // Don't start cycling until images are loaded
-    
+
     const interval = setInterval(() => {
-      setCurrentImageIndex(
-        (prevIndex) => (prevIndex + 1) % heroImages.length
-      );
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
     }, 15000); // Change every 15 seconds
 
     return () => clearInterval(interval);
   }, [heroImages.length, imagesLoaded]);
+
+
 
   // Function to fetch bikes from the API
   const fetchBikes = async () => {
@@ -380,10 +380,10 @@ export default function Homepage() {
         
         {/* Hero Section with Auto-Sliding Images */}
         <div className="mb-8">
-          <div 
-            className="relative h-[70vh] bg-cover bg-center shadow-lg overflow-hidden transition-all duration-1000"
+          <div
+            className="relative h-[70vh] bg-cover bg-center bg-black/40 shadow-lg overflow-hidden transition-all duration-1000"
             style={{
-              backgroundImage: imagesLoaded 
+              backgroundImage: imagesLoaded
                 ? `url('${heroImages[currentImageIndex]}')`
                 : 'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%)',
               backgroundSize: 'cover',
@@ -391,8 +391,6 @@ export default function Homepage() {
               backgroundRepeat: 'no-repeat'
             }}
           >
-            <div className="absolute inset-0 bg-black/40"></div>
-            
             {/* Image Navigation Dots */}
             <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
               {heroImages.map((_, index) => (
@@ -408,6 +406,8 @@ export default function Homepage() {
                 />
               ))}
             </div>
+            
+            {/* Content */}
             <div className="relative h-full flex items-center justify-center text-white">
               <div className="text-center max-w-3xl px-6">
                 <h1 className="text-4xl md:text-5xl font-bold mb-4">
