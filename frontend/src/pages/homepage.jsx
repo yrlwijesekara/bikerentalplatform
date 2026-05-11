@@ -381,7 +381,7 @@ export default function Homepage() {
         {/* Hero Section with Auto-Sliding Images */}
         <div className="mb-8">
           <div
-            className="relative h-[70vh] bg-cover bg-center bg-black/40 shadow-lg overflow-hidden transition-all duration-1000"
+            className="relative h-[70vh] bg-cover bg-center shadow-lg overflow-hidden transition-all duration-1000"
             style={{
               backgroundImage: imagesLoaded
                 ? `url('${heroImages[currentImageIndex]}')`
@@ -390,7 +390,10 @@ export default function Homepage() {
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat'
             }}
+
+            
           >
+             <div className="absolute inset-0 bg-black/40"></div>
             {/* Image Navigation Dots */}
             <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
               {heroImages.map((_, index) => (
